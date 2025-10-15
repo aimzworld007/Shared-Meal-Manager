@@ -1,95 +1,113 @@
 /**
  * @file GroceryManager.tsx
- * @summary A component for managing grocery expenses.
- * It displays a list of grocery purchases and provides a form to add new entries.
+ * @summary Component for managing grocery expense entries.
  */
 import React, { useState } from 'react';
 import { GroceryItem } from '../types';
 
-/**
- * Props for the GroceryManager component.
- */
 interface GroceryManagerProps {
-  /** The current list of grocery items. */
   groceries: GroceryItem[];
-  /** Callback function to add a new grocery item. */
-  onAddGrocery: (item: Omit<GroceryItem, 'id'>) => void;
-  /** Callback function to delete a grocery item. */
-  onDeleteGrocery: (id: string) => void;
+  onAdd: (item: Omit<GroceryItem, 'id'>) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
 }
 
-/**
- * Formats a number as a currency string in AED.
- * @param {number} amount - The number to format.
- * @returns {string} The formatted currency string.
- */
-const formatCurrency = (amount: number) => new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED' }).format(amount);
+const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+};
 
-/**
- * Renders the grocery management section, including a list and an add form.
- * @param {GroceryManagerProps} props - The component props.
- * @returns {JSX.Element} The rendered grocery manager component.
- */
-const GroceryManager: React.FC<GroceryManagerProps> = ({ groceries, onAddGrocery, onDeleteGrocery }) => {
+export const GroceryManager: React.FC<GroceryManagerProps> = ({ groceries, onAdd, onDelete }) => {
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [item, setItem] = useState('');
   const [amount, setAmount] = useState('');
 
-  /**
-   * Handles the form submission for adding a new grocery expense.
-   * Validates input, calls the onAddGrocery prop, and resets the form fields.
-   * @param {React.FormEvent} e - The form event.
-   */
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const parsedAmount = parseFloat(amount);
-    if (item.trim() && !isNaN(parsedAmount) && parsedAmount > 0) {
-      onAddGrocery({
-        date: new Date().toISOString().split('T')[0], // Use current date
+    if (item.trim() && amount) {
+      onAdd({
+        date,
         item: item.trim(),
-        amount: parsedAmount,
+        amount: parseFloat(amount),
       });
       setItem('');
       setAmount('');
     }
   };
+  
+  const sortedGroceries = [...groceries].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   return (
     <div className="bg-white shadow rounded-lg p-6">
-      <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">Groceries</h3>
-      <form onSubmit={handleSubmit} className="space-y-3 mb-4">
-        <input
-          type="text"
-          value={item}
-          onChange={(e) => setItem(e.target.value)}
-          placeholder="Item description"
-          className="w-full p-2 border border-gray-300 rounded-md"
-        />
-        <input
-          type="number"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          placeholder="Amount"
-          step="0.01"
-          className="w-full p-2 border border-gray-300 rounded-md"
-        />
-        <button type="submit" className="w-full bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">Add Expense</button>
+      <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">Manage Groceries</h3>
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 items-end">
+        <div className="md:col-span-1">
+            <label htmlFor="grocery-date" className="block text-sm font-medium text-gray-700">Date</label>
+            <input
+                id="grocery-date"
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                required
+            />
+        </div>
+        <div className="md:col-span-2">
+            <label htmlFor="grocery-item" className="block text-sm font-medium text-gray-700">Item Description</label>
+            <input
+                id="grocery-item"
+                type="text"
+                value={item}
+                onChange={(e) => setItem(e.target.value)}
+                placeholder="e.g., Vegetables, milk"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                required
+            />
+        </div>
+        <div className="md:col-span-1">
+             <label htmlFor="grocery-amount" className="block text-sm font-medium text-gray-700">Amount</label>
+            <input
+                id="grocery-amount"
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="0.00"
+                step="0.01"
+                min="0"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                required
+            />
+        </div>
+        <button
+          type="submit"
+          className="md:col-span-4 bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        >
+          Add Grocery
+        </button>
       </form>
-      <ul className="divide-y divide-gray-200">
-        {groceries.map(g => (
-          <li key={g.id} className="py-2 flex justify-between items-center">
-            <div>
-              <p className="text-sm text-gray-800">{g.item}</p>
-              <p className="text-xs text-gray-500">{g.date}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-sm font-medium text-gray-900">{formatCurrency(g.amount)}</p>
-              <button onClick={() => onDeleteGrocery(g.id)} className="text-red-500 hover:text-red-700 text-xs">Delete</button>
-            </div>
-          </li>
-        ))}
-      </ul>
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+                <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+            {sortedGroceries.map((g) => (
+                <tr key={g.id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{g.date}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{g.item}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">{formatCurrency(g.amount)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button onClick={() => onDelete(g.id)} className="text-red-600 hover:text-red-900">Delete</button>
+                    </td>
+                </tr>
+            ))}
+            </tbody>
+        </table>
+         {groceries.length === 0 && <p className="text-center text-gray-500 py-4">No grocery expenses recorded yet.</p>}
+      </div>
     </div>
   );
 };
-
-export default GroceryManager;

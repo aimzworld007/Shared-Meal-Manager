@@ -1,31 +1,33 @@
 /**
  * @file Dashboard.tsx
- * @summary The main view for authenticated users.
- * This component orchestrates the entire application layout post-login. It uses
- * the useMealManager hook to fetch and manage data, and renders various
- * sub-components to display and interact with that data. It also includes
- * a conditional view for the admin dashboard.
+ * @summary The main dashboard screen for authenticated users.
+ * It displays either the user-facing meal manager or the admin analytics panel.
  */
-import React, { useState } from 'react';
+import React from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useMealManager } from '../hooks/useMealManager';
-import { SummaryCard, SummaryCardProps } from './SummaryCard';
-import MemberManager from './ParticipantManager';
-import GroceryManager from './GroceryManager';
-import DepositManager from './DepositManager';
-import BalanceSummary from './BalanceSummary';
-import AdminDashboard from './AdminDashboard';
 import { ADMIN_UID } from '../services/firebase';
+import AdminDashboard from './AdminDashboard';
+import { SummaryCard } from './SummaryCard';
+import { BalanceSummary } from './BalanceSummary';
+import { ParticipantManager } from './ParticipantManager';
+import { GroceryManager } from './GroceryManager';
+import { DepositManager } from './DepositManager';
 
 /**
- * Renders the main dashboard layout.
- * Displays summary cards, data management sections, and the final balance table.
- * If the user is an admin, it provides an option to switch to the admin view.
- * @returns {JSX.Element} The rendered Dashboard component.
+ * The main application dashboard.
+ * It fetches and displays all meal management data and provides controls
+ * for adding/removing members, groceries, and deposits.
+ * If the logged-in user is the admin, it shows the admin analytics dashboard.
+ * @returns {JSX.Element} The rendered dashboard component.
  */
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
-  const [isAdminView, setIsAdminView] = useState(false);
+  const isAdmin = user?.uid === ADMIN_UID;
+
+  // We pass the admin UID for data fetching regardless of who is logged in,
+  // because all data is stored under the admin's account.
+  // In a real multi-tenant app, you'd pass user.uid.
   const {
     loading,
     members,
@@ -41,85 +43,81 @@ const Dashboard: React.FC = () => {
     totalDeposit,
     totalBalance,
     memberSummaries,
-  } = useMealManager(user?.uid ?? null);
+  } = useMealManager(ADMIN_UID);
 
-  const summaryCards: SummaryCardProps[] = [
-    { title: 'Total Expense', value: totalExpense, isCurrency: true },
-    { title: 'Total Deposits', value: totalDeposit, isCurrency: true },
-    { title: 'Final Balance', value: totalBalance, isCurrency: true, isPositive: totalBalance >= 0 },
-  ];
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Failed to log out:", error);
+    }
+  };
 
-  const isUserAdmin = user?.uid === ADMIN_UID;
+  if (isAdmin) {
+      // Show admin view
+      return (
+          <div className="min-h-screen bg-gray-100">
+              <header className="bg-white shadow">
+                  <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+                      <h1 className="text-3xl font-bold text-gray-900">Admin Analytics</h1>
+                      <button
+                          onClick={handleLogout}
+                          className="bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                      >
+                          Logout
+                      </button>
+                  </div>
+              </header>
+              <main>
+                  <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+                      <AdminDashboard />
+                  </div>
+              </main>
+          </div>
+      );
+  }
 
+  // Regular user view
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <h1 className="text-2xl font-bold text-gray-900">
-            {isAdminView ? 'Admin Analytics' : 'Meal Manager Dashboard'}
-          </h1>
-          <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600 hidden sm:inline">Welcome, {user?.email}</span>
-            {isUserAdmin && (
-              <button
-                onClick={() => setIsAdminView(!isAdminView)}
-                className="bg-purple-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-purple-700 transition"
-              >
-                {isAdminView ? 'My Dashboard' : 'Admin View'}
-              </button>
-            )}
-            <button
-              onClick={logout}
-              className="bg-red-500 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-red-600 transition"
-            >
-              Logout
-            </button>
-          </div>
+      <header className="bg-white shadow">
+        <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+          <h1 className="text-3xl font-bold text-gray-900">Shared Meal Manager</h1>
+          <button
+            onClick={handleLogout}
+            className="bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+          >
+            Logout
+          </button>
         </div>
       </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        {isAdminView ? (
-          <AdminDashboard />
-        ) : (
-          loading ? (
-            <div className="text-center text-gray-500">Loading data...</div>
+      <main>
+        <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+          {loading ? (
+            <p className="text-center text-gray-500">Loading your data...</p>
           ) : (
             <div className="space-y-8">
-              {/* Summary Cards */}
+              {/* Top Summary Cards */}
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
-                {summaryCards.map((card) => (
-                  <SummaryCard key={card.title} {...card} />
-                ))}
+                <SummaryCard title="Total Expense" value={totalExpense} isCurrency />
+                <SummaryCard title="Total Deposits" value={totalDeposit} isCurrency />
+                <SummaryCard title="Overall Balance" value={totalBalance} isCurrency />
               </div>
 
-              {/* Balance Summary Table */}
-              <BalanceSummary summaries={memberSummaries} />
-
-              {/* Data Management Sections */}
+              {/* Main Content Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                  <MemberManager
-                      members={members}
-                      onAddMember={addMember}
-                      onDeleteMember={deleteMember}
-                  />
-                  <GroceryManager
-                      groceries={groceries}
-                      onAddGrocery={addGrocery}
-                      onDeleteGrocery={deleteGrocery}
-                  />
-                  <DepositManager
-                      deposits={deposits}
-                      members={members}
-                      onAddDeposit={addDeposit}
-                      onDeleteDeposit={deleteDeposit}
-                  />
+                <div className="lg:col-span-2 space-y-8">
+                    <GroceryManager groceries={groceries} onAdd={addGrocery} onDelete={deleteGrocery} />
+                    <DepositManager deposits={deposits} members={members} onAdd={addDeposit} onDelete={deleteDeposit} />
+                </div>
+                <div className="lg:col-span-1 space-y-8">
+                    <BalanceSummary summaries={memberSummaries} />
+                    <ParticipantManager members={members} onAdd={addMember} onDelete={deleteMember} />
+                </div>
               </div>
             </div>
-          )
-        )}
+          )}
+        </div>
       </main>
     </div>
   );
