@@ -1,88 +1,102 @@
 /**
  * @file Dashboard.tsx
- * @summary The main dashboard view for authenticated users.
- * It displays an overview of finances and provides components to manage
- * members, groceries, and deposits.
+ * @summary The main view for authenticated users, displaying meal sharing data and management tools.
+ * It acts as a container for all the feature components like summaries, member management, etc.
  */
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useMealManager } from '../hooks/useMealManager';
-import AdminDashboard from './AdminDashboard';
 import { SummaryCard } from './SummaryCard';
 import { BalanceSummary } from './BalanceSummary';
 import { ParticipantManager } from './ParticipantManager';
 import { GroceryManager } from './GroceryManager';
 import { DepositManager } from './DepositManager';
-
-// A simple way to designate an admin user. In a real app, this would be role-based.
-const ADMIN_EMAIL = 'admin@example.com';
+import AdminDashboard from './AdminDashboard';
+import CSVImportModal from './CSVImportModal';
 
 const Dashboard: React.FC = () => {
     const { user, logout } = useAuth();
     const {
-        loading,
-        members,
-        groceries,
-        deposits,
-        addMember,
-        deleteMember,
-        addGrocery,
-        deleteGrocery,
-        addDeposit,
-        deleteDeposit,
-        totalSpent,
-        totalDeposits,
-        balanceSummaries,
+        loading, error, members, groceries, deposits, totalDeposit, totalExpense, memberCount,
+        balanceSummaries, addMember, updateMember, deleteMember, addGrocery, updateGrocery, deleteGrocery,
+        addDeposit, updateDeposit, deleteDeposit, onImportDeposits, onImportGroceries
     } = useMealManager();
 
-    if (user?.email === ADMIN_EMAIL) {
-        return <AdminDashboard />;
-    }
+    const [activeTab, setActiveTab] = useState('dashboard');
+    const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+    
+    // Simple check to render Admin view. In a real app, this would be based on user roles from your DB.
+    const isAdmin = user?.email === "admin@example.com"; // Replace with env var in a real app
+    
+    const renderContent = () => {
+        if (loading) {
+            return <div className="text-center py-10">Loading your meal data...</div>;
+        }
+        if (error) {
+            return <div className="text-center py-10 text-red-600">{error}</div>;
+        }
+
+        if (isAdmin && activeTab === 'admin') {
+            return <AdminDashboard />;
+        }
+
+        return (
+            <div className="space-y-8">
+                {/* Top Summary Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <SummaryCard title="Total Expense" value={totalExpense} isCurrency />
+                    <SummaryCard title="Total Deposits" value={totalDeposit} isCurrency />
+                    <SummaryCard title="Team Members" value={memberCount} />
+                </div>
+
+                {/* Main Content Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="lg:col-span-2 space-y-8">
+                        <GroceryManager groceries={groceries} members={members} addGrocery={addGrocery} updateGrocery={updateGrocery} deleteGrocery={deleteGrocery} />
+                        <DepositManager deposits={deposits} members={members} addDeposit={addDeposit} updateDeposit={updateDeposit} deleteDeposit={deleteDeposit} />
+                    </div>
+                    <div className="lg:col-span-1 space-y-8">
+                        <BalanceSummary summaries={balanceSummaries} />
+                        <ParticipantManager members={members} addMember={addMember} updateMember={updateMember} deleteMember={deleteMember} />
+                    </div>
+                </div>
+            </div>
+        );
+    };
 
     return (
         <div className="bg-gray-100 min-h-screen">
             <header className="bg-white shadow-sm">
-                <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-                    <h1 className="text-xl font-bold text-gray-900">Meal Manager Dashboard</h1>
-                    <div className='flex items-center'>
-                        <span className='text-sm text-gray-600 mr-4'>{user?.email}</span>
-                        <button
-                            onClick={logout}
-                            className="text-sm font-medium text-indigo-600 hover:text-indigo-500"
-                        >
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+                    <div>
+                        <h1 className="text-2xl font-bold text-gray-900">Meal Manager</h1>
+                        <p className="text-sm text-gray-500">Welcome, {user?.email}</p>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                        {isAdmin && (
+                             <button onClick={() => setActiveTab(t => t === 'admin' ? 'dashboard' : 'admin')} className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+                                {activeTab === 'admin' ? 'View User Dashboard' : 'View Admin Panel'}
+                            </button>
+                        )}
+                        <button onClick={() => setIsImportModalOpen(true)} className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+                            Import CSV
+                        </button>
+                        <button onClick={logout} className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
                             Sign Out
                         </button>
                     </div>
                 </div>
             </header>
-            <main className="py-8">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    {loading ? (
-                        <p className="text-center text-gray-500">Loading your data...</p>
-                    ) : (
-                        <>
-                            {/* Stats Grid */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                                <SummaryCard title="Total Members" value={members.length} />
-                                <SummaryCard title="Total Spent" value={totalSpent} isCurrency />
-                                <SummaryCard title="Total Deposits" value={totalDeposits} isCurrency />
-                            </div>
-
-                            {/* Main Content Grid */}
-                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                <div className="lg:col-span-2 space-y-6">
-                                    <GroceryManager groceries={groceries} addGrocery={addGrocery} deleteGrocery={deleteGrocery} />
-                                    <DepositManager deposits={deposits} members={members} addDeposit={addDeposit} deleteDeposit={deleteDeposit} />
-                                </div>
-                                <div className="space-y-6">
-                                    <ParticipantManager members={members} addMember={addMember} deleteMember={deleteMember} />
-                                    <BalanceSummary summaries={balanceSummaries} />
-                                </div>
-                            </div>
-                        </>
-                    )}
-                </div>
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {renderContent()}
             </main>
+            <CSVImportModal
+                isOpen={isImportModalOpen}
+                onClose={() => setIsImportModalOpen(false)}
+                members={members}
+                onImportDeposits={onImportDeposits}
+                onImportGroceries={onImportGroceries}
+            />
         </div>
     );
 };

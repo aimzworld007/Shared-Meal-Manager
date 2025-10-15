@@ -3,8 +3,8 @@
  * @summary Custom hook for fetching and managing all user data from an admin perspective.
  */
 import { useState, useEffect } from 'react';
-// Fix: Corrected import to use UserSummary as UserDataSummary to match the exported member from firebase service.
-import { UserSummary as UserDataSummary } from '../services/firebase';
+// Fix: Corrected import to use UserDataSummary which contains all user info.
+import { UserDataSummary } from '../services/firebase';
 import * as api from '../services/firebase';
 
 /**
@@ -24,8 +24,8 @@ export const useAdminDataManager = () => {
         setLoading(true);
         setError(null);
         try {
-            // Fix: Corrected function call to fetchAllUsers to match the exported function from firebase service.
-            const data = await api.fetchAllUsers();
+            // Fix: Corrected function call to fetchAllUsersData to get complete user data.
+            const data = await api.fetchAllUsersData();
             setAllUsersData(data);
         } catch (error: any) {
             console.error("Failed to fetch admin data:", error);

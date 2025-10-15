@@ -1,129 +1,118 @@
 /**
  * @file useMealManager.tsx
- * @summary A comprehensive custom hook to manage all aspects of a user's meal plan.
- * It encapsulates state management, data fetching, and business logic for members,
- * groceries, and deposits, and provides computed summaries.
+ * @summary A comprehensive custom hook to manage the state and logic for the meal sharing dashboard.
+ * It handles fetching data from Firebase, state management for members, groceries, and deposits,
+ * and computes derived data like financial summaries.
  */
-import { useState, useEffect, useMemo } from 'react';
-import { useAuth } from './useAuth';
-import * as api from '../services/firebase';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Member, GroceryItem, Deposit } from '../types';
+import * as api from '../services/firebase';
 
-/**
- * Provides all the data, state, and functions needed to manage a shared meal plan.
- * @returns {object} An object containing the meal plan data, loading states, computed
- * summaries, and functions to interact with the data.
- */
 export const useMealManager = () => {
-  const { user } = useAuth();
-  const [members, setMembers] = useState<Member[]>([]);
-  const [groceries, setGroceries] = useState<GroceryItem[]>([]);
-  const [deposits, setDeposits] = useState<Deposit[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+    const [members, setMembers] = useState<Member[]>([]);
+    const [groceries, setGroceries] = useState<GroceryItem[]>([]);
+    const [deposits, setDeposits] = useState<Deposit[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
 
-  /**
-   * Subscribes to real-time updates for all data collections (members, groceries, deposits)
-   * for the currently authenticated user.
-   * Side Effect: Sets up Firestore listeners.
-   */
-  useEffect(() => {
-    if (user?.uid) {
-      setLoading(true);
-      setError(null);
+    /**
+     * Fetches all necessary data (members, groceries, deposits) from the API.
+     * Uses useCallback to prevent re-creation on every render.
+     */
+    const fetchData = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const [membersData, groceriesData, depositsData] = await Promise.all([
+                api.getMembers(),
+                api.getGroceries(),
+                api.getDeposits(),
+            ]);
+            setMembers(membersData);
+            setGroceries(groceriesData);
+            setDeposits(depositsData);
+        } catch (err: any) {
+            console.error("Failed to fetch data:", err);
+            setError("Could not load your data. Please try again later.");
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
-      const unsubscribers = [
-        api.getMembers(user.uid, setMembers),
-        api.getGroceries(user.uid, setGroceries),
-        api.getDeposits(user.uid, setDeposits),
-      ];
-      
-      setLoading(false);
+    // Initial data fetch on component mount
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
 
-      // Cleanup listeners on unmount or user change
-      return () => unsubscribers.forEach(unsub => unsub());
-    }
-  }, [user?.uid]);
+    // --- Memoized Calculations for Summaries ---
+    const totalDeposit = useMemo(() => deposits.reduce((sum, item) => sum + item.amount, 0), [deposits]);
+    const totalExpense = useMemo(() => groceries.reduce((sum, item) => sum + item.amount, 0), [groceries]);
+    const memberCount = useMemo(() => members.length, [members]);
 
-  // --- API Functions ---
+    const balanceSummaries = useMemo(() => {
+        return members.map(member => {
+            const totalDeposit = deposits
+                .filter(d => d.memberId === member.id)
+                .reduce((sum, d) => sum + d.amount, 0);
 
-  const handleApiCall = async <T extends any[]>(apiCall: (...args: T) => Promise<any>, ...args: T) => {
-    if (!user?.uid) {
-        setError("You must be logged in to perform this action.");
-        return;
-    }
-    setError(null);
-    try {
-        await apiCall(...args);
-    } catch (e: any) {
-        console.error("API call failed:", e);
-        setError(e.message);
-    }
-  };
+            const memberExpense = groceries
+                .filter(g => g.memberIds.includes(member.id))
+                .reduce((sum, g) => sum + (g.amount / g.memberIds.length), 0);
+            
+            const balance = totalDeposit - memberExpense;
 
-  const addMember = async (name: string) => {
-    if(user?.uid) await handleApiCall(api.addMember, user.uid, name);
-  };
-  const deleteMember = async (memberId: string) => {
-    if(user?.uid) await handleApiCall(api.deleteMember, user.uid, memberId);
-  };
-
-  const addGrocery = async (item: Omit<GroceryItem, 'id'>) => {
-    if(user?.uid) await handleApiCall(api.addGrocery, user.uid, item);
-  };
-  const deleteGrocery = async (itemId: string) => {
-    if(user?.uid) await handleApiCall(api.deleteGrocery, user.uid, itemId);
-  };
-
-  const addDeposit = async (deposit: Omit<Deposit, 'id'>) => {
-    if(user?.uid) await handleApiCall(api.addDeposit, user.uid, deposit);
-  };
-  const deleteDeposit = async (depositId: string) => {
-    if(user?.uid) await handleApiCall(api.deleteDeposit, user.uid, depositId);
-  };
+            return {
+                ...member,
+                totalDeposit,
+                share: memberExpense,
+                balance
+            };
+        });
+    }, [members, deposits, groceries]);
 
 
-  // --- Memoized Calculations ---
+    // --- CRUD Operations ---
+    const handleApiCall = async (apiCall: Promise<any>) => {
+        try {
+            await apiCall;
+            await fetchData();
+        } catch (err) {
+            console.error("API call failed:", err);
+            setError("An operation failed. Please refresh and try again.");
+        }
+    };
 
-  const totalSpent = useMemo(() => {
-    return groceries.reduce((total, item) => total + item.amount, 0);
-  }, [groceries]);
-
-  const totalDeposits = useMemo(() => {
-    return deposits.reduce((total, item) => total + item.amount, 0);
-  }, [deposits]);
-
-  const balanceSummaries = useMemo(() => {
-    const sharePerMember = members.length > 0 ? totalSpent / members.length : 0;
+    const addMember = (name: string) => handleApiCall(api.addMember({ name }));
+    const updateMember = (id: string, name: string) => handleApiCall(api.updateMember(id, { name }));
+    const deleteMember = (id: string) => handleApiCall(api.deleteMember(id));
     
-    return members.map(member => {
-        const totalDeposit = deposits
-            .filter(d => d.memberId === member.id)
-            .reduce((sum, d) => sum + d.amount, 0);
-        const balance = totalDeposit - sharePerMember;
-        return {
-            ...member,
-            totalDeposit,
-            share: sharePerMember,
-            balance,
-        };
-    });
-  }, [members, deposits, totalSpent]);
+    const addGrocery = (item: Omit<GroceryItem, 'id'>) => handleApiCall(api.addGrocery(item));
+    const updateGrocery = (id: string, item: Omit<GroceryItem, 'id'>) => handleApiCall(api.updateGrocery(id, item));
+    const deleteGrocery = (id: string) => handleApiCall(api.deleteGrocery(id));
 
-  return {
-    loading,
-    error,
-    members,
-    groceries,
-    deposits,
-    addMember,
-    deleteMember,
-    addGrocery,
-    deleteGrocery,
-    addDeposit,
-    deleteDeposit,
-    totalSpent,
-    totalDeposits,
-    balanceSummaries,
-  };
+    const addDeposit = (item: Omit<Deposit, 'id'>) => handleApiCall(api.addDeposit(item));
+    const updateDeposit = (id: string, item: Omit<Deposit, 'id'>) => handleApiCall(api.updateDeposit(id, item));
+    const deleteDeposit = (id: string) => handleApiCall(api.deleteDeposit(id));
+    
+    // --- Bulk Import Operations ---
+
+    const onImportDeposits = async (items: { memberId: string; amount: number; date: string }[]) => {
+        const promises = items.map(item => api.addDeposit(item));
+        await handleApiCall(Promise.all(promises));
+    };
+
+    const onImportGroceries = async (items: { name: string; amount: number; date: string, memberIds: string[] }[]) => {
+        const promises = items.map(item => api.addGrocery(item));
+        await handleApiCall(Promise.all(promises));
+    };
+
+    return {
+        loading, error, members, groceries, deposits,
+        totalDeposit, totalExpense, memberCount, balanceSummaries,
+        addMember, updateMember, deleteMember,
+        addGrocery, updateGrocery, deleteGrocery,
+        addDeposit, updateDeposit, deleteDeposit,
+        onImportDeposits, onImportGroceries,
+        refreshData: fetchData,
+    };
 };

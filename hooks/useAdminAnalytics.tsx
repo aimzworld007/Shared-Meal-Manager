@@ -3,18 +3,10 @@
  * @summary Custom hook to fetch and process platform-wide data for the admin dashboard.
  */
 import { useState, useEffect, useMemo } from 'react';
-// Fix: The service only exports UserSummary and fetchAllUsers. We alias UserSummary
-// and will have to adjust the logic to handle the simpler data structure.
-import { UserSummary as UserDataSummary } from '../services/firebase';
+// Fix: Import the comprehensive UserDataSummary type from the firebase service.
+import { UserDataSummary } from '../services/firebase';
 import * as api from '../services/firebase';
 import { GroceryItem, Deposit } from '../types';
-
-// Fix: The base UserDataSummary from firebase.ts doesn't have groceries/deposits.
-// We extend it for local use within this hook.
-interface EnrichedUserData extends UserDataSummary {
-    groceries: GroceryItem[];
-    deposits: Deposit[];
-}
 
 /**
  * Provides all the data and logic needed for the admin analytics dashboard.
@@ -23,7 +15,8 @@ interface EnrichedUserData extends UserDataSummary {
  */
 export const useAdminAnalytics = () => {
     const [loading, setLoading] = useState(true);
-    const [allUsersData, setAllUsersData] = useState<EnrichedUserData[]>([]);
+    // Fix: State now holds the complete UserDataSummary.
+    const [allUsersData, setAllUsersData] = useState<UserDataSummary[]>([]);
 
     /**
      * Fetches the data for all users from the Firebase service.
@@ -33,17 +26,9 @@ export const useAdminAnalytics = () => {
         const fetchData = async () => {
             setLoading(true);
             try {
-                // Fix: Corrected function call to fetchAllUsers.
-                const data = await api.fetchAllUsers();
-                // Since fetchAllUsers only returns basic user info, we create mock sub-collection data
-                // to allow the charts to render without runtime errors. A proper fix would be
-                // to implement a service function that fetches the complete data.
-                const enrichedData = data.map(u => ({
-                    ...u,
-                    groceries: [], // Mock data
-                    deposits: [],  // Mock data
-                }));
-                setAllUsersData(enrichedData);
+                // Fix: Call fetchAllUsersData to get complete user and subcollection data, removing the need for mock data.
+                const data = await api.fetchAllUsersData();
+                setAllUsersData(data);
             } catch (error) {
                 console.error("Failed to fetch admin data:", error);
             } finally {
@@ -71,8 +56,8 @@ export const useAdminAnalytics = () => {
      * Data for the "Expense vs. Deposit per User" Bar Chart.
      */
     const expenseVsDepositChartData = useMemo(() => {
-        // Fix: Changed property from userEmail to email to match the UserSummary type.
-        const labels = allUsersData.map(u => u.email);
+        // Fix: Changed property from email to userEmail to match the UserDataSummary type.
+        const labels = allUsersData.map(u => u.userEmail);
         const expenseData = allUsersData.map(u => u.groceries.reduce((sum, g) => sum + g.amount, 0));
         const depositData = allUsersData.map(u => u.deposits.reduce((sum, d) => sum + d.amount, 0));
 
@@ -111,10 +96,11 @@ export const useAdminAnalytics = () => {
 
         const dailySpending: { [date: string]: number } = {};
         allGroceries.forEach(g => {
-            dailySpending[g.date] = (dailySpending[g.date] || 0) + g.amount;
+            const date = g.date.split('T')[0]; // Normalize date to YYYY-MM-DD
+            dailySpending[date] = (dailySpending[date] || 0) + g.amount;
         });
 
-        const sortedDates = Object.keys(dailySpending).sort();
+        const sortedDates = Object.keys(dailySpending).sort((a,b) => new Date(a).getTime() - new Date(b).getTime());
         const labels = sortedDates;
         let cumulativeAmount = 0;
         const data = sortedDates.map(date => {
