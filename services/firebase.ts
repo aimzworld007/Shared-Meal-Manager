@@ -1,3 +1,4 @@
+
 /**
  * @file firebase.ts
  * @summary Initializes and exports Firebase services for the application.
@@ -38,10 +39,16 @@ const firebaseConfig = {
 // --- IMPORTANT: ADMIN CONFIGURATION ---
 /**
  * The UID of the user designated as the admin.
+ * THIS IS A CRITICAL STEP FOR ADMIN FUNCTIONALITY TO WORK.
+ * 
  * To get your UID:
  * 1. Sign up for an account in the app.
  * 2. Go to your Firebase Console -> Authentication.
- * 3. Copy the UID for your user and paste it here.
+ * 3. Find the user account you want to be the admin.
+ * 4. Copy the "User UID" for that user.
+ * 5. Paste the UID here, replacing "YOUR_ADMIN_UID_HERE".
+ *
+ * Example: export const ADMIN_UID = "Abc123xyzDEF456...";
  */
 export const ADMIN_UID = "YOUR_ADMIN_UID_HERE";
 
