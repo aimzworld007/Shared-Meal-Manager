@@ -22,6 +22,7 @@ export interface GroceryItem {
   amount: number;
   date: string; // ISO string format for dates
   purchaserId: string; // UID of the user who bought it
+  purchaserEmail?: string;
 }
 
 /**
@@ -32,13 +33,22 @@ export interface Deposit {
   amount: number;
   date: string; // ISO string format
   userId: string; // UID of the user who made the deposit
+  userEmail?: string;
 }
 
 /**
- * Represents a participant in the meal sharing group.
- * In this system, a participant is synonymous with a user.
+ * Represents a participant (member) in the meal sharing group.
  */
 export interface Participant {
   id: string; // Corresponds to User's uid
   email: string;
+}
+
+/**
+ * Represents a member with all their calculated financial data.
+ */
+export interface Member extends Participant {
+    totalPurchase: number;
+    totalDeposit: number;
+    balance: number;
 }

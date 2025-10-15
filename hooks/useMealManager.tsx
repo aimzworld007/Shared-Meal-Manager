@@ -1,70 +1,75 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import * as api from '../services/firebase';
-import { GroceryItem, Deposit, Participant } from '../types';
-import { useAuth } from './useAuth';
+import { UserDataSummary } from '../services/firebase';
+import { GroceryItem, Deposit, Participant, Member } from '../types';
 
 export const useMealManager = () => {
-    const { user } = useAuth();
-    const [groceries, setGroceries] = useState<GroceryItem[]>([]);
-    const [deposits, setDeposits] = useState<Deposit[]>([]);
-    const [participants, setParticipants] = useState<Participant[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [allData, setAllData] = useState<UserDataSummary[]>([]);
+    const [members, setMembers] = useState<Participant[]>([]);
 
     const fetchData = useCallback(async () => {
-        if (!user) return;
         setLoading(true);
         setError(null);
         try {
-            // Fetch all data in parallel for efficiency
-            const [groceriesData, depositsData, participantsData] = await Promise.all([
-                api.getGroceries(user.uid),
-                api.getDeposits(user.uid),
-                api.getParticipants(),
+            const [data, membersData] = await Promise.all([
+                api.fetchAllUsersData(),
+                api.getMembers()
             ]);
-            setGroceries(groceriesData);
-            setDeposits(depositsData);
-            setParticipants(participantsData);
+            setAllData(data);
+            setMembers(membersData);
         } catch (err) {
-            console.error("Failed to fetch data:", err);
-            setError("Could not load your meal data. Please try again later.");
+            console.error("Failed to fetch admin data:", err);
+            setError("Could not load all meal data. Please try again later.");
         } finally {
             setLoading(false);
         }
-    }, [user]);
+    }, []);
 
     useEffect(() => {
         fetchData();
     }, [fetchData]);
     
     // --- Memoized Calculations ---
-    const balanceSummary = useMemo(() => {
-        const totalSpentByCurrentUser = groceries.reduce((sum, item) => sum + item.amount, 0);
-        const totalDepositedByCurrentUser = deposits.reduce((sum, item) => sum + item.amount, 0);
+    const summary = useMemo(() => {
+        const allGroceries = allData.flatMap(d => d.groceries);
+        const totalGroceryCost = allGroceries.reduce((sum, item) => sum + item.amount, 0);
         
-        // These calculations need to be based on ALL users' data for an accurate shared balance,
-        // but for the user dashboard, we'll focus on their contributions.
-        // A more complex system would fetch all groceries to calculate the total group expense.
-        // For simplicity here, we assume the `participants` list is for calculating shares.
-        const totalSharedExpense = groceries.reduce((sum, item) => sum + item.amount, 0); // This is simplified to current user's groceries
-        const numberOfParticipants = participants.length > 0 ? participants.length : 1;
-        const individualShare = totalSharedExpense / numberOfParticipants;
-        const personalBalance = totalDepositedByCurrentUser - individualShare;
+        const allDeposits = allData.flatMap(d => d.deposits);
+        const totalDeposits = allDeposits.reduce((sum, item) => sum + item.amount, 0);
+
+        const memberCount = members.length > 0 ? members.length : 1;
+        const averageExpense = totalGroceryCost / memberCount;
+
+        const memberData: Member[] = members.map(member => {
+            const userData = allData.find(d => d.userId === member.id);
+            const totalPurchase = userData?.groceries.reduce((sum, item) => sum + item.amount, 0) ?? 0;
+            const totalDeposit = userData?.deposits.reduce((sum, item) => sum + item.amount, 0) ?? 0;
+            const balance = (totalPurchase + totalDeposit) - averageExpense;
+            return {
+                ...member,
+                totalPurchase,
+                totalDeposit,
+                balance,
+            };
+        });
 
         return {
-            totalSpent: totalSpentByCurrentUser,
-            totalDeposited: totalDepositedByCurrentUser,
-            individualShare,
-            personalBalance,
-            numberOfParticipants,
+            totalMembers: members.length,
+            totalGroceryCost,
+            totalDeposits,
+            averageExpense,
+            members: memberData,
+            allGroceries: allData.flatMap(d => d.groceries.map(g => ({...g, purchaserEmail: d.userEmail}))).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+            allDeposits: allData.flatMap(d => d.deposits.map(dep => ({...dep, userEmail: d.userEmail}))).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
         };
-    }, [groceries, deposits, participants]);
+    }, [allData, members]);
 
     // --- CRUD Functions ---
-    const addGroceryItem = async (item: Omit<GroceryItem, 'id' | 'purchaserId'>) => {
-        if (!user) return;
+    const addGroceryItem = async (item: Omit<GroceryItem, 'id'>) => {
         try {
-            await api.addGrocery(user.uid, { ...item, purchaserId: user.uid });
+            await api.addGrocery(item.purchaserId, item);
             fetchData(); // Refresh data
         } catch (error) {
             console.error("Error adding grocery:", error);
@@ -72,13 +77,13 @@ export const useMealManager = () => {
             throw error;
         }
     };
-
-    const addMultipleGroceryItems = async (items: Omit<GroceryItem, 'id' | 'purchaserId'>[]) => {
-        if (!user) return;
+    
+    const addMultipleGroceryItems = async (items: Omit<GroceryItem, 'id'>[], memberId: string) => {
+        if (!memberId) return;
         try {
-            const promises = items.map(item => api.addGrocery(user.uid, { ...item, purchaserId: user.uid }));
+            const promises = items.map(item => api.addGrocery(memberId, { ...item, purchaserId: memberId }));
             await Promise.all(promises);
-            fetchData(); // Refresh data once after all items are added
+            fetchData();
         } catch (error) {
             console.error("Error adding multiple grocery items:", error);
             setError("Failed to import grocery items.");
@@ -86,10 +91,9 @@ export const useMealManager = () => {
         }
     };
 
-    const deleteGroceryItem = async (itemId: string) => {
-        if (!user) return;
+    const deleteGroceryItem = async (item: GroceryItem) => {
         try {
-            await api.deleteGrocery(user.uid, itemId);
+            await api.deleteGrocery(item.purchaserId, item.id);
             fetchData();
         } catch (error) {
             console.error("Error deleting grocery:", error);
@@ -98,10 +102,9 @@ export const useMealManager = () => {
         }
     };
 
-    const addDepositItem = async (item: Omit<Deposit, 'id' | 'userId'>) => {
-        if (!user) return;
+    const addDepositItem = async (item: Omit<Deposit, 'id'>) => {
         try {
-            await api.addDeposit(user.uid, { ...item, userId: user.uid });
+            await api.addDeposit(item.userId, item);
             fetchData();
         } catch (error) {
             console.error("Error adding deposit:", error);
@@ -110,10 +113,9 @@ export const useMealManager = () => {
         }
     };
 
-    const deleteDepositItem = async (depositId: string) => {
-        if (!user) return;
+    const deleteDepositItem = async (item: Deposit) => {
         try {
-            await api.deleteDeposit(user.uid, depositId);
+            await api.deleteDeposit(item.userId, item.id);
             fetchData();
         } catch (error) {
             console.error("Error deleting deposit:", error);
@@ -121,20 +123,31 @@ export const useMealManager = () => {
             throw error;
         }
     };
+    
+    const addMember = async (email: string, pass: string) => {
+        try {
+            await api.signUp(email, pass);
+            // Firebase client SDK signs out the admin here.
+            // We fetch data, but the app will likely kick the user to the login page.
+            await fetchData();
+        } catch(e) {
+            console.error("Failed to add member", e);
+            throw e;
+        }
+    };
 
 
     return {
         loading,
         error,
-        groceries,
-        deposits,
-        participants,
-        balanceSummary,
+        members,
+        summary,
         addGroceryItem,
         addMultipleGroceryItems,
         deleteGroceryItem,
         addDepositItem,
         deleteDepositItem,
+        addMember,
         refreshData: fetchData,
     };
 };

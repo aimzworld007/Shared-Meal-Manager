@@ -1,38 +1,31 @@
 /**
  * @file Login.tsx
- * @summary Renders the login/signup screen for the application.
- * This component provides an interface for users to sign in or create an account
+ * @summary Renders the login screen for the application administrator.
+ * This component provides an interface for the admin to sign in
  * using their email and password.
  */
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 
 /**
- * A presentation component for the login and registration page.
- * It features a form for email/password and allows switching between
- * "Sign In" and "Sign Up" modes.
+ * A presentation component for the admin login page.
  * @returns {JSX.Element} The rendered login page component.
  */
 const Login: React.FC = () => {
-  const [isLoginView, setIsLoginView] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [formLoading, setFormLoading] = useState(false);
-  const { login, signUp, error, loading } = useAuth();
+  const { login, error, loading } = useAuth();
 
   /**
-   * Handles the form submission for both login and signup.
+   * Handles the form submission for admin login.
    * @param {React.FormEvent} e - The form event.
    */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormLoading(true);
     try {
-      if (isLoginView) {
-        await login(email, password);
-      } else {
-        await signUp(email, password);
-      }
+      await login(email, password);
       // The onAuthChange listener in useAuth will handle redirecting to dashboard.
     } catch (err) {
       // Error is caught and displayed via the `error` state from useAuth
@@ -47,7 +40,7 @@ const Login: React.FC = () => {
       <div className="p-8 bg-white rounded-lg shadow-xl text-center max-w-sm w-full">
         <h1 className="text-3xl font-bold text-gray-800 mb-2">Shared Meal Manager</h1>
         <p className="text-gray-600 mb-6">
-          {isLoginView ? 'Sign in to your account.' : 'Create an account to get started.'}
+          Administrator Login
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4 text-left">
@@ -60,7 +53,7 @@ const Login: React.FC = () => {
               onChange={(e) => setEmail(e.target.value)}
               required
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-              placeholder="you@example.com"
+              placeholder="admin@example.com"
             />
           </div>
           <div>
@@ -84,19 +77,9 @@ const Login: React.FC = () => {
             disabled={loading || formLoading}
             className="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-300 ease-in-out disabled:bg-indigo-300"
           >
-            {loading || formLoading ? 'Processing...' : (isLoginView ? 'Sign In' : 'Create Account')}
+            {loading || formLoading ? 'Processing...' : 'Sign In'}
           </button>
         </form>
-
-        <p className="mt-6 text-center text-sm text-gray-600">
-          {isLoginView ? "Don't have an account?" : "Already have an account?"}{' '}
-          <button
-            onClick={() => setIsLoginView(!isLoginView)}
-            className="font-medium text-indigo-600 hover:text-indigo-500"
-          >
-            {isLoginView ? 'Sign Up' : 'Sign In'}
-          </button>
-        </p>
       </div>
     </div>
   );

@@ -22,14 +22,15 @@ import {
 } from "firebase/firestore";
 import { User, GroceryItem, Deposit, Participant } from "../types";
 
-// Your web app's Firebase configuration - ensure these are set in your environment
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID",
+  apiKey: "AIzaSyDmNZKM8m9iKA4rrxanl-yscV86cMz2-fM",
+  authDomain: "messmeal-31a11.firebaseapp.com",
+  projectId: "messmeal-31a11",
+  storageBucket: "messmeal-31a11.firebasestorage.app",
+  messagingSenderId: "413119253017",
+  appId: "1:413119253017:web:4b6c4f8dbb147693853888",
+  measurementId: "G-KXD9W95FCT"
 };
 
 // Initialize Firebase
@@ -47,7 +48,9 @@ export const signIn = (email: string, pass: string) => {
 };
 
 /**
- * Creates a new user with email and password and creates a user document in Firestore.
+ * Creates a new user (member) with email and password. Used by admin.
+ * NOTE: Using the client SDK for this will sign the admin out and sign the new user in.
+ * The UI should inform the admin to log back in. A robust solution uses a backend function.
  */
 export const signUp = async (email: string, pass: string) => {
   const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
@@ -55,7 +58,7 @@ export const signUp = async (email: string, pass: string) => {
   // Create a document for the new user
   await setDoc(doc(db, "users", user.uid), {
     email: user.email,
-    role: "user" // Default role
+    role: "user" // Default role for members
   });
   return userCredential;
 };
@@ -113,13 +116,15 @@ export const addDeposit = (userId: string, deposit: Omit<Deposit, 'id'>) => addD
 export const updateDeposit = (userId: string, depositId: string, data: Partial<Deposit>) => updateDoc(doc(getDepositsRef(userId), depositId), data);
 export const deleteDeposit = (userId: string, depositId: string) => deleteDoc(doc(getDepositsRef(userId), depositId));
 
-// --- Participants (Users) ---
-export const getParticipants = async (): Promise<Participant[]> => {
-    const querySnapshot = await getDocs(collection(db, 'users'));
+// --- Members (Users) ---
+export const getMembers = async (): Promise<Participant[]> => {
+    const usersQuery = query(collection(db, 'users'), orderBy('email'));
+    const querySnapshot = await getDocs(usersQuery);
     return querySnapshot.docs.map(doc => ({ id: doc.id, email: doc.data().email } as Participant));
 };
 
-// --- Admin Analytics ---
+
+// --- Admin Data Fetching ---
 
 /**
  * Defines the comprehensive summary of a user's data for admin analytics.
