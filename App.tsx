@@ -8,6 +8,7 @@ import React from 'react';
 import { useAuth } from './hooks/useAuth';
 import Dashboard from './components/Dashboard';
 import Login from './components/Login';
+import Footer from './components/Footer';
 
 /**
  * The main application component.
@@ -19,8 +20,11 @@ const App: React.FC = () => {
   const { user } = useAuth();
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-800">
-      {user ? <Dashboard /> : <Login />}
+    <div className="flex flex-col min-h-screen bg-gray-50 text-gray-800">
+      <main className="flex-grow">
+        {user ? <Dashboard /> : <Login />}
+      </main>
+      <Footer />
     </div>
   );
 };

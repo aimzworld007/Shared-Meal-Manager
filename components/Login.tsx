@@ -6,6 +6,7 @@
  */
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { logoDataUri } from '../assets/logo';
 
 /**
  * A presentation component for the admin login page.
@@ -36,9 +37,9 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen">
+    <div className="flex items-center justify-center h-full">
       <div className="p-8 bg-white rounded-lg shadow-xl text-center max-w-sm w-full">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">Shared Meal Manager</h1>
+        <img src={logoDataUri} alt="Shared Meal Manager Logo" className="w-48 mx-auto mb-4" />
         <p className="text-gray-600 mb-6">
           Administrator Login
         </p>
