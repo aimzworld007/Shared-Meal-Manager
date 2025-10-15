@@ -1,7 +1,7 @@
 /**
  * @file useAuth.tsx
  * @summary Provides authentication context and hooks for the application.
- * This file encapsulates the logic for user sign-in, sign-out, and managing
+ * This file encapsulates the logic for user sign-in, sign-up, sign-out, and managing
  * the current user's state using Firebase Authentication. It makes the auth state
  * available to all components wrapped within the AuthProvider.
  */
@@ -17,10 +17,14 @@ interface AuthContextType {
   user: User | null;
   /** A boolean indicating if the authentication status is being checked on initial load. */
   loading: boolean;
-  /** A function to trigger the sign-in process. */
-  login: () => Promise<void>;
+  /** A function to trigger the sign-in process with email and password. */
+  login: (email: string, pass: string) => Promise<void>;
+  /** A function to trigger the sign-up process with email and password. */
+  signUp: (email: string, pass: string) => Promise<void>;
   /** A function to trigger the sign-out process. */
   logout: () => Promise<void>;
+  /** Stores any authentication error messages. */
+  error: string | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -36,6 +40,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   /**
    * Subscribes to Firebase's authentication state listener when the component mounts.
@@ -56,15 +61,33 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   /**
    * Handles user login by calling the Firebase signIn API.
-   * The actual user state update is handled by the `onAuthChange` listener.
    * Side Effect: Calls the signIn API.
    */
-  const login = async () => {
+  const login = async (email: string, pass: string) => {
+    setError(null);
     try {
       // The onAuthChange listener will handle setting the user and loading state
-      await api.signIn();
-    } catch (error) {
+      await api.signIn(email, pass);
+    } catch (error: any) {
       console.error("Login failed:", error);
+      setError(error.message);
+      throw error; // Re-throw to be caught in component if needed
+    }
+  };
+  
+  /**
+   * Handles user registration by calling the Firebase signUp API.
+   * Side Effect: Calls the signUp API.
+   */
+  const signUp = async (email: string, pass: string) => {
+    setError(null);
+    try {
+      // The onAuthChange listener will handle setting the user.
+      await api.signUp(email, pass);
+    } catch (error: any) {
+      console.error("Sign up failed:", error);
+      setError(error.message);
+      throw error;
     }
   };
 
@@ -74,10 +97,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
    * Side Effect: Calls the signOut API.
    */
   const logout = async () => {
+    setUser(null);
     await api.signOut();
   };
 
-  const value = { user, loading, login, logout };
+  const value = { user, loading, login, signUp, logout, error };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

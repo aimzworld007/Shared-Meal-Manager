@@ -1,14 +1,13 @@
 /**
  * @file firebase.ts
  * @summary Initializes and exports Firebase services for the application.
- * This file replaces the mock service with a real Firebase implementation,
- * handling authentication with Google and data storage in Firestore.
+ * This file handles authentication with email/password and data storage in Firestore.
  */
 import { initializeApp } from 'firebase/app';
 import {
   getAuth,
-  signInWithPopup,
-  GoogleAuthProvider,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   onAuthStateChanged,
   User as FirebaseUser,
@@ -38,18 +37,35 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const provider = new GoogleAuthProvider();
 
 
 // --- AUTHENTICATION FUNCTIONS ---
 
 /**
- * Initiates Google Sign-In popup flow.
+ * Signs a user in with their email and password.
+ * @param {string} email - The user's email.
+ * @param {string} password - The user's password.
  * @returns {Promise<User>} A promise that resolves with the authenticated user's data.
  * @throws Throws an error if the sign-in process fails.
  */
-export const signIn = async (): Promise<User> => {
-  const result = await signInWithPopup(auth, provider);
+export const signIn = async (email, password): Promise<User> => {
+  const result = await signInWithEmailAndPassword(auth, email, password);
+  const user = result.user;
+  return {
+    uid: user.uid,
+    email: user.email,
+  };
+};
+
+/**
+ * Creates a new user account with an email and password.
+ * @param {string} email - The user's email.
+ * @param {string} password - The user's password.
+ * @returns {Promise<User>} A promise that resolves with the new user's data.
+ * @throws Throws an error if the sign-up process fails.
+ */
+export const signUp = async (email, password): Promise<User> => {
+  const result = await createUserWithEmailAndPassword(auth, email, password);
   const user = result.user;
   return {
     uid: user.uid,
