@@ -25,8 +25,8 @@ const Dashboard: React.FC = () => {
     const [activeTab, setActiveTab] = useState('dashboard');
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     
-    // Simple check to render Admin view. In a real app, this would be based on user roles from your DB.
-    const isAdmin = user?.email === "admin@example.com"; // Replace with env var in a real app
+    // Simple check to render Admin view. Update this email to your admin user's email for testing.
+    const isAdmin = user?.email === "admin@example.com"; 
     
     const renderContent = () => {
         if (loading) {

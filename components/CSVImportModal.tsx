@@ -4,7 +4,9 @@
  */
 import React, { useState } from 'react';
 import { Member } from '../types';
-import { parseDepositsCSV, parseGroceriesCSV, ParsedDeposit, ParsedGrocery } from '../utils/csvParser';
+// Fix: The types `ParsedDeposit` and `ParsedGrocery` are not exported from `csvParser`.
+// They are also not used in this file, so they have been removed from the import to fix the error.
+import { parseDepositsCSV, parseGroceriesCSV } from '../utils/csvParser';
 import Modal from './Modal';
 
 interface CSVImportModalProps {

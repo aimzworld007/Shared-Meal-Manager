@@ -10,14 +10,14 @@ import 'firebase/compat/firestore';
 import { User, Member, GroceryItem, Deposit } from '../types';
 
 // Your web app's Firebase configuration
-// In a real app, use environment variables like process.env.REACT_APP_FIREBASE_API_KEY
 const firebaseConfig = {
-  apiKey: "REPLACE_WITH_YOUR_API_KEY",
-  authDomain: "REPLACE_WITH_YOUR_AUTH_DOMAIN",
-  projectId: "REPLACE_WITH_YOUR_PROJECT_ID",
-  storageBucket: "REPLACE_WITH_YOUR_STORAGE_BUCKET",
-  messagingSenderId: "REPLACE_WITH_YOUR_MESSAGING_SENDER_ID",
-  appId: "REPLACE_WITH_YOUR_APP_ID"
+  apiKey: "AIzaSyDmNZKM8m9iKA4rrxanl-yscV86cMz2-fM",
+  authDomain: "messmeal-31a11.firebaseapp.com",
+  projectId: "messmeal-31a11",
+  storageBucket: "messmeal-31a11.appspot.com",
+  messagingSenderId: "413119253017",
+  appId: "1:413119253017:web:4b6c4f8dbb147693853888",
+  measurementId: "G-KXD9W95FCT"
 };
 
 
