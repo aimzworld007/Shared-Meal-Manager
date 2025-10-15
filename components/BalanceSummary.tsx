@@ -16,9 +16,9 @@ interface BalanceSummaryProps {
 }
 
 const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-AE', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'AED',
     }).format(amount);
   };
 

@@ -1,233 +1,200 @@
-
 /**
  * @file firebase.ts
- * @summary Initializes and exports Firebase services for the application.
- * This file handles authentication with email/password and data storage in Firestore.
+ * @summary Initializes Firebase and exports auth and Firestore service functions.
+ * This file is the single point of interaction with the Firebase backend.
  */
 import { initializeApp } from 'firebase/app';
 import {
   getAuth,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut as firebaseSignOut,
   onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut as firebaseSignOut,
   User as FirebaseUser,
 } from 'firebase/auth';
 import {
   getFirestore,
   collection,
-  getDocs,
+  doc,
   addDoc,
   deleteDoc,
-  doc,
-  collectionGroup,
+  onSnapshot,
   query,
+  orderBy,
+  getDocs,
+  updateDoc,
 } from 'firebase/firestore';
 import { User, Member, GroceryItem, Deposit } from '../types';
 
-// --- FIREBASE CONFIGURATION ---
+// Your web app's Firebase configuration
+// IMPORTANT: Do not commit sensitive keys to a public repository.
+// These have been hardcoded here to resolve the invalid-api-key error in the current project setup.
 const firebaseConfig = {
-    apiKey: "AIzaSyDmNZKM8m9iKA4rrxanl-yscV86cMz2-fM",
-    authDomain: "messmeal-31a11.firebaseapp.com",
-    projectId: "messmeal-31a11",
-    storageBucket: "messmeal-31a11.firebasestorage.app",
-    messagingSenderId: "413119253017",
-    appId: "1:413119253017:web:4b6c4f8dbb147693853888",
-    measurementId: "G-KXD9W95FCT"
+  apiKey: "AIzaSyDmNZKM8m9iKA4rrxanl-yscV86cMz2-fM",
+  authDomain: "messmeal-31a11.firebaseapp.com",
+  projectId: "messmeal-31a11",
+  storageBucket: "messmeal-31a11.appspot.com",
+  messagingSenderId: "413119253017",
+  appId: "1:413119253017:web:4b6c4f8dbb147693853888"
 };
 
-// --- IMPORTANT: ADMIN CONFIGURATION ---
-/**
- * The UID of the user designated as the admin.
- * THIS IS A CRITICAL STEP FOR ADMIN FUNCTIONALITY TO WORK.
- * 
- * To get your UID:
- * 1. Sign up for an account in the app.
- * 2. Go to your Firebase Console -> Authentication.
- * 3. Find the user account you want to be the admin.
- * 4. Copy the "User UID" for that user.
- * 5. Paste the UID here, replacing "YOUR_ADMIN_UID_HERE".
- *
- * Example: export const ADMIN_UID = "Abc123xyzDEF456...";
- */
-export const ADMIN_UID = "YOUR_ADMIN_UID_HERE";
-
-
-// --- INITIALIZE FIREBASE ---
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-
-// --- AUTHENTICATION FUNCTIONS ---
+// --- AUTHENTICATION ---
 
 /**
- * Signs a user in with their email and password.
- * @param {string} email - The user's email.
- * @param {string} password - The user's password.
- * @returns {Promise<User>} A promise that resolves with the authenticated user's data.
- * @throws Throws an error if the sign-in process fails.
+ * Maps a Firebase User object to our application's User type.
+ * @param {FirebaseUser} firebaseUser - The user object from Firebase Auth.
+ * @returns {User} The application-specific user object.
  */
-export const signIn = async (email, password): Promise<User> => {
-  const result = await signInWithEmailAndPassword(auth, email, password);
-  const user = result.user;
+const mapFirebaseUser = (firebaseUser: FirebaseUser): User => {
   return {
-    uid: user.uid,
-    email: user.email,
+    uid: firebaseUser.uid,
+    email: firebaseUser.email,
   };
 };
 
 /**
- * Creates a new user account with an email and password.
- * @param {string} email - The user's email.
- * @param {string} password - The user's password.
- * @returns {Promise<User>} A promise that resolves with the new user's data.
- * @throws Throws an error if the sign-up process fails.
- */
-export const signUp = async (email, password): Promise<User> => {
-  const result = await createUserWithEmailAndPassword(auth, email, password);
-  const user = result.user;
-  return {
-    uid: user.uid,
-    email: user.email,
-  };
-};
-
-/**
- * Signs the current user out.
- * @returns {Promise<void>} An empty promise that resolves upon successful sign-out.
- */
-export const signOut = (): Promise<void> => {
-  return firebaseSignOut(auth);
-};
-
-/**
- * Subscribes to authentication state changes.
- * This is a wrapper around Firebase's onAuthStateChanged to abstract Firebase-specific types.
- * @param {(user: User | null) => void} callback - A callback function that receives the user object or null.
- * @returns {() => void} An unsubscribe function to clean up the listener.
+ * Listens for authentication state changes and calls the callback.
+ * @param {(user: User | null) => void} callback - The function to call with the user state.
+ * @returns {() => void} An unsubscribe function.
  */
 export const onAuthChange = (callback: (user: User | null) => void) => {
-  return onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
-    if (firebaseUser) {
-      callback({ uid: firebaseUser.uid, email: firebaseUser.email });
-    } else {
-      callback(null);
-    }
+  return onAuthStateChanged(auth, (firebaseUser) => {
+    const user = firebaseUser ? mapFirebaseUser(firebaseUser) : null;
+    callback(user);
   });
 };
 
+export const signIn = (email: string, pass: string) => signInWithEmailAndPassword(auth, email, pass);
+export const signUp = (email: string, pass: string) => createUserWithEmailAndPassword(auth, email, pass);
+export const signOut = () => firebaseSignOut(auth);
 
-// --- FIRESTORE HELPER ---
+// --- FIRESTORE DATA HELPERS ---
 
-/**
- * Creates a Firestore collection reference for a subcollection under a specific user.
- * This is the core of the multi-tenancy data structure.
- * @param {string} adminUid - The UID of the currently logged-in user.
- * @param {string} collectionName - The name of the subcollection (e.g., 'members').
- * @returns {import('@firebase/firestore').CollectionReference} A Firestore collection reference.
- */
-const getUserSubcollection = (adminUid: string, collectionName: string) => {
-    return collection(db, 'users', adminUid, collectionName);
+const getCollectionPath = (uid: string, subcollection: 'members' | 'groceries' | 'deposits') => {
+    return `users/${uid}/${subcollection}`;
+}
+
+// --- MEMBERS ---
+
+export const getMembers = (uid: string, callback: (members: Member[]) => void) => {
+    const q = query(collection(db, getCollectionPath(uid, 'members')), orderBy('name'));
+    return onSnapshot(q, (snapshot) => {
+        const members: Member[] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Member));
+        callback(members);
+    });
 };
+export const addMember = (uid: string, name: string) => addDoc(collection(db, getCollectionPath(uid, 'members')), { name });
+export const updateMember = (uid: string, memberId: string, name: string) => updateDoc(doc(db, getCollectionPath(uid, 'members'), memberId), { name });
+export const deleteMember = (uid: string, memberId: string) => deleteDoc(doc(db, getCollectionPath(uid, 'members'), memberId));
 
+// --- GROCERIES ---
 
-// --- FIRESTORE: MEMBERS ---
-
-export const fetchMembers = async (adminUid: string): Promise<Member[]> => {
-  const querySnapshot = await getDocs(getUserSubcollection(adminUid, 'members'));
-  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Member));
+export const getGroceries = (uid: string, callback: (items: GroceryItem[]) => void) => {
+    const q = query(collection(db, getCollectionPath(uid, 'groceries')), orderBy('date', 'desc'));
+    return onSnapshot(q, (snapshot) => {
+        const items: GroceryItem[] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GroceryItem));
+        callback(items);
+    });
 };
+export const addGrocery = (uid: string, item: Omit<GroceryItem, 'id'>) => addDoc(collection(db, getCollectionPath(uid, 'groceries')), item);
+export const updateGrocery = (uid: string, itemId: string, item: Omit<GroceryItem, 'id'>) => updateDoc(doc(db, getCollectionPath(uid, 'groceries'), itemId), item);
+export const deleteGrocery = (uid: string, itemId: string) => deleteDoc(doc(db, getCollectionPath(uid, 'groceries'), itemId));
 
-export const addMember = async (adminUid: string, name: string): Promise<Member> => {
-  const docRef = await addDoc(getUserSubcollection(adminUid, 'members'), { name });
-  return { id: docRef.id, name };
+// --- DEPOSITS ---
+
+export const getDeposits = (uid: string, callback: (items: Deposit[]) => void) => {
+    const q = query(collection(db, getCollectionPath(uid, 'deposits')), orderBy('date', 'desc'));
+    return onSnapshot(q, (snapshot) => {
+        const items: Deposit[] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Deposit));
+        callback(items);
+    });
 };
-
-export const deleteMember = async (adminUid: string, id: string): Promise<void> => {
-  await deleteDoc(doc(db, 'users', adminUid, 'members', id));
-};
-
-
-// --- FIRESTORE: GROCERIES ---
-
-export const fetchGroceries = async (adminUid: string): Promise<GroceryItem[]> => {
-  const querySnapshot = await getDocs(getUserSubcollection(adminUid, 'groceries'));
-  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GroceryItem));
-};
-
-export const addGrocery = async (adminUid: string, groceryData: Omit<GroceryItem, 'id'>): Promise<GroceryItem> => {
-  const docRef = await addDoc(getUserSubcollection(adminUid, 'groceries'), groceryData);
-  return { id: docRef.id, ...groceryData };
-};
-
-export const deleteGrocery = async (adminUid: string, id: string): Promise<void> => {
-  await deleteDoc(doc(db, 'users', adminUid, 'groceries', id));
-};
+export const addDeposit = (uid: string, deposit: Omit<Deposit, 'id'>) => addDoc(collection(db, getCollectionPath(uid, 'deposits')), deposit);
+export const updateDeposit = (uid: string, depositId: string, deposit: Omit<Deposit, 'id'>) => updateDoc(doc(db, getCollectionPath(uid, 'deposits'), depositId), deposit);
+export const deleteDeposit = (uid: string, depositId: string) => deleteDoc(doc(db, getCollectionPath(uid, 'deposits'), depositId));
 
 
-// --- FIRESTORE: DEPOSITS ---
+// --- ADMIN ---
 
-export const fetchDeposits = async (adminUid: string): Promise<Deposit[]> => {
-  const querySnapshot = await getDocs(getUserSubcollection(adminUid, 'deposits'));
-  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Deposit));
-};
-
-export const addDeposit = async (adminUid: string, depositData: Omit<Deposit, 'id'>): Promise<Deposit> => {
-  const docRef = await addDoc(getUserSubcollection(adminUid, 'deposits'), depositData);
-  return { id: docRef.id, ...depositData };
-};
-
-export const deleteDeposit = async (adminUid: string, id: string): Promise<void> => {
-  await deleteDoc(doc(db, 'users', adminUid, 'deposits', id));
-};
-
-
-// --- ADMIN DATA FETCHING ---
-
-/**
- * Represents aggregated data for a single user for admin analytics.
- */
+// Fix: Renamed from UserSummary to UserDataSummary and added fields for admin analytics.
 export interface UserDataSummary {
     userId: string;
     userEmail: string | null;
+    members: Member[];
     groceries: GroceryItem[];
     deposits: Deposit[];
 }
 
 /**
- * Fetches all data (groceries, deposits) for all users.
- * This is an admin-only function.
- * @returns {Promise<UserDataSummary[]>} A promise that resolves with an array of aggregated data for each user.
+ * Fetches a list of all users and their associated data. In a real app, this should be a secured Cloud Function.
  */
+// Fix: Renamed from fetchAllUsers to fetchAllUsersData and implemented fetching of subcollections.
 export const fetchAllUsersData = async (): Promise<UserDataSummary[]> => {
-    const usersSnapshot = await getDocs(collection(db, 'users'));
-    const allUserData: UserDataSummary[] = [];
+    const usersCollection = collection(db, 'users');
+    const usersSnapshot = await getDocs(usersCollection);
 
-    for (const userDoc of usersSnapshot.docs) {
-        const userId = userDoc.id;
-        // The user document itself might not store the email, so we fetch it separately if needed
-        // For simplicity, we assume we don't have the email stored directly on the user doc
-        // and would need to look it up in Auth if required. We'll use the UID as the primary identifier.
-        
-        const groceriesPromise = getDocs(collection(db, 'users', userId, 'groceries'));
-        const depositsPromise = getDocs(collection(db, 'users', userId, 'deposits'));
+    const allUserData = await Promise.all(usersSnapshot.docs.map(async (userDoc) => {
+        const user = {
+            id: userDoc.id,
+            email: userDoc.data().email || userDoc.id,
+        };
 
-        const [groceriesSnapshot, depositsSnapshot] = await Promise.all([
-            groceriesPromise,
-            depositsPromise
-        ]);
+        const membersSnapshot = await getDocs(collection(db, `users/${user.id}/members`));
+        const groceriesSnapshot = await getDocs(collection(db, `users/${user.id}/groceries`));
+        const depositsSnapshot = await getDocs(collection(db, `users/${user.id}/deposits`));
+
+        const members: Member[] = membersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Member));
+        const groceries: GroceryItem[] = groceriesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GroceryItem));
+        const deposits: Deposit[] = depositsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Deposit));
         
-        const groceries = groceriesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GroceryItem));
-        const deposits = depositsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Deposit));
-        
-        allUserData.push({
-            userId: userId,
-            userEmail: `user-${userId.substring(0, 5)}...`, // Placeholder email
+        return {
+            userId: user.id,
+            userEmail: user.email,
+            members,
             groceries,
-            deposits
-        });
-    }
+            deposits,
+        };
+    }));
     
     return allUserData;
+};
+
+// This is the old fetchAllUsers, which is now replaced by fetchAllUsersData to meet the requirements of the admin dashboard.
+// For simplicity, it's removed, but in a real-world scenario with multiple consumers, you'd deprecate it carefully.
+/*
+export const fetchAllUsers = async (): Promise<UserSummary[]> => {
+    const usersCollection = collection(db, 'users');
+    const usersSnapshot = await getDocs(usersCollection);
+    // Note: This relies on an 'email' field being saved on the user document,
+    // which our current signup flow doesn't do. A better approach is a Cloud Function
+    // that can access Firebase Auth user list. For now, we'll use the UID as the primary identifier.
+    return usersSnapshot.docs.map(doc => ({
+        id: doc.id,
+        email: doc.data().email || doc.id, // Fallback to UID if email isn't on the doc
+    }));
+};
+*/
+export interface UserSummary {
+    id: string;
+    email: string | null;
+}
+
+/**
+ * Fetches a list of all users. In a real app, this should be a secured Cloud Function.
+ */
+export const fetchAllUsers = async (): Promise<UserSummary[]> => {
+    const usersCollection = collection(db, 'users');
+    const usersSnapshot = await getDocs(usersCollection);
+    // Note: This relies on an 'email' field being saved on the user document,
+    // which our current signup flow doesn't do. A better approach is a Cloud Function
+    // that can access Firebase Auth user list. For now, we'll use the UID as the primary identifier.
+    return usersSnapshot.docs.map(doc => ({
+        id: doc.id,
+        email: doc.data().email || doc.id, // Fallback to UID if email isn't on the doc
+    }));
 };

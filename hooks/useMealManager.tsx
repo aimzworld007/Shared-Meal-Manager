@@ -1,155 +1,118 @@
 /**
  * @file useMealManager.tsx
- * @summary A custom hook to manage all state and Firestore interactions for meal-related data.
- * This hook is the central point of logic for the dashboard. It fetches data,
- * handles additions and deletions, and performs all necessary financial calculations.
+ * @summary A comprehensive custom hook to manage all aspects of a user's meal plan.
+ * It encapsulates state management, data fetching, and business logic for members,
+ * groceries, and deposits, and provides computed summaries.
  */
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Member, GroceryItem, Deposit } from '../types';
+import { useState, useEffect, useMemo } from 'react';
+import { useAuth } from './useAuth';
 import * as api from '../services/firebase';
+import { Member, GroceryItem, Deposit } from '../types';
 
 /**
- * Manages all state and Firestore interactions for meal-related data.
- * @param {string | null} adminUid - The unique ID of the admin user to fetch data for.
- * @returns {object} An object containing:
- * - `loading`: A boolean indicating if initial data is being fetched.
- * - `members`, `groceries`, `deposits`: Arrays of the respective data types.
- * - `addMember`, `deleteMember`, etc.: Functions to manipulate the data.
- * - `totalExpense`, `totalDeposit`, `totalBalance`: Aggregated financial figures.
- * - `memberSummaries`: A memoized array with detailed financial summaries for each member.
+ * Provides all the data, state, and functions needed to manage a shared meal plan.
+ * @returns {object} An object containing the meal plan data, loading states, computed
+ * summaries, and functions to interact with the data.
  */
-export const useMealManager = (adminUid: string | null) => {
-  const [loading, setLoading] = useState(true);
+export const useMealManager = () => {
+  const { user } = useAuth();
   const [members, setMembers] = useState<Member[]>([]);
   const [groceries, setGroceries] = useState<GroceryItem[]>([]);
   const [deposits, setDeposits] = useState<Deposit[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   /**
-   * Fetches all initial data from the mock Firestore service.
-   * Runs only once when the component mounts and adminUid is available.
-   * Side Effect: Makes multiple API calls to fetch data.
+   * Subscribes to real-time updates for all data collections (members, groceries, deposits)
+   * for the currently authenticated user.
+   * Side Effect: Sets up Firestore listeners.
    */
-  const fetchData = useCallback(async () => {
-    if (!adminUid) return;
-    setLoading(true);
-    try {
-      const [pData, gData, dData] = await Promise.all([
-        api.fetchMembers(adminUid),
-        api.fetchGroceries(adminUid),
-        api.fetchDeposits(adminUid),
-      ]);
-      setMembers(pData);
-      setGroceries(gData);
-      setDeposits(dData);
-    } catch (error) {
-      console.error("Failed to fetch data:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [adminUid]);
-
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    if (user?.uid) {
+      setLoading(true);
+      setError(null);
 
-  // --- Data Manipulation Functions ---
+      const unsubscribers = [
+        api.getMembers(user.uid, setMembers),
+        api.getGroceries(user.uid, setGroceries),
+        api.getDeposits(user.uid, setDeposits),
+      ];
+      
+      setLoading(false);
+
+      // Cleanup listeners on unmount or user change
+      return () => unsubscribers.forEach(unsub => unsub());
+    }
+  }, [user?.uid]);
+
+  // --- API Functions ---
+
+  const handleApiCall = async <T extends any[]>(apiCall: (...args: T) => Promise<any>, ...args: T) => {
+    if (!user?.uid) {
+        setError("You must be logged in to perform this action.");
+        return;
+    }
+    setError(null);
+    try {
+        await apiCall(...args);
+    } catch (e: any) {
+        console.error("API call failed:", e);
+        setError(e.message);
+    }
+  };
 
   const addMember = async (name: string) => {
-    if (!adminUid) return;
-    try {
-      const newMember = await api.addMember(adminUid, name);
-      setMembers(prev => [...prev, newMember]);
-    } catch (error) {
-      console.error("Failed to add member:", error);
-    }
+    if(user?.uid) await handleApiCall(api.addMember, user.uid, name);
+  };
+  const deleteMember = async (memberId: string) => {
+    if(user?.uid) await handleApiCall(api.deleteMember, user.uid, memberId);
   };
 
-  const deleteMember = async (id: string) => {
-    if (!adminUid) return;
-    try {
-      await api.deleteMember(adminUid, id);
-      setMembers(prev => prev.filter(p => p.id !== id));
-    } catch (error) {
-      console.error("Failed to delete member:", error);
-    }
-  };
-  
   const addGrocery = async (item: Omit<GroceryItem, 'id'>) => {
-    if (!adminUid) return;
-    try {
-      const newGrocery = await api.addGrocery(adminUid, item);
-      setGroceries(prev => [...prev, newGrocery]);
-    } catch (error) {
-      console.error("Failed to add grocery:", error);
-    }
+    if(user?.uid) await handleApiCall(api.addGrocery, user.uid, item);
+  };
+  const deleteGrocery = async (itemId: string) => {
+    if(user?.uid) await handleApiCall(api.deleteGrocery, user.uid, itemId);
   };
 
-  const deleteGrocery = async (id: string) => {
-    if (!adminUid) return;
-    try {
-      await api.deleteGrocery(adminUid, id);
-      setGroceries(prev => prev.filter(g => g.id !== id));
-    } catch (error) {
-      console.error("Failed to delete grocery:", error);
-    }
+  const addDeposit = async (deposit: Omit<Deposit, 'id'>) => {
+    if(user?.uid) await handleApiCall(api.addDeposit, user.uid, deposit);
   };
-
-  const addDeposit = async (item: Omit<Deposit, 'id'>) => {
-    if (!adminUid) return;
-    try {
-      const newDeposit = await api.addDeposit(adminUid, item);
-      setDeposits(prev => [...prev, newDeposit]);
-    } catch (error) {
-      console.error("Failed to add deposit:", error);
-    }
-  };
-
-  const deleteDeposit = async (id: string) => {
-    if (!adminUid) return;
-    try {
-      await api.deleteDeposit(adminUid, id);
-      setDeposits(prev => prev.filter(d => d.id !== id));
-    } catch (error) {
-      console.error("Failed to delete deposit:", error);
-    }
+  const deleteDeposit = async (depositId: string) => {
+    if(user?.uid) await handleApiCall(api.deleteDeposit, user.uid, depositId);
   };
 
 
   // --- Memoized Calculations ---
 
-  const totalExpense = useMemo(() => {
-    return groceries.reduce((acc, item) => acc + item.amount, 0);
+  const totalSpent = useMemo(() => {
+    return groceries.reduce((total, item) => total + item.amount, 0);
   }, [groceries]);
 
-  const totalDeposit = useMemo(() => {
-    return deposits.reduce((acc, item) => acc + item.amount, 0);
+  const totalDeposits = useMemo(() => {
+    return deposits.reduce((total, item) => total + item.amount, 0);
   }, [deposits]);
 
-  const totalBalance = useMemo(() => totalDeposit - totalExpense, [totalDeposit, totalExpense]);
-
-  const memberSummaries = useMemo(() => {
-    // Avoid division by zero if there are no members.
-    const perPersonShare = members.length > 0 ? totalExpense / members.length : 0;
+  const balanceSummaries = useMemo(() => {
+    const sharePerMember = members.length > 0 ? totalSpent / members.length : 0;
     
     return members.map(member => {
-      // Calculate total deposits for the current member.
-      const memberDeposits = deposits
-        .filter(d => d.memberId === member.id)
-        .reduce((acc, d) => acc + d.amount, 0);
-      
-      const balance = memberDeposits - perPersonShare;
-      
-      return {
-        ...member,
-        totalDeposit: memberDeposits,
-        share: perPersonShare,
-        balance,
-      };
+        const totalDeposit = deposits
+            .filter(d => d.memberId === member.id)
+            .reduce((sum, d) => sum + d.amount, 0);
+        const balance = totalDeposit - sharePerMember;
+        return {
+            ...member,
+            totalDeposit,
+            share: sharePerMember,
+            balance,
+        };
     });
-  }, [members, deposits, totalExpense]);
+  }, [members, deposits, totalSpent]);
 
   return {
     loading,
+    error,
     members,
     groceries,
     deposits,
@@ -159,9 +122,8 @@ export const useMealManager = (adminUid: string | null) => {
     deleteGrocery,
     addDeposit,
     deleteDeposit,
-    totalExpense,
-    totalDeposit,
-    totalBalance,
-    memberSummaries,
+    totalSpent,
+    totalDeposits,
+    balanceSummaries,
   };
 };

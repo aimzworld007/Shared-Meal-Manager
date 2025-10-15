@@ -1,4 +1,3 @@
-
 /**
  * @file App.tsx
  * @summary The root component of the Shared Meal Manager application.
@@ -7,6 +6,7 @@
  */
 import React from 'react';
 import { useAuth } from './hooks/useAuth';
+// Fix: Correcting module import by ensuring the target file has content.
 import Dashboard from './components/Dashboard';
 import Login from './components/Login';
 
