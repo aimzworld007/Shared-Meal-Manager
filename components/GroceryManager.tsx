@@ -1,4 +1,3 @@
-
 /**
  * @file GroceryManager.tsx
  * @summary A component for managing grocery expenses.
@@ -18,6 +17,13 @@ interface GroceryManagerProps {
   /** Callback function to delete a grocery item. */
   onDeleteGrocery: (id: string) => void;
 }
+
+/**
+ * Formats a number as a currency string in AED.
+ * @param {number} amount - The number to format.
+ * @returns {string} The formatted currency string.
+ */
+const formatCurrency = (amount: number) => new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED' }).format(amount);
 
 /**
  * Renders the grocery management section, including a list and an add form.
@@ -76,7 +82,7 @@ const GroceryManager: React.FC<GroceryManagerProps> = ({ groceries, onAddGrocery
               <p className="text-xs text-gray-500">{g.date}</p>
             </div>
             <div className="text-right">
-              <p className="text-sm font-medium text-gray-900">${g.amount.toFixed(2)}</p>
+              <p className="text-sm font-medium text-gray-900">{formatCurrency(g.amount)}</p>
               <button onClick={() => onDeleteGrocery(g.id)} className="text-red-500 hover:text-red-700 text-xs">Delete</button>
             </div>
           </li>

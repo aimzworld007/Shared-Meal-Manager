@@ -19,19 +19,32 @@ import {
   addDoc,
   deleteDoc,
   doc,
+  collectionGroup,
+  query,
 } from 'firebase/firestore';
-import { User, Participant, GroceryItem, Deposit } from '../types';
+import { User, Member, GroceryItem, Deposit } from '../types';
 
 // --- FIREBASE CONFIGURATION ---
 const firebaseConfig = {
     apiKey: "AIzaSyDmNZKM8m9iKA4rrxanl-yscV86cMz2-fM",
     authDomain: "messmeal-31a11.firebaseapp.com",
     projectId: "messmeal-31a11",
-    storageBucket: "messmeal-31a11.appspot.com",
+    storageBucket: "messmeal-31a11.firebasestorage.app",
     messagingSenderId: "413119253017",
     appId: "1:413119253017:web:4b6c4f8dbb147693853888",
     measurementId: "G-KXD9W95FCT"
 };
+
+// --- IMPORTANT: ADMIN CONFIGURATION ---
+/**
+ * The UID of the user designated as the admin.
+ * To get your UID:
+ * 1. Sign up for an account in the app.
+ * 2. Go to your Firebase Console -> Authentication.
+ * 3. Copy the UID for your user and paste it here.
+ */
+export const ADMIN_UID = "YOUR_ADMIN_UID_HERE";
+
 
 // --- INITIALIZE FIREBASE ---
 const app = initializeApp(firebaseConfig);
@@ -104,7 +117,7 @@ export const onAuthChange = (callback: (user: User | null) => void) => {
  * Creates a Firestore collection reference for a subcollection under a specific user.
  * This is the core of the multi-tenancy data structure.
  * @param {string} adminUid - The UID of the currently logged-in user.
- * @param {string} collectionName - The name of the subcollection (e.g., 'participants').
+ * @param {string} collectionName - The name of the subcollection (e.g., 'members').
  * @returns {import('@firebase/firestore').CollectionReference} A Firestore collection reference.
  */
 const getUserSubcollection = (adminUid: string, collectionName: string) => {
@@ -112,69 +125,35 @@ const getUserSubcollection = (adminUid: string, collectionName: string) => {
 };
 
 
-// --- FIRESTORE: PARTICIPANTS ---
+// --- FIRESTORE: MEMBERS ---
 
-/**
- * Fetches all participants for a given admin user from Firestore.
- * @param {string} adminUid - The admin user's UID.
- * @returns {Promise<Participant[]>} A promise resolving to an array of participants.
- */
-export const fetchParticipants = async (adminUid: string): Promise<Participant[]> => {
-  const querySnapshot = await getDocs(getUserSubcollection(adminUid, 'participants'));
-  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Participant));
+export const fetchMembers = async (adminUid: string): Promise<Member[]> => {
+  const querySnapshot = await getDocs(getUserSubcollection(adminUid, 'members'));
+  return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Member));
 };
 
-/**
- * Adds a new participant to Firestore under the current admin user.
- * @param {string} adminUid - The admin user's UID.
- * @param {string} name - The name of the new participant.
- * @returns {Promise<Participant>} A promise resolving to the newly created participant.
- */
-export const addParticipant = async (adminUid: string, name: string): Promise<Participant> => {
-  const docRef = await addDoc(getUserSubcollection(adminUid, 'participants'), { name });
+export const addMember = async (adminUid: string, name: string): Promise<Member> => {
+  const docRef = await addDoc(getUserSubcollection(adminUid, 'members'), { name });
   return { id: docRef.id, name };
 };
 
-/**
- * Deletes a participant from Firestore.
- * @param {string} adminUid - The admin user's UID.
- * @param {string} id - The ID of the participant to delete.
- * @returns {Promise<void>} An empty promise that resolves on completion.
- */
-export const deleteParticipant = async (adminUid: string, id: string): Promise<void> => {
-  await deleteDoc(doc(db, 'users', adminUid, 'participants', id));
+export const deleteMember = async (adminUid: string, id: string): Promise<void> => {
+  await deleteDoc(doc(db, 'users', adminUid, 'members', id));
 };
 
 
 // --- FIRESTORE: GROCERIES ---
 
-/**
- * Fetches all grocery items for a given admin user from Firestore.
- * @param {string} adminUid - The admin user's UID.
- * @returns {Promise<GroceryItem[]>} A promise resolving to an array of grocery items.
- */
 export const fetchGroceries = async (adminUid: string): Promise<GroceryItem[]> => {
   const querySnapshot = await getDocs(getUserSubcollection(adminUid, 'groceries'));
   return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GroceryItem));
 };
 
-/**
- * Adds a new grocery item to Firestore.
- * @param {string} adminUid - The admin user's UID.
- * @param {Omit<GroceryItem, 'id'>} groceryData - The data for the new item.
- * @returns {Promise<GroceryItem>} A promise resolving to the newly created grocery item.
- */
 export const addGrocery = async (adminUid: string, groceryData: Omit<GroceryItem, 'id'>): Promise<GroceryItem> => {
   const docRef = await addDoc(getUserSubcollection(adminUid, 'groceries'), groceryData);
   return { id: docRef.id, ...groceryData };
 };
 
-/**
- * Deletes a grocery item from Firestore.
- * @param {string} adminUid - The admin user's UID.
- * @param {string} id - The ID of the grocery item to delete.
- * @returns {Promise<void>} An empty promise.
- */
 export const deleteGrocery = async (adminUid: string, id: string): Promise<void> => {
   await deleteDoc(doc(db, 'users', adminUid, 'groceries', id));
 };
@@ -182,33 +161,66 @@ export const deleteGrocery = async (adminUid: string, id: string): Promise<void>
 
 // --- FIRESTORE: DEPOSITS ---
 
-/**
- * Fetches all deposits for a given admin user from Firestore.
- * @param {string} adminUid - The admin user's UID.
- * @returns {Promise<Deposit[]>} A promise resolving to an array of deposits.
- */
 export const fetchDeposits = async (adminUid: string): Promise<Deposit[]> => {
   const querySnapshot = await getDocs(getUserSubcollection(adminUid, 'deposits'));
   return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Deposit));
 };
 
-/**
- * Adds a new deposit to Firestore.
- * @param {string} adminUid - The admin user's UID.
- * @param {Omit<Deposit, 'id'>} depositData - The data for the new deposit.
- * @returns {Promise<Deposit>} A promise resolving to the newly created deposit.
- */
 export const addDeposit = async (adminUid: string, depositData: Omit<Deposit, 'id'>): Promise<Deposit> => {
   const docRef = await addDoc(getUserSubcollection(adminUid, 'deposits'), depositData);
   return { id: docRef.id, ...depositData };
 };
 
-/**
- * Deletes a deposit from Firestore.
- * @param {string} adminUid - The admin user's UID.
- * @param {string} id - The ID of the deposit to delete.
- * @returns {Promise<void>} An empty promise.
- */
 export const deleteDeposit = async (adminUid: string, id: string): Promise<void> => {
   await deleteDoc(doc(db, 'users', adminUid, 'deposits', id));
+};
+
+
+// --- ADMIN DATA FETCHING ---
+
+/**
+ * Represents aggregated data for a single user for admin analytics.
+ */
+export interface UserDataSummary {
+    userId: string;
+    userEmail: string | null;
+    groceries: GroceryItem[];
+    deposits: Deposit[];
+}
+
+/**
+ * Fetches all data (groceries, deposits) for all users.
+ * This is an admin-only function.
+ * @returns {Promise<UserDataSummary[]>} A promise that resolves with an array of aggregated data for each user.
+ */
+export const fetchAllUsersData = async (): Promise<UserDataSummary[]> => {
+    const usersSnapshot = await getDocs(collection(db, 'users'));
+    const allUserData: UserDataSummary[] = [];
+
+    for (const userDoc of usersSnapshot.docs) {
+        const userId = userDoc.id;
+        // The user document itself might not store the email, so we fetch it separately if needed
+        // For simplicity, we assume we don't have the email stored directly on the user doc
+        // and would need to look it up in Auth if required. We'll use the UID as the primary identifier.
+        
+        const groceriesPromise = getDocs(collection(db, 'users', userId, 'groceries'));
+        const depositsPromise = getDocs(collection(db, 'users', userId, 'deposits'));
+
+        const [groceriesSnapshot, depositsSnapshot] = await Promise.all([
+            groceriesPromise,
+            depositsPromise
+        ]);
+        
+        const groceries = groceriesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GroceryItem));
+        const deposits = depositsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Deposit));
+        
+        allUserData.push({
+            userId: userId,
+            userEmail: `user-${userId.substring(0, 5)}...`, // Placeholder email
+            groceries,
+            deposits
+        });
+    }
+    
+    return allUserData;
 };

@@ -1,4 +1,3 @@
-
 /**
  * @file SummaryCard.tsx
  * @summary A reusable UI component for displaying a single piece of summary data.
@@ -20,14 +19,14 @@ export interface SummaryCardProps {
 }
 
 /**
- * Formats a number as a currency string.
+ * Formats a number as a currency string in AED.
  * @param {number} amount - The number to format.
- * @returns {string} The formatted currency string (e.g., "$125.50").
+ * @returns {string} The formatted currency string (e.g., "AED 125.50").
  */
 const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-AE', {
         style: 'currency',
-        currency: 'USD',
+        currency: 'AED',
     }).format(amount);
 };
 

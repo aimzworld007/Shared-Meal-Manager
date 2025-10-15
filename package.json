@@ -11,7 +11,10 @@
   "dependencies": {
     "react-dom": "^19.2.0",
     "react": "^19.2.0",
-    "firebase": "^12.4.0"
+    "firebase": "^12.4.0",
+    "chart.js": "^4.4.2",
+    "@kurkle/color": "^0.3.2",
+    "react-chartjs-2": "^5.2.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",

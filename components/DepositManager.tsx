@@ -1,10 +1,9 @@
-
 /**
  * @file DepositManager.tsx
- * @summary A component for managing financial deposits made by participants.
+ * @summary A component for managing financial deposits made by members.
  */
 import React, { useState } from 'react';
-import { Deposit, Participant } from '../types';
+import { Deposit, Member } from '../types';
 
 /**
  * Props for the DepositManager component.
@@ -12,8 +11,8 @@ import { Deposit, Participant } from '../types';
 interface DepositManagerProps {
   /** The list of all deposits. */
   deposits: Deposit[];
-  /** The list of all participants, used for the dropdown selector. */
-  participants: Participant[];
+  /** The list of all members, used for the dropdown selector. */
+  members: Member[];
   /** Callback function to add a new deposit. */
   onAddDeposit: (item: Omit<Deposit, 'id'>) => void;
   /** Callback function to delete a deposit. */
@@ -21,12 +20,19 @@ interface DepositManagerProps {
 }
 
 /**
+ * Formats a number as a currency string in AED.
+ * @param {number} amount - The number to format.
+ * @returns {string} The formatted currency string.
+ */
+const formatCurrency = (amount: number) => new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED' }).format(amount);
+
+/**
  * Renders the deposit management section, including a list and an add form.
  * @param {DepositManagerProps} props - The component props.
  * @returns {JSX.Element} The rendered deposit manager component.
  */
-const DepositManager: React.FC<DepositManagerProps> = ({ deposits, participants, onAddDeposit, onDeleteDeposit }) => {
-  const [participantId, setParticipantId] = useState('');
+const DepositManager: React.FC<DepositManagerProps> = ({ deposits, members, onAddDeposit, onDeleteDeposit }) => {
+  const [memberId, setMemberId] = useState('');
   const [amount, setAmount] = useState('');
 
   /**
@@ -36,25 +42,25 @@ const DepositManager: React.FC<DepositManagerProps> = ({ deposits, participants,
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const parsedAmount = parseFloat(amount);
-    if (participantId && !isNaN(parsedAmount) && parsedAmount > 0) {
+    if (memberId && !isNaN(parsedAmount) && parsedAmount > 0) {
       onAddDeposit({
         date: new Date().toISOString().split('T')[0], // Use current date
-        participantId,
+        memberId,
         amount: parsedAmount,
       });
-      setParticipantId('');
+      setMemberId('');
       setAmount('');
     }
   };
   
   /**
-   * Finds a participant's name by their ID.
+   * Finds a member's name by their ID.
    * A helper function to display names in the list instead of just IDs.
-   * @param {string} id - The ID of the participant.
-   * @returns {string} The name of the participant or 'Unknown'.
+   * @param {string} id - The ID of the member.
+   * @returns {string} The name of the member or 'Unknown'.
    */
-  const getParticipantName = (id: string) => {
-      return participants.find(p => p.id === id)?.name || 'Unknown';
+  const getMemberName = (id: string) => {
+      return members.find(m => m.id === id)?.name || 'Unknown';
   }
 
   return (
@@ -62,12 +68,12 @@ const DepositManager: React.FC<DepositManagerProps> = ({ deposits, participants,
       <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">Deposits</h3>
       <form onSubmit={handleSubmit} className="space-y-3 mb-4">
         <select
-          value={participantId}
-          onChange={(e) => setParticipantId(e.target.value)}
+          value={memberId}
+          onChange={(e) => setMemberId(e.target.value)}
           className="w-full p-2 border border-gray-300 rounded-md"
         >
-          <option value="">Select Participant</option>
-          {participants.map(p => (
+          <option value="">Select Member</option>
+          {members.map(p => (
             <option key={p.id} value={p.id}>{p.name}</option>
           ))}
         </select>
@@ -85,11 +91,11 @@ const DepositManager: React.FC<DepositManagerProps> = ({ deposits, participants,
         {deposits.map(d => (
           <li key={d.id} className="py-2 flex justify-between items-center">
             <div>
-              <p className="text-sm text-gray-800">{getParticipantName(d.participantId)}</p>
+              <p className="text-sm text-gray-800">{getMemberName(d.memberId)}</p>
               <p className="text-xs text-gray-500">{d.date}</p>
             </div>
             <div className="text-right">
-              <p className="text-sm font-medium text-gray-900">${d.amount.toFixed(2)}</p>
+              <p className="text-sm font-medium text-gray-900">{formatCurrency(d.amount)}</p>
               <button onClick={() => onDeleteDeposit(d.id)} className="text-red-500 hover:text-red-700 text-xs">Delete</button>
             </div>
           </li>

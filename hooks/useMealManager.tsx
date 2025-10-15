@@ -1,4 +1,3 @@
-
 /**
  * @file useMealManager.tsx
  * @summary A custom hook to manage all state and Firestore interactions for meal-related data.
@@ -6,7 +5,7 @@
  * handles additions and deletions, and performs all necessary financial calculations.
  */
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Participant, GroceryItem, Deposit } from '../types';
+import { Member, GroceryItem, Deposit } from '../types';
 import * as api from '../services/firebase';
 
 /**
@@ -14,14 +13,14 @@ import * as api from '../services/firebase';
  * @param {string | null} adminUid - The unique ID of the admin user to fetch data for.
  * @returns {object} An object containing:
  * - `loading`: A boolean indicating if initial data is being fetched.
- * - `participants`, `groceries`, `deposits`: Arrays of the respective data types.
- * - `addParticipant`, `deleteParticipant`, etc.: Functions to manipulate the data.
+ * - `members`, `groceries`, `deposits`: Arrays of the respective data types.
+ * - `addMember`, `deleteMember`, etc.: Functions to manipulate the data.
  * - `totalExpense`, `totalDeposit`, `totalBalance`: Aggregated financial figures.
- * - `participantSummaries`: A memoized array with detailed financial summaries for each participant.
+ * - `memberSummaries`: A memoized array with detailed financial summaries for each member.
  */
 export const useMealManager = (adminUid: string | null) => {
   const [loading, setLoading] = useState(true);
-  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [members, setMembers] = useState<Member[]>([]);
   const [groceries, setGroceries] = useState<GroceryItem[]>([]);
   const [deposits, setDeposits] = useState<Deposit[]>([]);
 
@@ -35,11 +34,11 @@ export const useMealManager = (adminUid: string | null) => {
     setLoading(true);
     try {
       const [pData, gData, dData] = await Promise.all([
-        api.fetchParticipants(adminUid),
+        api.fetchMembers(adminUid),
         api.fetchGroceries(adminUid),
         api.fetchDeposits(adminUid),
       ]);
-      setParticipants(pData);
+      setMembers(pData);
       setGroceries(gData);
       setDeposits(dData);
     } catch (error) {
@@ -55,40 +54,64 @@ export const useMealManager = (adminUid: string | null) => {
 
   // --- Data Manipulation Functions ---
 
-  const addParticipant = async (name: string) => {
+  const addMember = async (name: string) => {
     if (!adminUid) return;
-    const newParticipant = await api.addParticipant(adminUid, name);
-    setParticipants(prev => [...prev, newParticipant]);
+    try {
+      const newMember = await api.addMember(adminUid, name);
+      setMembers(prev => [...prev, newMember]);
+    } catch (error) {
+      console.error("Failed to add member:", error);
+    }
   };
 
-  const deleteParticipant = async (id: string) => {
+  const deleteMember = async (id: string) => {
     if (!adminUid) return;
-    await api.deleteParticipant(adminUid, id);
-    setParticipants(prev => prev.filter(p => p.id !== id));
+    try {
+      await api.deleteMember(adminUid, id);
+      setMembers(prev => prev.filter(p => p.id !== id));
+    } catch (error) {
+      console.error("Failed to delete member:", error);
+    }
   };
   
   const addGrocery = async (item: Omit<GroceryItem, 'id'>) => {
     if (!adminUid) return;
-    const newGrocery = await api.addGrocery(adminUid, item);
-    setGroceries(prev => [...prev, newGrocery]);
+    try {
+      const newGrocery = await api.addGrocery(adminUid, item);
+      setGroceries(prev => [...prev, newGrocery]);
+    } catch (error) {
+      console.error("Failed to add grocery:", error);
+    }
   };
 
   const deleteGrocery = async (id: string) => {
     if (!adminUid) return;
-    await api.deleteGrocery(adminUid, id);
-    setGroceries(prev => prev.filter(g => g.id !== id));
+    try {
+      await api.deleteGrocery(adminUid, id);
+      setGroceries(prev => prev.filter(g => g.id !== id));
+    } catch (error) {
+      console.error("Failed to delete grocery:", error);
+    }
   };
 
   const addDeposit = async (item: Omit<Deposit, 'id'>) => {
     if (!adminUid) return;
-    const newDeposit = await api.addDeposit(adminUid, item);
-    setDeposits(prev => [...prev, newDeposit]);
+    try {
+      const newDeposit = await api.addDeposit(adminUid, item);
+      setDeposits(prev => [...prev, newDeposit]);
+    } catch (error) {
+      console.error("Failed to add deposit:", error);
+    }
   };
 
   const deleteDeposit = async (id: string) => {
     if (!adminUid) return;
-    await api.deleteDeposit(adminUid, id);
-    setDeposits(prev => prev.filter(d => d.id !== id));
+    try {
+      await api.deleteDeposit(adminUid, id);
+      setDeposits(prev => prev.filter(d => d.id !== id));
+    } catch (error) {
+      console.error("Failed to delete deposit:", error);
+    }
   };
 
 
@@ -104,34 +127,34 @@ export const useMealManager = (adminUid: string | null) => {
 
   const totalBalance = useMemo(() => totalDeposit - totalExpense, [totalDeposit, totalExpense]);
 
-  const participantSummaries = useMemo(() => {
-    // Avoid division by zero if there are no participants.
-    const perPersonShare = participants.length > 0 ? totalExpense / participants.length : 0;
+  const memberSummaries = useMemo(() => {
+    // Avoid division by zero if there are no members.
+    const perPersonShare = members.length > 0 ? totalExpense / members.length : 0;
     
-    return participants.map(participant => {
-      // Calculate total deposits for the current participant.
-      const participantDeposits = deposits
-        .filter(d => d.participantId === participant.id)
+    return members.map(member => {
+      // Calculate total deposits for the current member.
+      const memberDeposits = deposits
+        .filter(d => d.memberId === member.id)
         .reduce((acc, d) => acc + d.amount, 0);
       
-      const balance = participantDeposits - perPersonShare;
+      const balance = memberDeposits - perPersonShare;
       
       return {
-        ...participant,
-        totalDeposit: participantDeposits,
+        ...member,
+        totalDeposit: memberDeposits,
         share: perPersonShare,
         balance,
       };
     });
-  }, [participants, deposits, totalExpense]);
+  }, [members, deposits, totalExpense]);
 
   return {
     loading,
-    participants,
+    members,
     groceries,
     deposits,
-    addParticipant,
-    deleteParticipant,
+    addMember,
+    deleteMember,
     addGrocery,
     deleteGrocery,
     addDeposit,
@@ -139,6 +162,6 @@ export const useMealManager = (adminUid: string | null) => {
     totalExpense,
     totalDeposit,
     totalBalance,
-    participantSummaries,
+    memberSummaries,
   };
 };
