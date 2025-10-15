@@ -1,0 +1,5 @@
+{
+  "name": "Shared Meal Manager",
+  "description": "A web application to manage shared meal expenses, including participants, groceries, and deposits. It helps calculate balances for each member for a given month, making it easy to track shared finances.",
+  "requestFramePermissions": []
+}
