@@ -1,149 +1,155 @@
-/**
- * @file firebase.ts
- * @summary A service module for all Firebase interactions.
- * This file centralizes Firebase configuration and provides a clean API
- * for authentication and Firestore database operations.
- */
-import firebase from 'firebase/compat/app';
-import 'firebase/compat/auth';
-import 'firebase/compat/firestore';
-import { User, Member, GroceryItem, Deposit } from '../types';
+import { initializeApp } from "firebase/app";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut as firebaseSignOut,
+  onAuthStateChanged,
+  User as FirebaseUser,
+} from "firebase/auth";
+import {
+  getFirestore,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  orderBy,
+  setDoc
+} from "firebase/firestore";
+import { User, GroceryItem, Deposit, Participant } from "../types";
 
-// Your web app's Firebase configuration
+// Your web app's Firebase configuration - ensure these are set in your environment
 const firebaseConfig = {
-  apiKey: "AIzaSyDmNZKM8m9iKA4rrxanl-yscV86cMz2-fM",
-  authDomain: "messmeal-31a11.firebaseapp.com",
-  projectId: "messmeal-31a11",
-  storageBucket: "messmeal-31a11.appspot.com",
-  messagingSenderId: "413119253017",
-  appId: "1:413119253017:web:4b6c4f8dbb147693853888",
-  measurementId: "G-KXD9W95FCT"
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_AUTH_DOMAIN",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_STORAGE_BUCKET",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_APP_ID",
 };
 
-
 // Initialize Firebase
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
-}
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-const auth = firebase.auth();
-const db = firebase.firestore();
+// --- Auth Service ---
 
-// --- Authentication ---
+/**
+ * Signs a user in with email and password.
+ */
+export const signIn = (email: string, pass: string) => {
+  return signInWithEmailAndPassword(auth, email, pass);
+};
 
-export const onAuthChange = (callback: (user: User | null) => void): (() => void) => {
-  return auth.onAuthStateChanged((firebaseUser) => {
+/**
+ * Creates a new user with email and password and creates a user document in Firestore.
+ */
+export const signUp = async (email: string, pass: string) => {
+  const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+  const user = userCredential.user;
+  // Create a document for the new user
+  await setDoc(doc(db, "users", user.uid), {
+    email: user.email,
+    role: "user" // Default role
+  });
+  return userCredential;
+};
+
+/**
+ * Signs the current user out.
+ */
+export const signOut = () => {
+  return firebaseSignOut(auth);
+};
+
+/**
+ * Listens for authentication state changes and retrieves user role from Firestore.
+ */
+export const onAuthChange = (callback: (user: User | null) => void) => {
+  return onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
     if (firebaseUser) {
-      const user: User = {
+      const userDocRef = doc(db, 'users', firebaseUser.uid);
+      const userDoc = await getDoc(userDocRef);
+      // Default to 'user' role if not specified in Firestore
+      const role = userDoc.exists() ? userDoc.data().role : 'user';
+
+      callback({
         uid: firebaseUser.uid,
         email: firebaseUser.email,
-      };
-      callback(user);
+        role: role,
+      });
     } else {
       callback(null);
     }
   });
 };
 
-export const signIn = (email: string, pass: string): Promise<firebase.auth.UserCredential> => {
-  return auth.signInWithEmailAndPassword(email, pass);
+// --- Firestore Service ---
+
+// Helper to get user subcollection reference
+const getGroceriesRef = (userId: string) => collection(db, 'users', userId, 'groceries');
+const getDepositsRef = (userId: string) => collection(db, 'users', userId, 'deposits');
+
+// --- Groceries ---
+export const getGroceries = async (userId: string): Promise<GroceryItem[]> => {
+    const querySnapshot = await getDocs(query(getGroceriesRef(userId), orderBy('date', 'desc')));
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GroceryItem));
+};
+export const addGrocery = (userId: string, item: Omit<GroceryItem, 'id'>) => addDoc(getGroceriesRef(userId), item);
+export const updateGrocery = (userId: string, itemId: string, data: Partial<GroceryItem>) => updateDoc(doc(getGroceriesRef(userId), itemId), data);
+export const deleteGrocery = (userId: string, itemId: string) => deleteDoc(doc(getGroceriesRef(userId), itemId));
+
+// --- Deposits ---
+export const getDeposits = async (userId: string): Promise<Deposit[]> => {
+    const querySnapshot = await getDocs(query(getDepositsRef(userId), orderBy('date', 'desc')));
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Deposit));
+};
+export const addDeposit = (userId: string, deposit: Omit<Deposit, 'id'>) => addDoc(getDepositsRef(userId), deposit);
+export const updateDeposit = (userId: string, depositId: string, data: Partial<Deposit>) => updateDoc(doc(getDepositsRef(userId), depositId), data);
+export const deleteDeposit = (userId: string, depositId: string) => deleteDoc(doc(getDepositsRef(userId), depositId));
+
+// --- Participants (Users) ---
+export const getParticipants = async (): Promise<Participant[]> => {
+    const querySnapshot = await getDocs(collection(db, 'users'));
+    return querySnapshot.docs.map(doc => ({ id: doc.id, email: doc.data().email } as Participant));
 };
 
-export const signUp = (email: string, pass: string): Promise<firebase.auth.UserCredential> => {
-  return auth.createUserWithEmailAndPassword(email, pass);
-};
+// --- Admin Analytics ---
 
-export const signOut = (): Promise<void> => {
-  return auth.signOut();
-};
-
-
-// --- Firestore Collections ---
-
-const getCollectionRef = (collectionName: string) => {
-    const user = auth.currentUser;
-    if (!user) throw new Error("User not authenticated for Firestore operation.");
-    return db.collection('users').doc(user.uid).collection(collectionName);
-}
-
-// --- Generic Firestore CRUD ---
-
-const addDoc = async <T extends { [key: string]: any }>(collectionName: string, data: T) => {
-    const ref = getCollectionRef(collectionName);
-    return await ref.add(data);
-};
-
-const getDocs = async <T>(collectionName: string): Promise<(T & { id: string })[]> => {
-    const query = getCollectionRef(collectionName);
-    // Members don't have a date, so we can't sort them all by date.
-    const snapshot = collectionName === 'members' ? await query.get() : await query.orderBy('date', 'desc').get();
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T & { id: string }));
-};
-
-const updateDoc = async (collectionName: string, id: string, data: { [key: string]: any }) => {
-    return await getCollectionRef(collectionName).doc(id).update(data);
-};
-
-const deleteDoc = async (collectionName: string, id: string) => {
-    return await getCollectionRef(collectionName).doc(id).delete();
-};
-
-// --- Specific CRUD for Collections ---
-
-// Members
-export const addMember = (data: Omit<Member, 'id'>) => addDoc('members', data);
-export const getMembers = () => getDocs<Member>('members');
-export const updateMember = (id: string, data: Partial<Omit<Member, 'id'>>) => updateDoc('members', id, data);
-export const deleteMember = (id: string) => deleteDoc('members', id);
-
-// Groceries
-export const addGrocery = (data: Omit<GroceryItem, 'id'>) => addDoc('groceries', data);
-export const getGroceries = () => getDocs<GroceryItem>('groceries');
-export const updateGrocery = (id: string, data: Partial<Omit<GroceryItem, 'id'>>) => updateDoc('groceries', id, data);
-export const deleteGrocery = (id: string) => deleteDoc('groceries', id);
-
-// Deposits
-export const addDeposit = (data: Omit<Deposit, 'id'>) => addDoc('deposits', data);
-export const getDeposits = () => getDocs<Deposit>('deposits');
-export const updateDeposit = (id: string, data: Partial<Omit<Deposit, 'id'>>) => updateDoc('deposits', id, data);
-export const deleteDeposit = (id: string) => deleteDoc('deposits', id);
-
-// --- Admin ---
-
+/**
+ * Defines the comprehensive summary of a user's data for admin analytics.
+ */
 export interface UserDataSummary {
     userId: string;
-    userEmail: string | null;
-    members: Member[];
+    userEmail: string;
     groceries: GroceryItem[];
     deposits: Deposit[];
 }
 
+/**
+ * Fetches all data for all users. This is an admin-only function.
+ */
 export const fetchAllUsersData = async (): Promise<UserDataSummary[]> => {
-    // This function requires admin privileges and is best implemented as a Firebase Cloud Function.
-    // The client-side implementation below assumes Firestore rules are set up to allow
-    // an admin user to read the `users` collection, which is not a secure default.
-    console.warn("fetchAllUsersData is running on the client. For production, this should be a secure Cloud Function.");
-    
-    const usersSnapshot = await db.collection('users').get();
+    const usersSnapshot = await getDocs(collection(db, 'users'));
     const allUserData: UserDataSummary[] = [];
 
     for (const userDoc of usersSnapshot.docs) {
         const userId = userDoc.id;
-        // Attempt to get email from user doc, assuming it was stored on signup.
-        const userEmail = userDoc.data()?.email || 'N/A';
+        const userEmail = userDoc.data().email;
 
-        const [members, groceries, deposits] = await Promise.all([
-            db.collection('users').doc(userId).collection('members').get(),
-            db.collection('users').doc(userId).collection('groceries').get(),
-            db.collection('users').doc(userId).collection('deposits').get()
-        ]);
+        const groceries = await getGroceries(userId);
+        const deposits = await getDeposits(userId);
 
         allUserData.push({
             userId,
             userEmail,
-            members: members.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Member[],
-            groceries: groceries.docs.map(doc => ({ id: doc.id, ...doc.data() })) as GroceryItem[],
-            deposits: deposits.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Deposit[],
+            groceries,
+            deposits,
         });
     }
 

@@ -1,177 +1,149 @@
 /**
  * @file GroceryManager.tsx
- * @summary A component for managing grocery purchase entries.
+ * @summary Component for adding, viewing, and deleting grocery expenses.
  */
-import React, { useState, useMemo } from 'react';
-import { GroceryItem, Member } from '../types';
+import React, { useState } from 'react';
+import { GroceryItem } from '../types';
 import Modal from './Modal';
 import ConfirmationModal from './ConfirmationModal';
+import CSVImportModal from './CSVImportModal';
 
 interface GroceryManagerProps {
   groceries: GroceryItem[];
-  members: Member[];
-  addGrocery: (item: Omit<GroceryItem, 'id'>) => void;
-  updateGrocery: (id: string, item: Omit<GroceryItem, 'id'>) => void;
-  deleteGrocery: (id: string) => void;
+  onAddGrocery: (item: { name: string; amount: number; date: string }) => Promise<void>;
+  onAddMultipleGroceries: (items: Omit<GroceryItem, 'id' | 'purchaserId'>[]) => Promise<void>;
+  onDeleteGrocery: (id: string) => Promise<void>;
 }
 
 const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED' }).format(amount);
 };
 
-const formatDateForInput = (dateString: string) => {
-    try {
-        return new Date(dateString).toISOString().split('T')[0];
-    } catch(e) {
-        return '';
-    }
-}
-
-export const GroceryManager: React.FC<GroceryManagerProps> = ({ groceries, members, addGrocery, updateGrocery, deleteGrocery }) => {
+const GroceryManager: React.FC<GroceryManagerProps> = ({ groceries, onAddGrocery, onAddMultipleGroceries, onDeleteGrocery }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
-  const [currentItem, setCurrentItem] = useState<GroceryItem | null>(null);
-  const [formState, setFormState] = useState({ name: '', amount: '', date: new Date().toISOString().split('T')[0], memberIds: [] as string[] });
-  const [itemToDelete, setItemToDelete] = useState<GroceryItem | null>(null);
+  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
-  const memberMap = useMemo(() => new Map(members.map(m => [m.id, m.name])), [members]);
-  const getMemberNames = (memberIds: string[]) => memberIds.map(id => memberMap.get(id) || 'Unknown').join(', ');
+  const [name, setName] = useState('');
+  const [amount, setAmount] = useState('');
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const openAddModal = () => {
-    setCurrentItem(null);
-    setFormState({ name: '', amount: '', date: new Date().toISOString().split('T')[0], memberIds: members.map(m => m.id) });
-    setIsModalOpen(true);
-  };
-
-  const openEditModal = (item: GroceryItem) => {
-    setCurrentItem(item);
-    setFormState({ name: item.name, amount: item.amount.toString(), date: formatDateForInput(item.date), memberIds: item.memberIds });
-    setIsModalOpen(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !amount || !date || isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+        await onAddGrocery({ name, amount: parseFloat(amount), date });
+        setName('');
+        setAmount('');
+        setDate(new Date().toISOString().split('T')[0]);
+        setIsModalOpen(false);
+    } catch (error) {
+        // Error is handled by the hook and displayed on the dashboard
+    } finally {
+        setIsSubmitting(false);
+    }
   };
   
-  const openConfirmModal = (item: GroceryItem) => {
-    setItemToDelete(item);
+  const handleDeleteClick = (id: string) => {
+    setItemToDelete(id);
     setIsConfirmOpen(true);
   };
 
-  const handleCloseModal = () => {
-    setIsModalOpen(false);
-    setCurrentItem(null);
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormState(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleMemberSelection = (memberId: string) => {
-    setFormState(prev => {
-        const newMemberIds = prev.memberIds.includes(memberId)
-            ? prev.memberIds.filter(id => id !== memberId)
-            : [...prev.memberIds, memberId];
-        return { ...prev, memberIds: newMemberIds };
-    });
-  }
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const newGrocery = {
-      name: formState.name.trim(),
-      amount: parseFloat(formState.amount),
-      date: formState.date,
-      memberIds: formState.memberIds,
-    };
-    if (newGrocery.name && !isNaN(newGrocery.amount) && newGrocery.memberIds.length > 0) {
-      if (currentItem) {
-        updateGrocery(currentItem.id, newGrocery);
-      } else {
-        addGrocery(newGrocery);
-      }
-      handleCloseModal();
-    }
-  };
-
-  const handleDelete = () => {
+  const handleConfirmDelete = async () => {
     if (itemToDelete) {
-        deleteGrocery(itemToDelete.id);
-        setIsConfirmOpen(false);
-        setItemToDelete(null);
+      await onDeleteGrocery(itemToDelete);
     }
+    setIsConfirmOpen(false);
+    setItemToDelete(null);
   };
-
-  const commonInputClass = "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm";
 
   return (
-    <div className="bg-white shadow rounded-lg p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-medium leading-6 text-gray-900">Manage Groceries</h3>
-        <button onClick={openAddModal} disabled={members.length === 0} className="bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition duration-300 text-sm disabled:bg-indigo-300 disabled:cursor-not-allowed">
-          Add Grocery Item
-        </button>
+    <div className="bg-white shadow rounded-lg">
+      <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center flex-wrap gap-2">
+        <h3 className="text-lg font-medium text-gray-900">Grocery Expenses</h3>
+        <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsImportModalOpen(true)}
+              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              Import CSV
+            </button>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            >
+              Add Expense
+            </button>
+        </div>
       </div>
-      <ul role="list" className="divide-y divide-gray-200">
-        {groceries.map((item) => (
-          <li key={item.id} className="py-3 flex justify-between items-center">
-            <div>
-              <p className="text-sm font-medium text-gray-900">{item.name} - {formatCurrency(item.amount)}</p>
-              <p className="text-sm text-gray-500">{item.date} | Shared by: {getMemberNames(item.memberIds)}</p>
-            </div>
-            <div className="space-x-2">
-              <button onClick={() => openEditModal(item)} className="text-indigo-600 hover:text-indigo-900 text-sm font-medium">Edit</button>
-              <button onClick={() => openConfirmModal(item)} className="text-red-600 hover:text-red-900 text-sm font-medium">Delete</button>
-            </div>
-          </li>
-        ))}
-      </ul>
-      {groceries.length === 0 && <p className="text-center text-gray-500 mt-4">No grocery items logged yet.</p>}
-      {members.length === 0 && !isModalOpen && <p className="text-center text-gray-500 mt-4">Please add a member before adding a grocery item.</p>}
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+              <th scope="col" className="relative px-6 py-3"><span className="sr-only">Delete</span></th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {groceries.length === 0 && (
+              <tr><td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500">No expenses added yet.</td></tr>
+            )}
+            {groceries.map((item) => (
+              <tr key={item.id}>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(item.date).toLocaleDateString()}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.name}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{formatCurrency(item.amount)}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <button onClick={() => handleDeleteClick(item.id)} className="text-red-600 hover:text-red-900">Delete</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-      <Modal isOpen={isModalOpen} onClose={handleCloseModal} title={currentItem ? 'Edit Grocery Item' : 'Add New Grocery Item'}>
+      <Modal title="Add New Expense" isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
         <form onSubmit={handleSubmit} className="space-y-4">
            <div>
-            <label htmlFor="name" className="block text-sm font-medium text-gray-700">Item Name</label>
-            <input id="name" name="name" type="text" value={formState.name} onChange={handleChange} required className={commonInputClass} />
-          </div>
-          <div>
-            <label htmlFor="amount" className="block text-sm font-medium text-gray-700">Amount (AED)</label>
-            <input id="amount" name="amount" type="number" step="0.01" value={formState.amount} onChange={handleChange} required className={commonInputClass} />
-          </div>
-          <div>
-            <label htmlFor="date" className="block text-sm font-medium text-gray-700">Date</label>
-            <input id="date" name="date" type="date" value={formState.date} onChange={handleChange} required className={commonInputClass} />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Shared By</label>
-            <div className="mt-2 space-y-2">
-                {members.map(member => (
-                    <div key={member.id} className="flex items-center">
-                        <input
-                            id={`member-${member.id}`}
-                            type="checkbox"
-                            checked={formState.memberIds.includes(member.id)}
-                            onChange={() => handleMemberSelection(member.id)}
-                            className="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-                        />
-                        <label htmlFor={`member-${member.id}`} className="ml-3 block text-sm text-gray-900">{member.name}</label>
-                    </div>
-                ))}
-            </div>
-          </div>
-          <div className="mt-4 flex justify-end">
-            <button type="submit" className="bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700">
-              {currentItem ? 'Update' : 'Save'}
-            </button>
-          </div>
+              <label htmlFor="date" className="block text-sm font-medium text-gray-700">Date</label>
+              <input type="date" id="date" value={date} onChange={(e) => setDate(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+           </div>
+           <div>
+             <label htmlFor="name" className="block text-sm font-medium text-gray-700">Item Name</label>
+             <input type="text" id="name" value={name} onChange={(e) => setName(e.target.value)} required placeholder="e.g., Chicken, Rice" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+           </div>
+           <div>
+             <label htmlFor="amount" className="block text-sm font-medium text-gray-700">Amount (AED)</label>
+             <input type="number" id="amount" value={amount} onChange={(e) => setAmount(e.target.value)} required min="0.01" step="0.01" placeholder="e.g., 50.75" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+           </div>
+           <div className="pt-2 flex justify-end">
+             <button type="submit" disabled={isSubmitting} className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400">
+                {isSubmitting ? 'Adding...' : 'Add Expense'}
+             </button>
+           </div>
         </form>
       </Modal>
 
       <ConfirmationModal
         isOpen={isConfirmOpen}
         onClose={() => setIsConfirmOpen(false)}
-        onConfirm={handleDelete}
-        title="Delete Grocery Entry"
-        message={`Are you sure you want to delete the entry for ${itemToDelete?.name}? This action cannot be undone.`}
+        onConfirm={handleConfirmDelete}
+        title="Delete Expense"
+        message="Are you sure you want to delete this expense? This action cannot be undone."
+      />
+
+      <CSVImportModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onImport={onAddMultipleGroceries}
       />
     </div>
   );
 };
+
+export default GroceryManager;

@@ -1,120 +1,102 @@
 /**
  * @file CSVImportModal.tsx
- * @summary A modal component for importing data from a CSV file.
+ * @summary A modal component to handle CSV file uploads for bulk data import.
  */
-import React, { useState } from 'react';
-import { Member } from '../types';
-// Fix: The types `ParsedDeposit` and `ParsedGrocery` are not exported from `csvParser`.
-// They are also not used in this file, so they have been removed from the import to fix the error.
-import { parseDepositsCSV, parseGroceriesCSV } from '../utils/csvParser';
+import React, { useState, useCallback } from 'react';
+import { useDropzone } from 'react-dropzone';
+import { parseCsv } from '../utils/csvParser';
+import { GroceryItem } from '../types';
 import Modal from './Modal';
 
 interface CSVImportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  members: Member[];
-  onImportDeposits: (items: { memberId: string, amount: number, date: string }[]) => Promise<void>;
-  onImportGroceries: (items: { name: string, amount: number, date: string, memberIds: string[] }[]) => Promise<void>;
+  onImport: (items: Omit<GroceryItem, 'id' | 'purchaserId'>[]) => Promise<void>;
 }
 
-const CSVImportModal: React.FC<CSVImportModalProps> = ({
-  isOpen,
-  onClose,
-  members,
-  onImportDeposits,
-  onImportGroceries,
-}) => {
-  const [importType, setImportType] = useState<'deposits' | 'groceries'>('deposits');
+const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose, onImport }) => {
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isImporting, setIsImporting] = useState(false);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFile(e.target.files[0]);
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    if (acceptedFiles.length > 0) {
+      setFile(acceptedFiles[0]);
       setError(null);
     }
-  };
+  }, []);
 
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: { 'text/csv': ['.csv'] },
+    multiple: false,
+  });
+  
   const handleImport = async () => {
     if (!file) {
       setError('Please select a file to import.');
       return;
     }
-    
     setIsImporting(true);
     setError(null);
-
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const text = e.target?.result as string;
-      try {
-        if (importType === 'deposits') {
-          const parsedData = parseDepositsCSV(text);
-          const memberMap = new Map(members.map(m => [m.name.toLowerCase(), m.id]));
-          const depositsToImport = parsedData.map(d => {
-            const memberId = memberMap.get(d.memberName.toLowerCase());
-            if (!memberId) throw new Error(`Member "${d.memberName}" not found.`);
-            return { memberId, amount: d.amount, date: d.date };
-          });
-          await onImportDeposits(depositsToImport);
-        } else {
-          const parsedData = parseGroceriesCSV(text);
-          // Assuming groceries are shared by all members by default on import
-          const allMemberIds = members.map(m => m.id);
-          const groceriesToImport = parsedData.map(g => ({ ...g, memberIds: allMemberIds }));
-          await onImportGroceries(groceriesToImport);
-        }
-        onClose();
-      } catch (err: any) {
-        setError(err.message || 'Failed to parse or import the file.');
-      } finally {
-        setIsImporting(false);
+    try {
+      const items = await parseCsv(file);
+      // Basic validation
+      if (items.some(item => !item.name || isNaN(item.amount) || !item.date)) {
+          throw new Error('CSV file has invalid data. Required columns are: name, amount, date (YYYY-MM-DD).');
       }
-    };
-    reader.readAsText(file);
+      await onImport(items);
+      handleClose();
+    } catch (err: any) {
+      setError(err.message || 'Failed to parse or import CSV.');
+    } finally {
+      setIsImporting(false);
+    }
   };
   
+  const handleClose = () => {
+      setFile(null);
+      setError(null);
+      setIsImporting(false);
+      onClose();
+  }
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Import from CSV">
+    <Modal isOpen={isOpen} onClose={handleClose} title="Import Expenses from CSV">
       <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Import Type</label>
-          <select
-            value={importType}
-            onChange={(e) => setImportType(e.target.value as 'deposits' | 'groceries')}
-            className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-          >
-            <option value="deposits">Deposits</option>
-            <option value="groceries">Groceries</option>
-          </select>
-          <p className="mt-2 text-xs text-gray-500">
-            {importType === 'deposits' 
-                ? 'CSV format: memberName,amount,date (e.g., John Doe,50,2023-10-27)'
-                : 'CSV format: name,amount,date (e.g., Milk,5.99,2023-10-27)'
-            }
-          </p>
+        <p className="text-sm text-gray-600">
+          Upload a CSV file with the headers: <code>date</code>, <code>name</code>, <code>amount</code>.
+          The date should be in <code>YYYY-MM-DD</code> format.
+        </p>
+        <div
+          {...getRootProps()}
+          className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md cursor-pointer transition-colors ${
+            isDragActive ? 'border-indigo-600 bg-indigo-50' : 'hover:border-gray-400'
+          }`}
+        >
+          <div className="space-y-1 text-center">
+            <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+              <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <div className="flex text-sm text-gray-600">
+              <label htmlFor="file-upload" className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-indigo-500">
+                <span>Upload a file</span>
+                <input {...getInputProps()} id="file-upload" name="file-upload" type="file" className="sr-only" />
+              </label>
+              <p className="pl-1">or drag and drop</p>
+            </div>
+            <p className="text-xs text-gray-500">CSV up to 10MB</p>
+          </div>
         </div>
-
-        <div>
-            <label className="block text-sm font-medium text-gray-700">CSV File</label>
-            <input
-                type="file"
-                accept=".csv"
-                onChange={handleFileChange}
-                className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
-            />
-        </div>
-
+        {file && <p className="text-sm text-gray-700">Selected file: <span className="font-medium">{file.name}</span></p>}
         {error && <p className="text-sm text-red-600">{error}</p>}
-        
-        <div className="mt-4 flex justify-end">
-            <button 
-                onClick={handleImport} 
-                disabled={isImporting || !file}
-                className="bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 disabled:bg-indigo-300"
+        <div className="pt-2 flex justify-end space-x-2">
+            <button
+                onClick={handleImport}
+                disabled={!file || isImporting}
+                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300"
             >
-                {isImporting ? 'Importing...' : 'Import'}
+                {isImporting ? 'Importing...' : 'Import Data'}
             </button>
         </div>
       </div>

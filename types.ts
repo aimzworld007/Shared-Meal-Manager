@@ -1,56 +1,44 @@
 /**
  * @file types.ts
- * @summary Defines the core data structures and types used throughout the application.
+ * @summary Defines the core data structures used throughout the application.
  */
 
 /**
- * Represents a registered user of the application.
- * This is primarily based on Firebase's User object.
+ * Represents a user in the system, mirroring the Firebase Auth user object
+ * with an added custom role.
  */
 export interface User {
   uid: string;
   email: string | null;
+  role?: 'admin' | 'user';
 }
 
 /**
- * Represents a member of a shared meal group.
- * Members participate in meals and make deposits.
- */
-export interface Member {
-  id: string;
-  name: string;
-}
-
-/**
- * Represents a single grocery purchase.
- * The cost is shared among the specified members.
+ * Represents a single grocery item purchased.
  */
 export interface GroceryItem {
-  id:string;
+  id: string;
   name: string;
   amount: number;
-  date: string; // ISO string format for simplicity
-  memberIds: string[]; // IDs of members who shared this item
+  date: string; // ISO string format for dates
+  purchaserId: string; // UID of the user who bought it
 }
 
 /**
- * Represents a deposit made by a member into the shared pool.
+ * Represents a deposit made by a user into the shared fund.
  */
 export interface Deposit {
   id: string;
-  memberId: string;
   amount: number;
   date: string; // ISO string format
+  userId: string; // UID of the user who made the deposit
 }
 
-export type ParsedDeposit = {
-    memberName: string;
-    amount: number;
-    date: string;
-};
-
-export type ParsedGrocery = {
-    name: string;
-    amount: number;
-    date: string;
-};
+/**
+ * Represents a participant in the meal sharing group.
+ * In this system, a participant is synonymous with a user.
+ */
+export interface Participant {
+  id: string; // Corresponds to User's uid
+  email: string;
+}

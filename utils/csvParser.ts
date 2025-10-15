@@ -1,52 +1,69 @@
 /**
  * @file csvParser.ts
- * @summary A utility for parsing CSV files into structured data.
+ * @summary Utility functions for parsing CSV files.
  */
-import { ParsedDeposit, ParsedGrocery } from '../types';
+import { GroceryItem } from '../types';
 
 /**
- * Parses a CSV string for deposit data.
- * Expected format: memberName,amount,date (e.g., "John Doe,50,2023-10-27")
- * @param {string} csvString - The raw CSV content.
- * @returns {ParsedDeposit[]} An array of parsed deposit objects.
+ * Parses a CSV file and returns an array of grocery items.
+ * A simple implementation without external libraries.
+ * @param {File} file - The CSV file to parse.
+ * @returns {Promise<Omit<GroceryItem, 'id' | 'purchaserId'>[]>} A promise that resolves with the parsed data.
  */
-export const parseDepositsCSV = (csvString: string): ParsedDeposit[] => {
-    const lines = csvString.trim().split('\n');
-    const results: ParsedDeposit[] = [];
-
-    // Skip header if it exists
-    const startIndex = lines[0] && lines[0].toLowerCase().includes('member') ? 1 : 0;
-
-    for (let i = startIndex; i < lines.length; i++) {
-        if (!lines[i]) continue; // Skip empty lines
-        const [memberName, amountStr, date] = lines[i].split(',').map(s => s.trim());
-        const amount = parseFloat(amountStr);
-        if (memberName && !isNaN(amount) && date) {
-            results.push({ memberName, amount, date });
+export const parseCsv = (file: File): Promise<Omit<GroceryItem, 'id' | 'purchaserId'>[]> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const csvText = event.target?.result as string;
+        if (!csvText) {
+          return resolve([]);
         }
-    }
-    return results;
-};
-
-/**
- * Parses a CSV string for grocery data.
- * Expected format: name,amount,date (e.g., "Milk,5.99,2023-10-27")
- * @param {string} csvString - The raw CSV content.
- * @returns {ParsedGrocery[]} An array of parsed grocery objects.
- */
-export const parseGroceriesCSV = (csvString: string): ParsedGrocery[] => {
-    const lines = csvString.trim().split('\n');
-    const results: ParsedGrocery[] = [];
-
-    const startIndex = lines[0] && lines[0].toLowerCase().includes('name') ? 1 : 0;
-
-    for (let i = startIndex; i < lines.length; i++) {
-        if (!lines[i]) continue; // Skip empty lines
-        const [name, amountStr, date] = lines[i].split(',').map(s => s.trim());
-        const amount = parseFloat(amountStr);
-        if (name && !isNaN(amount) && date) {
-            results.push({ name, amount, date });
+        
+        const lines = csvText.trim().split(/\r\n|\n/); // Handle different line endings
+        const headerLine = lines.shift();
+        if (!headerLine) {
+          throw new Error("CSV file is empty or has no header row.");
         }
-    }
-    return results;
+        
+        // Simple CSV parsing: assumes no commas within quoted fields
+        const headers = headerLine.split(',').map(h => h.trim().toLowerCase());
+        const dateIndex = headers.indexOf('date');
+        const nameIndex = headers.indexOf('name');
+        const amountIndex = headers.indexOf('amount');
+
+        if (dateIndex === -1 || nameIndex === -1 || amountIndex === -1) {
+          throw new Error("CSV must contain 'date', 'name', and 'amount' headers.");
+        }
+
+        const data = lines
+          .filter(line => line.trim() !== '') // Skip empty lines
+          .map((line, index) => {
+            const values = line.split(',');
+            const amount = parseFloat(values[amountIndex]?.trim());
+
+            if (isNaN(amount)) {
+                throw new Error(`Invalid amount found on row ${index + 2}.`);
+            }
+
+            return {
+              date: values[dateIndex]?.trim(),
+              name: values[nameIndex]?.trim(),
+              amount: amount,
+            };
+          });
+        
+        resolve(data);
+
+      } catch (error) {
+        reject(error);
+      }
+    };
+
+    reader.onerror = (error) => {
+      reject(error);
+    };
+
+    reader.readAsText(file);
+  });
 };

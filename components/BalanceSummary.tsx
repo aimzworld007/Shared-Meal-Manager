@@ -1,57 +1,49 @@
 /**
  * @file BalanceSummary.tsx
- * @summary Displays a summary of each member's financial status.
+ * @summary Displays a detailed breakdown of the group's financial balance.
  */
 import React from 'react';
-import { Member } from '../types';
-
-interface MemberSummary extends Member {
-  totalDeposit: number;
-  share: number;
-  balance: number;
-}
 
 interface BalanceSummaryProps {
-  summaries: MemberSummary[];
+  summary: {
+    totalSpent: number; // Note: In this simplified view, this is the current user's spending
+    individualShare: number;
+    numberOfParticipants: number;
+  };
 }
 
 const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('en-AE', {
-      style: 'currency',
-      currency: 'AED',
-    }).format(amount);
-  };
+  return new Intl.NumberFormat('en-AE', {
+    style: 'currency',
+    currency: 'AED',
+  }).format(amount);
+};
 
-export const BalanceSummary: React.FC<BalanceSummaryProps> = ({ summaries }) => {
+const BalanceSummary: React.FC<BalanceSummaryProps> = ({ summary }) => {
+  const { totalSpent, individualShare, numberOfParticipants } = summary;
+
   return (
     <div className="bg-white shadow rounded-lg p-6">
-      <h3 className="text-lg font-medium leading-6 text-gray-900 mb-4">Balance Summary</h3>
-      <div className="flow-root">
-        <ul role="list" className="-my-5 divide-y divide-gray-200">
-          {summaries.map((summary) => (
-            <li key={summary.id} className="py-4">
-              <div className="flex items-center space-x-4">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">{summary.name}</p>
-                  <p className="text-sm text-gray-500 truncate">
-                    Deposited: {formatCurrency(summary.totalDeposit)} | Share: {formatCurrency(summary.share)}
-                  </p>
-                </div>
-                <div>
-                  <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium ${
-                      summary.balance >= 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                    }`}
-                  >
-                    {formatCurrency(summary.balance)}
-                  </span>
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
-       {summaries.length === 0 && <p className="text-center text-gray-500 mt-4">Add members to see their balance summary.</p>}
+      <h3 className="text-lg font-medium text-gray-900 mb-4">Balance Summary</h3>
+      <ul className="space-y-3 text-sm">
+        <li className="flex justify-between">
+          <span className="text-gray-600">Total Group Expense (Tracked by you):</span>
+          <span className="font-semibold text-gray-800">{formatCurrency(totalSpent)}</span>
+        </li>
+        <li className="flex justify-between">
+          <span className="text-gray-600">Number of Participants:</span>
+          <span className="font-semibold text-gray-800">{numberOfParticipants}</span>
+        </li>
+        <li className="flex justify-between border-t pt-3 mt-3">
+          <span className="text-gray-600 font-bold">Your Individual Share:</span>
+          <span className="font-bold text-indigo-600">{formatCurrency(individualShare)}</span>
+        </li>
+      </ul>
+      <p className="mt-4 text-xs text-gray-500">
+        Your share is calculated based on the expenses you've logged. Your personal balance is your total deposits minus this share.
+      </p>
     </div>
   );
 };
+
+export default BalanceSummary;
