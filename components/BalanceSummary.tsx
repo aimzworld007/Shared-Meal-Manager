@@ -21,9 +21,9 @@ const formatCurrency = (amount: number): string => {
 const MemberBalanceTable: React.FC<MemberBalanceTableProps> = ({ summary }) => {
 
   const handleDownloadCsv = () => {
-    const headers = ['Member', 'Total Purchase', 'Total Deposit', 'Balance', 'Status'];
+    const headers = ['Member Name', 'Total Purchase', 'Total Deposit', 'Balance', 'Status'];
     const rows = summary.members.map(member => [
-      `"${member.email}"`,
+      `"${member.name}"`,
       member.totalPurchase.toFixed(2),
       member.totalDeposit.toFixed(2),
       member.balance.toFixed(2),
@@ -57,7 +57,7 @@ const MemberBalanceTable: React.FC<MemberBalanceTableProps> = ({ summary }) => {
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member</th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member Name</th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Purchase</th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Deposit</th>
               <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Balance</th>
@@ -67,7 +67,7 @@ const MemberBalanceTable: React.FC<MemberBalanceTableProps> = ({ summary }) => {
           <tbody className="bg-white divide-y divide-gray-200">
             {summary.members.map((member) => (
               <tr key={member.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{member.email}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{member.name}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{formatCurrency(member.totalPurchase)}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{formatCurrency(member.totalDeposit)}</td>
                 <td className={`px-6 py-4 whitespace-nowrap text-sm font-semibold ${member.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>

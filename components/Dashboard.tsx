@@ -7,9 +7,8 @@ import { useAuth } from '../hooks/useAuth';
 import { useMealManager } from '../hooks/useMealManager';
 import { SummaryCard } from './SummaryCard';
 import MemberBalanceTable from './BalanceSummary';
-import MemberManager from './ParticipantManager';
 import GroceryManager from './GroceryManager';
-import DepositManager from './DepositManager';
+import MemberAndDepositManager from './MemberAndDepositManager';
 import { logoDataUri } from '../assets/logo';
 import PermissionsError from './PermissionsError';
 
@@ -64,7 +63,7 @@ const Dashboard: React.FC = () => {
         
         {!loading && !error && (
           <div className="space-y-8">
-            {/* <!-- Summary Stats --> */}
+            {/* 1. Summary Stats */}
             <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
               <SummaryCard title="Total Members" value={summary.totalMembers} />
               <SummaryCard title="Total Grocery Cost" value={summary.totalGroceryCost} isCurrency />
@@ -72,8 +71,7 @@ const Dashboard: React.FC = () => {
               <SummaryCard title="Average Expense" value={summary.averageExpense} isCurrency />
             </div>
             
-            <MemberBalanceTable summary={summary} />
-            <MemberManager members={members} onAddMember={addMember} />
+            {/* 2. Grocery Expenses */}
             <GroceryManager 
               groceries={summary.allGroceries} 
               members={members}
@@ -81,12 +79,19 @@ const Dashboard: React.FC = () => {
               onAddMultipleGroceries={addMultipleGroceryItems}
               onDeleteGrocery={deleteGroceryItem} 
             />
-            <DepositManager 
-              deposits={summary.allDeposits}
+
+            {/* 3. Member & Deposit Management */}
+            <MemberAndDepositManager
               members={members}
+              deposits={summary.allDeposits}
+              onAddMember={addMember}
               onAddDeposit={addDepositItem}
               onDeleteDeposit={deleteDepositItem}
             />
+            
+            {/* 4. Final Balance Table */}
+            <MemberBalanceTable summary={summary} />
+
           </div>
         )}
       </main>

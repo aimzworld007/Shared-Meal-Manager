@@ -116,7 +116,7 @@ const GroceryManager: React.FC<GroceryManagerProps> = ({ groceries, members, onA
               <tr key={item.id}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(item.date).toLocaleDateString()}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.name}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.purchaserEmail}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.purchaserName}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{formatCurrency(item.amount)}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   <button onClick={() => handleDeleteClick(item)} className="text-red-600 hover:text-red-900">Delete</button>
@@ -133,7 +133,7 @@ const GroceryManager: React.FC<GroceryManagerProps> = ({ groceries, members, onA
               <label htmlFor="purchaser" className="block text-sm font-medium text-gray-700">Purchased By</label>
               <select id="purchaser" value={purchaserId} onChange={(e) => setPurchaserId(e.target.value)} required className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                 {members.map(member => (
-                    <option key={member.id} value={member.id}>{member.email}</option>
+                    <option key={member.id} value={member.id}>{member.name}</option>
                 ))}
               </select>
            </div>

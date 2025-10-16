@@ -25,7 +25,7 @@ export const useMealManager = () => {
                 throw err;
             }
 
-            // Fetch groceries and deposits in parallel now that we know we have basic admin access
+            // Fetch groceries and deposits in parallel
             const [groceriesData, depositsData] = await Promise.all([
                 api.getAllGroceries().catch(err => {
                     console.error("Failed to fetch groceries:", err);
@@ -39,22 +39,22 @@ export const useMealManager = () => {
                 })
             ]);
             
-            // Create a map for quick email lookups
-            const memberMap = new Map(membersData.map(m => [m.id, m.email]));
+            // Create a map for quick name lookups
+            const memberMap = new Map(membersData.map(m => [m.id, m.name]));
 
-            // Join member emails with grocery and deposit data
-            const groceriesWithEmail = groceriesData.map(g => ({
+            // Join member names with grocery and deposit data
+            const groceriesWithName = groceriesData.map(g => ({
                 ...g,
-                purchaserEmail: memberMap.get(g.purchaserId) || 'Unknown Member'
+                purchaserName: memberMap.get(g.purchaserId) || 'Unknown Member'
             }));
 
-            const depositsWithEmail = depositsData.map(d => ({
+            const depositsWithName = depositsData.map(d => ({
                 ...d,
-                userEmail: memberMap.get(d.userId) || 'Unknown Member'
+                userName: memberMap.get(d.userId) || 'Unknown Member'
             }));
             
-            setAllGroceries(groceriesWithEmail);
-            setAllDeposits(depositsWithEmail);
+            setAllGroceries(groceriesWithName);
+            setAllDeposits(depositsWithName);
             setMembers(membersData);
 
         } catch (err: any) {
@@ -165,14 +165,13 @@ export const useMealManager = () => {
         }
     };
     
-    const addMember = async (email: string, pass: string) => {
+    const addMember = async (name: string) => {
         try {
-            await api.signUp(email, pass);
-            // Firebase client SDK signs out the admin here.
-            // We fetch data, but the app will likely kick the user to the login page.
+            await api.addMember(name);
             await fetchData();
         } catch(e) {
             console.error("Failed to add member", e);
+            setError("Failed to add new member.");
             throw e;
         }
     };

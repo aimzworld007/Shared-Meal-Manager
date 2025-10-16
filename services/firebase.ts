@@ -48,17 +48,18 @@ export const signIn = (email: string, pass: string) => {
 };
 
 /**
- * Creates a new user (member) with email and password. Used by admin.
- * NOTE: Using the client SDK for this will sign the admin out and sign the new user in.
- * The UI should inform the admin to log back in. A robust solution uses a backend function.
+ * Creates a new user with email and password for authentication purposes.
+ * Primarily for creating new admin users.
  */
 export const signUp = async (email: string, pass: string) => {
   const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
   const user = userCredential.user;
-  // Create a document for the new user
+  // Create a document for the new auth user, e.g., for role management
   await setDoc(doc(db, "users", user.uid), {
     email: user.email,
-    role: "user" // Default role for members
+    // New users created via sign-up could be assigned a default role.
+    // Admin role must be set manually in Firestore for security.
+    role: "user" 
   });
   return userCredential;
 };
@@ -97,6 +98,7 @@ export const onAuthChange = (callback: (user: User | null) => void) => {
 // Top-level collection references
 const groceriesCol = collection(db, 'groceries');
 const depositsCol = collection(db, 'deposits');
+const membersCol = collection(db, 'members'); // New collection for members
 
 // --- Groceries ---
 export const getAllGroceries = async (): Promise<GroceryItem[]> => {
@@ -117,9 +119,19 @@ export const updateDeposit = (depositId: string, data: Partial<Deposit>) => upda
 export const deleteDeposit = (depositId: string) => deleteDoc(doc(depositsCol, depositId));
 
 
-// --- Members (Users) ---
+// --- Members ---
+/**
+ * Retrieves all members from the 'members' collection.
+ */
 export const getMembers = async (): Promise<Participant[]> => {
-    const usersQuery = query(collection(db, 'users'), orderBy('email'));
-    const querySnapshot = await getDocs(usersQuery);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, email: doc.data().email } as Participant));
+    const membersQuery = query(membersCol, orderBy('name'));
+    const querySnapshot = await getDocs(membersQuery);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name } as Participant));
+};
+
+/**
+ * Adds a new member to the 'members' collection.
+ */
+export const addMember = (name: string) => {
+    return addDoc(membersCol, { name });
 };
