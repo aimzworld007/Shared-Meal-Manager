@@ -23,8 +23,10 @@ import {
   query,
   orderBy,
   setDoc,
+  getDoc,
 } from "firebase/firestore";
-import { User, GroceryItem, Deposit, Participant } from "../types";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { User, GroceryItem, Deposit, Participant, SiteSettings } from "../types";
 
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
@@ -41,6 +43,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const storage = getStorage(app);
 
 // --- Helper to get user-specific subcollection ref ---
 const getUserSubcollection = (collectionName: string) => {
@@ -60,13 +63,9 @@ export const signUp = async (email: string, pass: string) => {
   return userCredential;
 };
 export const signOut = () => firebaseSignOut(auth);
-export const onAuthChange = (callback: (user: User | null) => void) => {
-  return onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
-    if (firebaseUser) {
-      callback({ uid: firebaseUser.uid, email: firebaseUser.email });
-    } else {
-      callback(null);
-    }
+export const onAuthChange = (callback: (user: FirebaseUser | null) => void) => {
+  return onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
+    callback(firebaseUser);
   });
 };
 export const sendPasswordResetEmail = (email: string) => firebaseSendPasswordResetEmail(auth, email);
@@ -86,6 +85,28 @@ export const changeUserPassword = (newPassword: string) => {
   if (!auth.currentUser) throw new Error("User not authenticated.");
   return updatePassword(auth.currentUser, newPassword);
 };
+
+// --- Site Settings Service (Admin only) ---
+const siteSettingsRef = doc(db, 'siteSettings', 'config');
+
+export const getSiteSettings = async (): Promise<SiteSettings | null> => {
+    const docSnap = await getDoc(siteSettingsRef);
+    if (docSnap.exists()) {
+        return docSnap.data() as SiteSettings;
+    }
+    return null;
+};
+
+export const updateSiteSettings = (data: Partial<SiteSettings>) => {
+    return setDoc(siteSettingsRef, data, { merge: true });
+};
+
+export const uploadLogo = async (file: File): Promise<string> => {
+    const logoRef = ref(storage, `site/logo-${new Date().getTime()}`);
+    await uploadBytes(logoRef, file);
+    return getDownloadURL(logoRef);
+};
+
 
 // --- Firestore Service (User-Scoped) ---
 

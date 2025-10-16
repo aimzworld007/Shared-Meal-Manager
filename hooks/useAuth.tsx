@@ -8,6 +8,9 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { User } from '../types';
 import * as api from '../services/firebase';
+import { User as FirebaseUser } from 'firebase/auth';
+
+const SUPER_ADMIN_EMAIL = 'aimctgbd@gmail.com';
 
 /**
  * Defines the shape of the authentication context.
@@ -49,8 +52,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const unsubscribe = api.onAuthChange((user) => {
-      setUser(user);
+    const unsubscribe = api.onAuthChange((firebaseUser: FirebaseUser | null) => {
+      if (firebaseUser) {
+        const isAdmin = firebaseUser.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+        setUser({ uid: firebaseUser.uid, email: firebaseUser.email, isAdmin });
+      } else {
+        setUser(null);
+      }
       setLoading(false);
     });
     return () => unsubscribe();
@@ -110,7 +118,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       await api.changeUserEmail(newEmail);
       // Manually update user state since onAuthChange might not fire immediately
-      if(user) setUser({...user, email: newEmail});
+      if(user) {
+        const isAdmin = newEmail.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+        setUser({...user, email: newEmail, isAdmin});
+      }
     } catch(err) {
       handleError(err);
     }

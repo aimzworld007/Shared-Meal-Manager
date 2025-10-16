@@ -10,6 +10,16 @@
 export interface User {
   uid: string;
   email: string | null;
+  isAdmin?: boolean;
+}
+
+/**
+ * Represents site-wide settings configurable by an admin.
+ */
+export interface SiteSettings {
+  siteTitle: string;
+  siteDescription: string;
+  logoUrl: string;
 }
 
 /**

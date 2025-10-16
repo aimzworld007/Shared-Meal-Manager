@@ -10,7 +10,11 @@ import { logoDataUri } from '../assets/logo';
 
 type AuthView = 'login' | 'signup' | 'forgot';
 
-const Login: React.FC = () => {
+interface LoginProps {
+  logoUrl?: string;
+}
+
+const Login: React.FC<LoginProps> = ({ logoUrl }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [formLoading, setFormLoading] = useState(false);
@@ -72,7 +76,7 @@ const Login: React.FC = () => {
   return (
     <div className="flex items-center justify-center min-h-full py-12 px-4 sm:px-6 lg:px-8">
       <div className="p-8 bg-white rounded-lg shadow-xl text-center max-w-sm w-full">
-        <img src={logoDataUri} alt="Shared Meal Manager Logo" className="w-40 mx-auto mb-4" />
+        <img src={logoUrl || logoDataUri} alt="Shared Meal Manager Logo" className="w-40 h-40 object-contain mx-auto mb-4" />
         <h2 className="text-2xl font-bold text-gray-800">{titles[view]}</h2>
         <p className="text-gray-600 mt-2 mb-6">
           {descriptions[view]}
