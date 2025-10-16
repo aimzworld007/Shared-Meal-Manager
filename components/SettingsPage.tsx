@@ -239,7 +239,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ mealManager }) => {
                 <p className="text-sm text-gray-600 dark:text-gray-400">Current Email: <span className="font-semibold">{user?.email}</span></p>
                  <div>
                     <label htmlFor="newEmail" className="block text-sm font-medium text-gray-700 dark:text-gray-300">New Email</label>
-                    <input id="newEmail" type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} className="mt-1 block w-full sm:w-80 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700" />
+                    <input id="newEmail" type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} className="mt-1 block w-full sm:w-80 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-300" />
                 </div>
                 <button onClick={handleEmailChange} className="inline-flex items-center justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
                     Change Email
@@ -249,11 +249,11 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ mealManager }) => {
                  <h4 className="font-medium text-gray-900 dark:text-gray-100">Change Password</h4>
                  <div>
                     <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">New Password</label>
-                    <input id="newPassword" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="mt-1 block w-full sm:w-80 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700" placeholder="Min. 6 characters" />
+                    <input id="newPassword" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="mt-1 block w-full sm:w-80 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-300" placeholder="Min. 6 characters" />
                 </div>
                  <div>
                     <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Confirm New Password</label>
-                    <input id="confirmPassword" type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="mt-1 block w-full sm:w-80 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700" />
+                    <input id="confirmPassword" type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="mt-1 block w-full sm:w-80 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-300" />
                 </div>
                  <button onClick={handlePasswordChange} className="inline-flex items-center justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
                     Change Password
@@ -276,11 +276,11 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ mealManager }) => {
         <form onSubmit={handleMemberSubmit} className="space-y-4">
           <div>
             <label htmlFor="memberName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Member Name</label>
-            <input id="memberName" type="text" value={memberName} onChange={e => setMemberName(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700" />
+            <input id="memberName" type="text" value={memberName} onChange={e => setMemberName(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-300" />
           </div>
           <div>
             <label htmlFor="memberPhone" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number</label>
-            <input id="memberPhone" type="tel" value={memberPhone} onChange={e => setMemberPhone(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700" />
+            <input id="memberPhone" type="tel" value={memberPhone} onChange={e => setMemberPhone(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-300" />
           </div>
           <div className="pt-2 flex justify-end">
             <button type="submit" disabled={isSubmittingMember} className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400">

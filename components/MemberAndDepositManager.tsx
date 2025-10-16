@@ -53,35 +53,35 @@ const MemberAndDepositManager: React.FC<MemberAndDepositManagerProps> = ({ depos
   };
 
   return (
-    <div className="bg-white shadow-lg rounded-lg">
-        <div className="px-6 py-4 bg-gray-50 border-b rounded-t-lg flex flex-wrap justify-between items-center gap-2">
-            <h3 className="text-lg font-semibold text-gray-800">Deposit History</h3>
+    <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg">
+        <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-b dark:border-gray-700 rounded-t-lg flex flex-wrap justify-between items-center gap-2">
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Deposit History</h3>
         </div>
         <div className="overflow-x-auto">
             <table className="min-w-full">
-            <thead className="bg-gray-100">
+            <thead className="bg-gray-100 dark:bg-gray-700">
                 <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Member</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</th>
                 <th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
                 </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {deposits.length === 0 && (
-                <tr><td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500">No deposits added yet.</td></tr>
+                <tr><td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">No deposits added yet.</td></tr>
                 )}
                 {deposits.map((item) => (
                 <tr key={item.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(item.date).toLocaleDateString()}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.userName}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-800">{formatCurrency(item.amount)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{new Date(item.date).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{item.userName}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-800 dark:text-green-400">{formatCurrency(item.amount)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex items-center justify-end gap-3">
-                        <button onClick={() => handleShareWhatsApp(item)} className="text-green-600 hover:text-green-800" title="Share on WhatsApp">
+                        <button onClick={() => handleShareWhatsApp(item)} className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300" title="Share on WhatsApp">
                         <WhatsAppIcon />
                         </button>
-                    <button onClick={() => onEditDeposit(item)} className="text-indigo-600 hover:text-indigo-900">Edit / Transfer</button>
-                    <button onClick={() => handleDeleteClick(item)} className="text-red-600 hover:text-red-900">Delete</button>
+                    <button onClick={() => onEditDeposit(item)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">Edit / Transfer</button>
+                    <button onClick={() => handleDeleteClick(item)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">Delete</button>
                     </td>
                 </tr>
                 ))}

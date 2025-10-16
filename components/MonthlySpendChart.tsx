@@ -15,6 +15,7 @@ import {
   ChartOptions,
 } from 'chart.js';
 import { GroceryItem } from '../types';
+import { useTheme } from '../App';
 
 ChartJS.register(
   CategoryScale,
@@ -39,6 +40,8 @@ interface MonthlySpendChartProps {
 }
 
 const MonthlySpendChart: React.FC<MonthlySpendChartProps> = ({ groceries }) => {
+  const { theme } = useTheme();
+
   const chartData = useMemo(() => {
     const monthlyTotals = Array(12).fill(0);
     const currentYear = new Date().getFullYear();
@@ -66,64 +69,75 @@ const MonthlySpendChart: React.FC<MonthlySpendChartProps> = ({ groceries }) => {
     };
   }, [groceries]);
 
-  const chartOptions: ChartOptions<'bar'> = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: {
-        display: false,
-      },
-      title: {
-        display: true,
-        text: `Grocery Spending for ${new Date().getFullYear()}`,
-        font: {
-            size: 18,
-            weight: 'bold',
+  const chartOptions: ChartOptions<'bar'> = useMemo(() => {
+    const textColor = theme === 'dark' ? 'rgba(229, 231, 235, 0.8)' : 'rgba(55, 65, 81, 1)';
+    const gridColor = theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(200, 200, 200, 0.2)';
+
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false,
         },
-        padding: {
-            bottom: 20,
-        }
-      },
-      tooltip: {
-        callbacks: {
-          label: function(context) {
-            let label = context.dataset.label || '';
-            if (label) {
-              label += ': ';
-            }
-            if (context.parsed.y !== null) {
-              label += formatCurrency(context.parsed.y);
-            }
-            return label;
-          }
-        }
-      }
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        ticks: {
-          callback: function(value) {
-            if (typeof value === 'number') {
-                return formatCurrency(value);
-            }
-            return value;
+        title: {
+          display: true,
+          text: `Grocery Spending for ${new Date().getFullYear()}`,
+          color: textColor,
+          font: {
+              size: 18,
+              weight: 'bold',
+          },
+          padding: {
+              bottom: 20,
           }
         },
-        grid: {
-            color: 'rgba(200, 200, 200, 0.2)',
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              let label = context.dataset.label || '';
+              if (label) {
+                label += ': ';
+              }
+              if (context.parsed.y !== null) {
+                label += formatCurrency(context.parsed.y);
+              }
+              return label;
+            }
+          }
         }
       },
-      x: {
-         grid: {
-            display: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            color: textColor,
+            callback: function(value) {
+              if (typeof value === 'number') {
+                  return formatCurrency(value);
+              }
+              return value;
+            }
+          },
+          grid: {
+              color: gridColor,
+          }
+        },
+        x: {
+           ticks: {
+             color: textColor
+           },
+           grid: {
+              display: false,
+          }
         }
-      }
-    },
-  };
+      },
+    };
+  }, [theme]);
+
 
   return (
-    <div className="bg-white shadow-lg rounded-lg p-6">
+    <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6">
         <div style={{ height: '350px' }}>
              <Bar options={chartOptions} data={chartData} />
         </div>

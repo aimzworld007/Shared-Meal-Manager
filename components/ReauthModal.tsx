@@ -38,16 +38,16 @@ const ReauthModal: React.FC<ReauthModalProps> = ({ isOpen, onClose, onSuccess, a
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title}>
       <form onSubmit={handleSubmit} className="space-y-4">
-        <p className="text-sm text-gray-600">{message}</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400">{message}</p>
         <div>
-          <label htmlFor="current-password"className="block text-sm font-medium text-gray-700">Current Password</label>
+          <label htmlFor="current-password"className="block text-sm font-medium text-gray-700 dark:text-gray-300">Current Password</label>
           <input
             id="current-password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
           />
         </div>
         

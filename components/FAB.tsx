@@ -46,13 +46,13 @@ const FAB: React.FC<FABProps> = ({ onAddExpense, onAddDeposit }) => {
              {/* Action Buttons */}
             <div className={`transition-all duration-300 ease-in-out flex flex-col items-center gap-4 ${isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
                  <div className="flex items-center gap-3">
-                    <span className="bg-white text-sm text-gray-700 font-semibold px-3 py-1 rounded-md shadow-lg">Add Deposit</span>
+                    <span className="bg-white dark:bg-gray-700 text-sm text-gray-700 dark:text-gray-300 font-semibold px-3 py-1 rounded-md shadow-lg">Add Deposit</span>
                     <button onClick={handleAddDeposit} className="bg-green-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
                         <DepositIcon />
                     </button>
                 </div>
                 <div className="flex items-center gap-3">
-                    <span className="bg-white text-sm text-gray-700 font-semibold px-3 py-1 rounded-md shadow-lg">Add Expense</span>
+                    <span className="bg-white dark:bg-gray-700 text-sm text-gray-700 dark:text-gray-300 font-semibold px-3 py-1 rounded-md shadow-lg">Add Expense</span>
                     <button onClick={handleAddExpense} className="bg-indigo-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
                        <GroceryIcon />
                     </button>

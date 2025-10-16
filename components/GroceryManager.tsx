@@ -58,14 +58,14 @@ const GroceryManager: React.FC<GroceryManagerProps> = (props) => {
   const totalGroceryCost = props.groceries.reduce((sum, item) => sum + item.amount, 0);
 
   return (
-    <div className="bg-white shadow-lg rounded-lg">
-      <div className="px-6 py-4 bg-gray-50 border-b rounded-t-lg flex justify-between items-center flex-wrap gap-2">
+    <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg">
+      <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-b dark:border-gray-700 rounded-t-lg flex justify-between items-center flex-wrap gap-2">
         <div>
-          <h3 className="text-xl font-bold text-gray-800">Grocery Bill</h3>
-          <p className="text-2xl font-semibold text-indigo-600">{formatCurrency(totalGroceryCost)}</p>
+          <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200">Grocery Bill</h3>
+          <p className="text-2xl font-semibold text-indigo-600 dark:text-indigo-400">{formatCurrency(totalGroceryCost)}</p>
         </div>
         <div className="flex items-center gap-2">
-            <button onClick={() => setIsFilterModalOpen(true)} className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50">
+            <button onClick={() => setIsFilterModalOpen(true)} className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">
                 <FilterIcon />
                 Filter
             </button>
@@ -73,29 +73,29 @@ const GroceryManager: React.FC<GroceryManagerProps> = (props) => {
       </div>
 
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-100">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="bg-gray-100 dark:bg-gray-700">
             <tr>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Purchased By</th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Item</th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Purchased By</th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</th>
               <th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             {props.groceries.length === 0 && (
-              <tr><td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">No expenses recorded for the selected period.</td></tr>
+              <tr><td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">No expenses recorded for the selected period.</td></tr>
             )}
             {props.groceries.map((item) => (
               <tr key={item.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{new Date(item.date).toLocaleDateString()}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.name}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{item.purchaserName}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-800">{formatCurrency(item.amount)}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">{new Date(item.date).toLocaleDateString()}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{item.name}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">{item.purchaserName}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-800 dark:text-gray-200">{formatCurrency(item.amount)}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
-                   <button onClick={() => props.onEditGrocery(item)} className="text-indigo-600 hover:text-indigo-900">Edit</button>
-                   <button onClick={() => handleDeleteClick(item)} className="text-red-600 hover:text-red-900">Delete</button>
+                   <button onClick={() => props.onEditGrocery(item)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">Edit</button>
+                   <button onClick={() => handleDeleteClick(item)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">Delete</button>
                 </td>
               </tr>
             ))}
