@@ -11,6 +11,7 @@ import GroceryManager from './GroceryManager';
 import MemberAndDepositManager from './MemberAndDepositManager';
 import PermissionsError from './PermissionsError';
 import SettingsPage from './SettingsPage';
+import MonthlySpendChart from './MonthlySpendChart';
 import { logoUrl as defaultLogoUrl } from '../assets/logo';
 
 // Define the BeforeInstallPromptEvent interface for PWA installation
@@ -67,6 +68,7 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
     error,
     summary,
     members,
+    groceries,
     refreshData,
   } = mealManager;
 
@@ -99,7 +101,12 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
               onResetFilters={mealManager.resetFilters}
             />
           )}
-          {activeTab === 'balance' && <MainBalanceSummary summary={summary} />}
+          {activeTab === 'balance' && (
+            <div className="space-y-8">
+              <MonthlySpendChart groceries={groceries} />
+              <MainBalanceSummary summary={summary} />
+            </div>
+          )}
           {activeTab === 'accounts' && <IndividualAccounts members={summary.members} groceries={summary.allGroceries} />}
           {activeTab === 'deposit' && (
             <MemberAndDepositManager

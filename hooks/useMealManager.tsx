@@ -6,7 +6,7 @@ import { ParsedGroceryItem } from '../utils/csvParser';
 export const useMealManager = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [allGroceries, setAllGroceries] = useState<GroceryItem[]>([]);
+    const [groceries, setGroceries] = useState<GroceryItem[]>([]);
     const [allDeposits, setAllDeposits] = useState<Deposit[]>([]);
     const [members, setMembers] = useState<Participant[]>([]);
     
@@ -42,7 +42,7 @@ export const useMealManager = () => {
                 userName: memberMap.get(d.userId) || 'Unknown Member'
             }));
             
-            setAllGroceries(groceriesWithName);
+            setGroceries(groceriesWithName);
             setAllDeposits(depositsWithName);
             setMembers(membersData);
 
@@ -65,7 +65,7 @@ export const useMealManager = () => {
     // --- Memoized Calculations ---
     const summary = useMemo(() => {
         // Filter groceries and deposits based on the selected date range
-        const filteredGroceries = allGroceries.filter(item => {
+        const filteredGroceries = groceries.filter(item => {
             const itemDate = item.date.split('T')[0];
             if (startDate && itemDate < startDate) return false;
             if (endDate && itemDate > endDate) return false;
@@ -134,7 +134,7 @@ export const useMealManager = () => {
             allGroceries: filteredGroceries.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
             allDeposits: filteredDeposits.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
         };
-    }, [allGroceries, allDeposits, members, startDate, endDate, minAmount, maxAmount, selectedPurchaser]);
+    }, [groceries, allDeposits, members, startDate, endDate, minAmount, maxAmount, selectedPurchaser]);
 
     // --- CRUD Functions ---
     const addGroceryItem = async (item: Omit<GroceryItem, 'id'>) => {
@@ -190,7 +190,7 @@ export const useMealManager = () => {
             fetchData();
         } catch (err) {
             console.error("Error importing grocery items:", err);
-            // Fix: Type 'unknown' is not assignable to type 'string'. Handle unknown error type before setting error message.
+            // Fix: The `err` object in a catch block is of type `unknown`. We must check if it's an instance of `Error` before accessing the `message` property to avoid a type error.
             let message = "Failed to import grocery items.";
             if (err instanceof Error) {
                 message = err.message;
@@ -301,6 +301,7 @@ export const useMealManager = () => {
         error,
         summary,
         members,
+        groceries,
         refreshData: fetchData,
         // Groceries
         addGroceryItem,
