@@ -11,6 +11,7 @@ import MemberManager from './ParticipantManager';
 import GroceryManager from './GroceryManager';
 import DepositManager from './DepositManager';
 import { logoDataUri } from '../assets/logo';
+import PermissionsError from './PermissionsError';
 
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
@@ -25,7 +26,11 @@ const Dashboard: React.FC = () => {
     addDepositItem, 
     deleteDepositItem,
     addMember,
+    refreshData,
   } = useMealManager();
+
+  // Check if the specific permission error is present
+  const isPermissionError = error && error.includes('Permission Denied');
 
   return (
     <div className="bg-gray-100">
@@ -46,7 +51,16 @@ const Dashboard: React.FC = () => {
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         {loading && <p className="text-center text-gray-600">Loading dashboard data...</p>}
-        {error && <p className="text-center text-red-500 bg-red-100 p-4 rounded-md">{error}</p>}
+        
+        {/* Render the specific PermissionsError component if it's a permission issue */}
+        {isPermissionError && (
+          <PermissionsError errorMessage={error} onRetry={refreshData} />
+        )}
+
+        {/* Render a generic error for other issues */}
+        {!isPermissionError && error && (
+          <p className="text-center text-red-500 bg-red-100 p-4 rounded-md">{error}</p>
+        )}
         
         {!loading && !error && (
           <div className="space-y-8">

@@ -1,31 +1,65 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import * as api from '../services/firebase';
-import { UserDataSummary } from '../services/firebase';
 import { GroceryItem, Deposit, Participant, Member } from '../types';
 
 export const useMealManager = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [allData, setAllData] = useState<UserDataSummary[]>([]);
+    const [allGroceries, setAllGroceries] = useState<GroceryItem[]>([]);
+    const [allDeposits, setAllDeposits] = useState<Deposit[]>([]);
     const [members, setMembers] = useState<Participant[]>([]);
 
     const fetchData = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
-            const [data, membersData] = await Promise.all([
-                api.fetchAllUsersData(),
-                api.getMembers()
-            ]);
-            setAllData(data);
-            setMembers(membersData);
-        } catch (err: any) {
-            console.error("Failed to fetch admin data:", err);
-            if (err.code === 'permission-denied') {
-                setError("Permission Denied: Could not load all user data. Please check your Firestore security rules to ensure the logged-in admin has permission to read all user collections and documents.");
-            } else {
-                setError("Could not load all meal data. Please try again later.");
+            // Fetch members first, as this is a common point of failure for admin permissions
+            let membersData: Participant[];
+            try {
+                membersData = await api.getMembers();
+            } catch (err: any) {
+                console.error("Failed to fetch members:", err);
+                if (err.code === 'permission-denied') {
+                    throw new Error("Permission Denied: Could not load members list. Please check your Firestore security rules and ensure the logged-in user has a document in the 'users' collection with a 'role' field set to 'admin'.");
+                }
+                throw err;
             }
+
+            // Fetch groceries and deposits in parallel now that we know we have basic admin access
+            const [groceriesData, depositsData] = await Promise.all([
+                api.getAllGroceries().catch(err => {
+                    console.error("Failed to fetch groceries:", err);
+                    if (err.code === 'permission-denied') throw new Error("Permission Denied: Could not load grocery data. Please check security rules for the 'groceries' collection.");
+                    throw err;
+                }),
+                api.getAllDeposits().catch(err => {
+                    console.error("Failed to fetch deposits:", err);
+                    if (err.code === 'permission-denied') throw new Error("Permission Denied: Could not load deposit data. Please check security rules for the 'deposits' collection.");
+                    throw err;
+                })
+            ]);
+            
+            // Create a map for quick email lookups
+            const memberMap = new Map(membersData.map(m => [m.id, m.email]));
+
+            // Join member emails with grocery and deposit data
+            const groceriesWithEmail = groceriesData.map(g => ({
+                ...g,
+                purchaserEmail: memberMap.get(g.purchaserId) || 'Unknown Member'
+            }));
+
+            const depositsWithEmail = depositsData.map(d => ({
+                ...d,
+                userEmail: memberMap.get(d.userId) || 'Unknown Member'
+            }));
+            
+            setAllGroceries(groceriesWithEmail);
+            setAllDeposits(depositsWithEmail);
+            setMembers(membersData);
+
+        } catch (err: any) {
+            // The more specific error from inner catches will be caught and displayed
+            setError(err.message || "An unknown error occurred while fetching data.");
         } finally {
             setLoading(false);
         }
@@ -37,20 +71,23 @@ export const useMealManager = () => {
     
     // --- Memoized Calculations ---
     const summary = useMemo(() => {
-        const allGroceries = allData.flatMap(d => d.groceries);
         const totalGroceryCost = allGroceries.reduce((sum, item) => sum + item.amount, 0);
-        
-        const allDeposits = allData.flatMap(d => d.deposits);
         const totalDeposits = allDeposits.reduce((sum, item) => sum + item.amount, 0);
 
         const memberCount = members.length > 0 ? members.length : 1;
         const averageExpense = totalGroceryCost / memberCount;
 
         const memberData: Member[] = members.map(member => {
-            const userData = allData.find(d => d.userId === member.id);
-            const totalPurchase = userData?.groceries.reduce((sum, item) => sum + item.amount, 0) ?? 0;
-            const totalDeposit = userData?.deposits.reduce((sum, item) => sum + item.amount, 0) ?? 0;
+            const totalPurchase = allGroceries
+                .filter(g => g.purchaserId === member.id)
+                .reduce((sum, item) => sum + item.amount, 0);
+            
+            const totalDeposit = allDeposits
+                .filter(d => d.userId === member.id)
+                .reduce((sum, item) => sum + item.amount, 0);
+
             const balance = (totalPurchase + totalDeposit) - averageExpense;
+            
             return {
                 ...member,
                 totalPurchase,
@@ -65,15 +102,15 @@ export const useMealManager = () => {
             totalDeposits,
             averageExpense,
             members: memberData,
-            allGroceries: allData.flatMap(d => d.groceries.map(g => ({...g, purchaserEmail: d.userEmail}))).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
-            allDeposits: allData.flatMap(d => d.deposits.map(dep => ({...dep, userEmail: d.userEmail}))).sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+            allGroceries: allGroceries.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+            allDeposits: allDeposits.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
         };
-    }, [allData, members]);
+    }, [allGroceries, allDeposits, members]);
 
     // --- CRUD Functions ---
     const addGroceryItem = async (item: Omit<GroceryItem, 'id'>) => {
         try {
-            await api.addGrocery(item.purchaserId, item);
+            await api.addGrocery(item);
             fetchData(); // Refresh data
         } catch (error) {
             console.error("Error adding grocery:", error);
@@ -85,7 +122,7 @@ export const useMealManager = () => {
     const addMultipleGroceryItems = async (items: Omit<GroceryItem, 'id'>[], memberId: string) => {
         if (!memberId) return;
         try {
-            const promises = items.map(item => api.addGrocery(memberId, { ...item, purchaserId: memberId }));
+            const promises = items.map(item => api.addGrocery({ ...item, purchaserId: memberId }));
             await Promise.all(promises);
             fetchData();
         } catch (error) {
@@ -97,7 +134,7 @@ export const useMealManager = () => {
 
     const deleteGroceryItem = async (item: GroceryItem) => {
         try {
-            await api.deleteGrocery(item.purchaserId, item.id);
+            await api.deleteGrocery(item.id);
             fetchData();
         } catch (error) {
             console.error("Error deleting grocery:", error);
@@ -108,7 +145,7 @@ export const useMealManager = () => {
 
     const addDepositItem = async (item: Omit<Deposit, 'id'>) => {
         try {
-            await api.addDeposit(item.userId, item);
+            await api.addDeposit(item);
             fetchData();
         } catch (error) {
             console.error("Error adding deposit:", error);
@@ -119,7 +156,7 @@ export const useMealManager = () => {
 
     const deleteDepositItem = async (item: Deposit) => {
         try {
-            await api.deleteDeposit(item.userId, item.id);
+            await api.deleteDeposit(item.id);
             fetchData();
         } catch (error) {
             console.error("Error deleting deposit:", error);

@@ -94,69 +94,32 @@ export const onAuthChange = (callback: (user: User | null) => void) => {
 
 // --- Firestore Service ---
 
-// Helper to get user subcollection reference
-const getGroceriesRef = (userId: string) => collection(db, 'users', userId, 'groceries');
-const getDepositsRef = (userId: string) => collection(db, 'users', userId, 'deposits');
+// Top-level collection references
+const groceriesCol = collection(db, 'groceries');
+const depositsCol = collection(db, 'deposits');
 
 // --- Groceries ---
-export const getGroceries = async (userId: string): Promise<GroceryItem[]> => {
-    const querySnapshot = await getDocs(query(getGroceriesRef(userId), orderBy('date', 'desc')));
+export const getAllGroceries = async (): Promise<GroceryItem[]> => {
+    const querySnapshot = await getDocs(query(groceriesCol, orderBy('date', 'desc')));
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GroceryItem));
 };
-export const addGrocery = (userId: string, item: Omit<GroceryItem, 'id'>) => addDoc(getGroceriesRef(userId), item);
-export const updateGrocery = (userId: string, itemId: string, data: Partial<GroceryItem>) => updateDoc(doc(getGroceriesRef(userId), itemId), data);
-export const deleteGrocery = (userId: string, itemId: string) => deleteDoc(doc(getGroceriesRef(userId), itemId));
+export const addGrocery = (item: Omit<GroceryItem, 'id'>) => addDoc(groceriesCol, item);
+export const updateGrocery = (itemId: string, data: Partial<GroceryItem>) => updateDoc(doc(groceriesCol, itemId), data);
+export const deleteGrocery = (itemId: string) => deleteDoc(doc(groceriesCol, itemId));
 
 // --- Deposits ---
-export const getDeposits = async (userId: string): Promise<Deposit[]> => {
-    const querySnapshot = await getDocs(query(getDepositsRef(userId), orderBy('date', 'desc')));
+export const getAllDeposits = async (): Promise<Deposit[]> => {
+    const querySnapshot = await getDocs(query(depositsCol, orderBy('date', 'desc')));
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Deposit));
 };
-export const addDeposit = (userId: string, deposit: Omit<Deposit, 'id'>) => addDoc(getDepositsRef(userId), deposit);
-export const updateDeposit = (userId: string, depositId: string, data: Partial<Deposit>) => updateDoc(doc(getDepositsRef(userId), depositId), data);
-export const deleteDeposit = (userId: string, depositId: string) => deleteDoc(doc(getDepositsRef(userId), depositId));
+export const addDeposit = (deposit: Omit<Deposit, 'id'>) => addDoc(depositsCol, deposit);
+export const updateDeposit = (depositId: string, data: Partial<Deposit>) => updateDoc(doc(depositsCol, depositId), data);
+export const deleteDeposit = (depositId: string) => deleteDoc(doc(depositsCol, depositId));
+
 
 // --- Members (Users) ---
 export const getMembers = async (): Promise<Participant[]> => {
     const usersQuery = query(collection(db, 'users'), orderBy('email'));
     const querySnapshot = await getDocs(usersQuery);
     return querySnapshot.docs.map(doc => ({ id: doc.id, email: doc.data().email } as Participant));
-};
-
-
-// --- Admin Data Fetching ---
-
-/**
- * Defines the comprehensive summary of a user's data for admin analytics.
- */
-export interface UserDataSummary {
-    userId: string;
-    userEmail: string;
-    groceries: GroceryItem[];
-    deposits: Deposit[];
-}
-
-/**
- * Fetches all data for all users. This is an admin-only function.
- */
-export const fetchAllUsersData = async (): Promise<UserDataSummary[]> => {
-    const usersSnapshot = await getDocs(collection(db, 'users'));
-    const allUserData: UserDataSummary[] = [];
-
-    for (const userDoc of usersSnapshot.docs) {
-        const userId = userDoc.id;
-        const userEmail = userDoc.data().email;
-
-        const groceries = await getGroceries(userId);
-        const deposits = await getDeposits(userId);
-
-        allUserData.push({
-            userId,
-            userEmail,
-            groceries,
-            deposits,
-        });
-    }
-
-    return allUserData;
 };
