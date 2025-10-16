@@ -125,6 +125,11 @@ export const deleteGrocery = (itemId: string) => {
     const groceryDocRef = doc(getUserSubcollection('groceries'), itemId);
     return deleteDoc(groceryDocRef);
 };
+export const updateGrocery = (itemId: string, data: Partial<Omit<GroceryItem, 'id'>>) => {
+    const groceryDocRef = doc(getUserSubcollection('groceries'), itemId);
+    return updateDoc(groceryDocRef, data);
+};
+
 
 // --- Deposits ---
 export const getAllDeposits = async (): Promise<Deposit[]> => {
@@ -141,6 +146,10 @@ export const deleteDeposit = (depositId: string) => {
     const depositDocRef = doc(getUserSubcollection('deposits'), depositId);
     return deleteDoc(depositDocRef);
 };
+export const updateDeposit = (depositId: string, data: Partial<Omit<Deposit, 'id'>>) => {
+    const depositDocRef = doc(getUserSubcollection('deposits'), depositId);
+    return updateDoc(depositDocRef, data);
+};
 
 // --- Members ---
 export const getMembers = async (): Promise<Participant[]> => {
@@ -152,4 +161,8 @@ export const getMembers = async (): Promise<Participant[]> => {
 export const addMember = (name: string) => {
     const membersCol = getUserSubcollection('members');
     return addDoc(membersCol, { name });
+};
+export const updateMember = (memberId: string, name: string) => {
+    const memberDocRef = doc(getUserSubcollection('members'), memberId);
+    return updateDoc(memberDocRef, { name });
 };

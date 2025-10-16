@@ -41,10 +41,13 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
     // actions
     addGroceryItem,
     importGroceryItems,
-    deleteGroceryItem, 
+    deleteGroceryItem,
+    updateGroceryItem, 
     addDepositItem, 
     deleteDepositItem,
+    updateDepositItem,
     addMember,
+    updateMember,
     refreshData,
   } = useMealManager();
 
@@ -76,7 +79,8 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
             members={members}
             onAddGrocery={addGroceryItem} 
             onImportGroceries={importGroceryItems}
-            onDeleteGrocery={deleteGroceryItem} 
+            onDeleteGrocery={deleteGroceryItem}
+            onUpdateGrocery={updateGroceryItem} 
           />
            <IndividualAccounts members={summary.members} groceries={summary.allGroceries} />
            <MainBalanceSummary summary={summary} />
@@ -84,8 +88,10 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
             members={members}
             deposits={summary.allDeposits}
             onAddMember={addMember}
+            onUpdateMember={updateMember}
             onAddDeposit={addDepositItem}
             onDeleteDeposit={deleteDepositItem}
+            onUpdateDeposit={updateDepositItem}
           />
         </div>
       )}

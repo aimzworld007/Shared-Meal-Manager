@@ -15,14 +15,17 @@ interface GroceryManagerProps {
   onAddGrocery: (item: Omit<GroceryItem, 'id'>) => Promise<void>;
   onImportGroceries: (items: ParsedGroceryItem[]) => Promise<void>;
   onDeleteGrocery: (item: GroceryItem) => Promise<void>;
+  onUpdateGrocery: (itemId: string, data: Partial<Omit<GroceryItem, 'id'>>) => Promise<void>;
 }
 
 const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED' }).format(amount);
 };
 
-const GroceryManager: React.FC<GroceryManagerProps> = ({ groceries, members, onAddGrocery, onImportGroceries, onDeleteGrocery }) => {
+const GroceryManager: React.FC<GroceryManagerProps> = ({ groceries, members, onAddGrocery, onImportGroceries, onDeleteGrocery, onUpdateGrocery }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<GroceryItem | null>(null);
+  
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<GroceryItem | null>(null);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -34,18 +37,49 @@ const GroceryManager: React.FC<GroceryManagerProps> = ({ groceries, members, onA
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const totalAmount = groceries.reduce((sum, item) => sum + item.amount, 0);
+  
+  const openAddModal = () => {
+    if(members.length > 0) {
+      setEditingItem(null);
+      setName('');
+      setAmount('');
+      setDate(new Date().toISOString().split('T')[0]);
+      setPurchaserId(members[0].id);
+      setIsModalOpen(true);
+    } else {
+      alert("Please add a member first before adding an expense.");
+    }
+  };
+  
+  const openEditModal = (item: GroceryItem) => {
+    setEditingItem(item);
+    setName(item.name);
+    setAmount(String(item.amount));
+    // Ensure date is in YYYY-MM-DD format for the input
+    setDate(new Date(item.date).toISOString().split('T')[0]);
+    setPurchaserId(item.purchaserId);
+    setIsModalOpen(true);
+  };
+  
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditingItem(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !amount || !date || !purchaserId || isSubmitting) return;
     setIsSubmitting(true);
+
+    const itemData = { name, amount: parseFloat(amount), date, purchaserId };
+
     try {
-        await onAddGrocery({ name, amount: parseFloat(amount), date, purchaserId });
-        setName('');
-        setAmount('');
-        setDate(new Date().toISOString().split('T')[0]);
-        setPurchaserId('');
-        setIsModalOpen(false);
+        if (editingItem) {
+            await onUpdateGrocery(editingItem.id, itemData);
+        } else {
+            await onAddGrocery(itemData);
+        }
+        closeModal();
     } catch (error) {
         // Error is handled by the hook and displayed on the dashboard
     } finally {
@@ -92,14 +126,7 @@ const GroceryManager: React.FC<GroceryManagerProps> = ({ groceries, members, onA
               Import CSV
             </button>
             <button
-              onClick={() => {
-                if(members.length > 0) {
-                    setPurchaserId(members[0].id)
-                    setIsModalOpen(true)
-                } else {
-                    alert("Please add a member first before adding an expense.");
-                }
-              }}
+              onClick={openAddModal}
               className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-blue-600 bg-white hover:bg-gray-200"
             >
               Add Expense
@@ -114,7 +141,7 @@ const GroceryManager: React.FC<GroceryManagerProps> = ({ groceries, members, onA
               <th scope="col" className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Item</th>
               <th scope="col" className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Amount</th>
               <th scope="col" className="px-4 py-2 text-left text-sm font-semibold text-gray-700">By</th>
-              <th scope="col" className="relative px-4 py-2"><span className="sr-only">Delete</span></th>
+              <th scope="col" className="relative px-4 py-2"><span className="sr-only">Actions</span></th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -128,6 +155,7 @@ const GroceryManager: React.FC<GroceryManagerProps> = ({ groceries, members, onA
                 <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{formatCurrency(item.amount)}</td>
                 <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-600">{item.purchaserName}</td>
                 <td className="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
+                  <button onClick={() => openEditModal(item)} className="text-indigo-600 hover:text-indigo-900 mr-4">Edit</button>
                   <button onClick={() => handleDeleteClick(item)} className="text-red-600 hover:text-red-900">Delete</button>
                 </td>
               </tr>
@@ -143,7 +171,7 @@ const GroceryManager: React.FC<GroceryManagerProps> = ({ groceries, members, onA
         </table>
       </div>
 
-      <Modal title="Add New Expense" isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+      <Modal title={editingItem ? "Edit Expense" : "Add New Expense"} isOpen={isModalOpen} onClose={closeModal}>
         <form onSubmit={handleSubmit} className="space-y-4">
            <div>
               <label htmlFor="purchaser" className="block text-sm font-medium text-gray-700">Purchased By</label>
@@ -167,7 +195,7 @@ const GroceryManager: React.FC<GroceryManagerProps> = ({ groceries, members, onA
            </div>
            <div className="pt-2 flex justify-end">
              <button type="submit" disabled={isSubmitting} className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400">
-                {isSubmitting ? 'Adding...' : 'Add Expense'}
+                {isSubmitting ? 'Saving...' : (editingItem ? 'Save Changes' : 'Add Expense')}
              </button>
            </div>
         </form>

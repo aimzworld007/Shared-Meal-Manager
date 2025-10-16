@@ -137,6 +137,17 @@ export const useMealManager = () => {
         }
     };
     
+    const updateGroceryItem = async (itemId: string, data: Partial<Omit<GroceryItem, 'id'>>) => {
+        try {
+            await api.updateGrocery(itemId, data);
+            fetchData(); // Refresh data
+        } catch (error) {
+            console.error("Error updating grocery:", error);
+            setError("Failed to update grocery item.");
+            throw error;
+        }
+    };
+
     const importGroceryItems = async (items: ParsedGroceryItem[]) => {
         setError(null);
         try {
@@ -168,7 +179,7 @@ export const useMealManager = () => {
             fetchData();
         } catch (error) {
             console.error("Error importing grocery items:", error);
-            // The caught 'error' is of type 'unknown'. Check if it is an instance of Error
+            // FIX: The caught 'error' is of type 'unknown'. Check if it is an instance of Error
             // to safely access its `message` property before setting the error state.
             const message = error instanceof Error ? error.message : "Failed to import grocery items.";
             setError(message);
@@ -198,6 +209,17 @@ export const useMealManager = () => {
         }
     };
 
+    const updateDepositItem = async (depositId: string, data: Partial<Omit<Deposit, 'id'>>) => {
+        try {
+            await api.updateDeposit(depositId, data);
+            fetchData(); // Refresh data
+        } catch (error) {
+            console.error("Error updating deposit:", error);
+            setError("Failed to update deposit.");
+            throw error;
+        }
+    };
+
     const deleteDepositItem = async (item: Deposit) => {
         try {
             await api.deleteDeposit(item.id);
@@ -220,6 +242,17 @@ export const useMealManager = () => {
         }
     };
     
+    const updateMember = async (memberId: string, name: string) => {
+        try {
+            await api.updateMember(memberId, name);
+            await fetchData();
+        } catch(e) {
+            console.error("Failed to update member", e);
+            setError("Failed to update member name.");
+            throw e;
+        }
+    };
+
     const resetFilters = () => {
         setStartDate('');
         setEndDate('');
@@ -248,11 +281,14 @@ export const useMealManager = () => {
         resetFilters,
         // actions
         addGroceryItem,
+        updateGroceryItem,
         importGroceryItems,
         deleteGroceryItem,
         addDepositItem,
+        updateDepositItem,
         deleteDepositItem,
         addMember,
+        updateMember,
         refreshData: fetchData,
     };
 };

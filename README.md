@@ -1,7 +1,5 @@
 # Shared Meal Manager
 
-[![Logo](https://i.ibb.co/ycwhj9tt/logo.jpg)](https://i.ibb.co/ycwhj9tt/logo.jpg)
-
 A web application to manage shared meal expenses, helping you easily track finances for your group, mess, or household.
 
 This application provides a secure, private space for each registered user to manage their own group's finances. Data is not shared between users, ensuring that your group's information remains confidential.
@@ -33,7 +31,7 @@ This application provides a secure, private space for each registered user to ma
 
 ## For Administrators
 
-- An administrator account (e.g., `ai****@gmail.com`) has special privileges:
+An administrator account (e.g., `aimctgbd@gmail.com`) has special privileges:
 - Navigate to the **Settings** page by clicking the button in the header.
 - In the "Site Management (Admin)" panel, you can:
     - Change the **Site Title** that appears in the browser tab.
