@@ -12,7 +12,7 @@ import MemberAndDepositManager from './MemberAndDepositManager';
 import PermissionsError from './PermissionsError';
 import DataFilter from './DateFilter';
 import SettingsPage from './SettingsPage';
-import { logoDataUri } from '../assets/logo';
+import { logoUrl as defaultLogoUrl } from '../assets/logo';
 
 interface DashboardProps {
   logoUrl?: string;
@@ -96,7 +96,7 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
     <div className="bg-gray-100">
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <img src={logoUrl || logoDataUri} alt="Logo" className="h-10" />
+          <img src={logoUrl || defaultLogoUrl} alt="Logo" className="h-10" />
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-600 hidden sm:block">Welcome, {user?.email}</span>
             {view === 'dashboard' ? (
