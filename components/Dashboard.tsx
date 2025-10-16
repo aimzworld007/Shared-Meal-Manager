@@ -5,8 +5,8 @@
 import React from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useMealManager } from '../hooks/useMealManager';
-import { SummaryCard } from './SummaryCard';
-import MemberBalanceTable from './BalanceSummary';
+import MainBalanceSummary from './BalanceSummary';
+import IndividualAccounts from './IndividualAccounts';
 import GroceryManager from './GroceryManager';
 import MemberAndDepositManager from './MemberAndDepositManager';
 import { logoDataUri } from '../assets/logo';
@@ -51,27 +51,24 @@ const Dashboard: React.FC = () => {
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         {loading && <p className="text-center text-gray-600">Loading dashboard data...</p>}
         
-        {/* Render the specific PermissionsError component if it's a permission issue */}
         {isPermissionError && (
           <PermissionsError errorMessage={error} onRetry={refreshData} />
         )}
 
-        {/* Render a generic error for other issues */}
         {!isPermissionError && error && (
           <p className="text-center text-red-500 bg-red-100 p-4 rounded-md">{error}</p>
         )}
         
         {!loading && !error && (
           <div className="space-y-8">
-            {/* 1. Summary Stats */}
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              <SummaryCard title="Total Members" value={summary.totalMembers} />
-              <SummaryCard title="Total Grocery Cost" value={summary.totalGroceryCost} isCurrency />
-              <SummaryCard title="Total Deposits" value={summary.totalDeposits} isCurrency />
-              <SummaryCard title="Average Expense" value={summary.averageExpense} isCurrency />
-            </div>
             
-            {/* 2. Grocery Expenses */}
+            {/* 1. Main Balance Summary */}
+            <MainBalanceSummary summary={summary} />
+
+            {/* 2. Individual Accounts Breakdown */}
+            <IndividualAccounts members={summary.members} groceries={summary.allGroceries} />
+
+            {/* 3. Grocery Expenses */}
             <GroceryManager 
               groceries={summary.allGroceries} 
               members={members}
@@ -80,7 +77,7 @@ const Dashboard: React.FC = () => {
               onDeleteGrocery={deleteGroceryItem} 
             />
 
-            {/* 3. Member & Deposit Management */}
+            {/* 4. Member & Deposit Management */}
             <MemberAndDepositManager
               members={members}
               deposits={summary.allDeposits}
@@ -88,9 +85,6 @@ const Dashboard: React.FC = () => {
               onAddDeposit={addDepositItem}
               onDeleteDeposit={deleteDepositItem}
             />
-            
-            {/* 4. Final Balance Table */}
-            <MemberBalanceTable summary={summary} />
 
           </div>
         )}

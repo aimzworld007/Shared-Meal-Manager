@@ -32,6 +32,8 @@ const GroceryManager: React.FC<GroceryManagerProps> = ({ groceries, members, onA
   const [purchaserId, setPurchaserId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const totalAmount = groceries.reduce((sum, item) => sum + item.amount, 0);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !amount || !date || !purchaserId || isSubmitting) return;
@@ -72,13 +74,13 @@ const GroceryManager: React.FC<GroceryManagerProps> = ({ groceries, members, onA
   };
 
   return (
-    <div className="bg-white shadow rounded-lg">
-      <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center flex-wrap gap-2">
-        <h3 className="text-lg font-medium text-gray-900">Grocery Expenses</h3>
+    <div className="bg-white border border-gray-200">
+      <div className="px-4 py-3 bg-blue-600 text-white flex justify-between items-center flex-wrap gap-2">
+        <h3 className="text-lg font-bold">TOTAL GROCERY BILL</h3>
         <div className="flex items-center gap-2">
             <button
               onClick={() => setIsImportModalOpen(true)}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-blue-600 bg-white hover:bg-gray-200"
             >
               Import CSV
             </button>
@@ -91,39 +93,46 @@ const GroceryManager: React.FC<GroceryManagerProps> = ({ groceries, members, onA
                     alert("Please add a member first before adding an expense.");
                 }
               }}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-blue-600 bg-white hover:bg-gray-200"
             >
               Add Expense
             </button>
         </div>
       </div>
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="min-w-full">
+          <thead className="bg-gray-100">
             <tr>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Purchased By</th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-              <th scope="col" className="relative px-6 py-3"><span className="sr-only">Delete</span></th>
+              <th scope="col" className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Date</th>
+              <th scope="col" className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Item</th>
+              <th scope="col" className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Amount</th>
+              <th scope="col" className="px-4 py-2 text-left text-sm font-semibold text-gray-700">By</th>
+              <th scope="col" className="relative px-4 py-2"><span className="sr-only">Delete</span></th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {groceries.length === 0 && (
-              <tr><td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">No expenses added yet.</td></tr>
+              <tr><td colSpan={5} className="px-4 py-4 text-center text-sm text-gray-500">No expenses added yet.</td></tr>
             )}
             {groceries.map((item) => (
               <tr key={item.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(item.date).toLocaleDateString()}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.name}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.purchaserName}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{formatCurrency(item.amount)}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-600">{new Date(item.date).toLocaleDateString()}</td>
+                <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">{item.name}</td>
+                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{formatCurrency(item.amount)}</td>
+                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-600">{item.purchaserName}</td>
+                <td className="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
                   <button onClick={() => handleDeleteClick(item)} className="text-red-600 hover:text-red-900">Delete</button>
                 </td>
               </tr>
             ))}
           </tbody>
+           <tfoot className="bg-gray-100 border-t-2 border-gray-300">
+              <tr>
+                  <td colSpan={2} className="px-4 py-2 text-right font-bold text-gray-800">Total Amount</td>
+                  <td className="px-4 py-2 font-bold text-gray-900">{formatCurrency(totalAmount)}</td>
+                  <td colSpan={2}></td>
+              </tr>
+           </tfoot>
         </table>
       </div>
 
