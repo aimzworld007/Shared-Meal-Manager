@@ -13,11 +13,29 @@ import PermissionsError from './PermissionsError';
 import SettingsPage from './SettingsPage';
 import { logoUrl as defaultLogoUrl } from '../assets/logo';
 
-interface DashboardProps {
-  logoUrl?: string;
+// Define the BeforeInstallPromptEvent interface for PWA installation
+interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: string[];
+  readonly userChoice: Promise<{
+    outcome: 'accepted' | 'dismissed';
+    platform: string;
+  }>;
+  prompt(): Promise<void>;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
+interface DashboardProps {
+  logoUrl?: string;
+  installPromptEvent: BeforeInstallPromptEvent | null;
+  onInstallClick: () => void;
+}
+
+const InstallIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+    </svg>
+);
+
+const Dashboard: React.FC<DashboardProps> = ({ logoUrl, installPromptEvent, onInstallClick }) => {
   const [view, setView] = useState<'dashboard' | 'settings'>('dashboard');
   const { user, logout } = useAuth();
   const mealManager = useMealManager();
@@ -74,11 +92,17 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
 
   return (
     <div className="bg-gray-100">
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
+      <header className="bg-white shadow-sm sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex flex-wrap justify-between items-center gap-4">
           <img src={logoUrl || defaultLogoUrl} alt="Logo" className="h-10" />
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600 hidden sm:block">Welcome, {user?.email}</span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm text-gray-600 hidden sm:block order-first">Welcome, {user?.email}</span>
+            {installPromptEvent && (
+               <button onClick={onInstallClick} className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
+                   <InstallIcon />
+                   Install App
+               </button>
+            )}
             {view === 'dashboard' ? (
                  <button onClick={() => setView('settings')} className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50">Settings</button>
             ) : (

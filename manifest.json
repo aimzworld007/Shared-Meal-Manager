@@ -1,0 +1,23 @@
+{
+  "short_name": "Meal Manager",
+  "name": "Shared Meal Manager",
+  "description": "A web application to manage shared meal expenses, helping you easily track finances for your group, mess, or household.",
+  "icons": [
+    {
+      "src": "https://i.ibb.co/ycwhj9tt/logo.jpg",
+      "type": "image/jpeg",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://i.ibb.co/ycwhj9tt/logo.jpg",
+      "type": "image/jpeg",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#4f46e5",
+  "background_color": "#f9fafb"
+}

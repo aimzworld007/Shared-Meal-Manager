@@ -117,7 +117,7 @@ const MemberAndDepositManager: React.FC<MemberAndDepositManagerProps> = ({ depos
 
   return (
     <div className="bg-white shadow-lg rounded-lg">
-        <div className="px-6 py-4 bg-gray-50 border-b rounded-t-lg flex justify-between items-center">
+        <div className="px-6 py-4 bg-gray-50 border-b rounded-t-lg flex flex-wrap justify-between items-center gap-2">
             <h3 className="text-lg font-semibold text-gray-800">Deposit History</h3>
             <button onClick={openAddDepositModal} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
                 Add Deposit
