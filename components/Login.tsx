@@ -8,13 +8,31 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { logoUrl as defaultLogoUrl } from '../assets/logo';
 
+// Define the BeforeInstallPromptEvent interface for PWA installation
+interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: string[];
+  readonly userChoice: Promise<{
+    outcome: 'accepted' | 'dismissed';
+    platform: string;
+  }>;
+  prompt(): Promise<void>;
+}
+
 type AuthView = 'login' | 'signup' | 'forgot';
 
 interface LoginProps {
   logoUrl?: string;
+  installPromptEvent: BeforeInstallPromptEvent | null;
+  onInstallClick: () => void;
 }
 
-const Login: React.FC<LoginProps> = ({ logoUrl }) => {
+const InstallIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+    </svg>
+);
+
+const Login: React.FC<LoginProps> = ({ logoUrl, installPromptEvent, onInstallClick }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [formLoading, setFormLoading] = useState(false);
@@ -122,7 +140,7 @@ const Login: React.FC<LoginProps> = ({ logoUrl }) => {
   const isProcessing = loading || formLoading;
 
   return (
-    <div className="flex items-center justify-center min-h-full py-12 px-4 sm:px-6 lg:px-8">
+    <div className="flex flex-col items-center justify-center min-h-full py-12 px-4 sm:px-6 lg:px-8">
       <div className="p-8 bg-white rounded-lg shadow-xl text-center max-w-sm w-full">
         <img src={logoUrl || defaultLogoUrl} alt="Shared Meal Manager Logo" className="w-40 h-40 object-contain mx-auto mb-4" />
         <h2 className="text-2xl font-bold text-gray-800">{titles[view]}</h2>
@@ -216,6 +234,14 @@ const Login: React.FC<LoginProps> = ({ logoUrl }) => {
           )}
         </div>
       </div>
+      {installPromptEvent && (
+         <div className="mt-8 max-w-sm w-full">
+             <button onClick={onInstallClick} className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
+                 <InstallIcon />
+                 Install App
+             </button>
+         </div>
+      )}
     </div>
   );
 };

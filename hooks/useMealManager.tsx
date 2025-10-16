@@ -190,8 +190,11 @@ export const useMealManager = () => {
             fetchData();
         } catch (err) {
             console.error("Error importing grocery items:", err);
-            // Fix: Rename `error` to `err` to avoid shadowing the state variable.
-            const message = err instanceof Error ? err.message : "Failed to import grocery items.";
+            // Fix: Type 'unknown' is not assignable to type 'string'. Handle unknown error type before setting error message.
+            let message = "Failed to import grocery items.";
+            if (err instanceof Error) {
+                message = err.message;
+            }
             setError(message);
             throw err;
         }

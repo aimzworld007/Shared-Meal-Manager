@@ -82,11 +82,13 @@ const App: React.FC = () => {
         ) : user ? (
           <Dashboard
             logoUrl={defaultLogoUrl}
+          />
+        ) : (
+          <Login
+            logoUrl={defaultLogoUrl}
             installPromptEvent={installPromptEvent}
             onInstallClick={handleInstallClick}
           />
-        ) : (
-          <Login logoUrl={defaultLogoUrl} />
         )}
       </main>
       <Footer />

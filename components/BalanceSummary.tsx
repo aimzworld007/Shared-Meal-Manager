@@ -27,7 +27,7 @@ const MainBalanceSummary: React.FC<MainBalanceSummaryProps> = ({ summary }) => {
   return (
     <div className="bg-white border border-gray-200">
       <div className="px-4 py-3 bg-teal-700 text-white flex justify-between items-center flex-wrap gap-2">
-        <h3 className="text-lg font-bold">MAIN BALANCE SUMMARY</h3>
+        <h3 className="text-lg font-bold">Balance</h3>
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full">

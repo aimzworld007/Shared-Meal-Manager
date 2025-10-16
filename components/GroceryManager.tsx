@@ -34,7 +34,7 @@ const formatCurrency = (amount: number): string => {
 
 const FilterIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V19l-4 2v-5.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V19l-4 2v-5.586a1 1 0 00-.293.707L3.293 7.293A1 1 0 013 6.586V4z" />
   </svg>
 );
 
@@ -115,7 +115,7 @@ const GroceryManager: React.FC<GroceryManagerProps> = (props) => {
     <div className="bg-white shadow-lg rounded-lg">
       <div className="px-6 py-4 bg-gray-50 border-b rounded-t-lg flex justify-between items-center flex-wrap gap-2">
         <div>
-          <h3 className="text-xl font-bold text-gray-800">TOTAL GROCERY BILL</h3>
+          <h3 className="text-xl font-bold text-gray-800">Grocery Bill</h3>
           <p className="text-2xl font-semibold text-indigo-600">{formatCurrency(totalGroceryCost)}</p>
         </div>
         <div className="flex items-center gap-2">
