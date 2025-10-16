@@ -2,9 +2,9 @@
  * @file Login.tsx
  * @summary Renders the authentication screen for the application.
  * This component provides an interface for users to sign in, sign up,
- * or request a password reset.
+ * or request a password reset, with an added verification step.
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { logoUrl as defaultLogoUrl } from '../assets/logo';
 
@@ -21,7 +21,39 @@ const Login: React.FC<LoginProps> = ({ logoUrl }) => {
   const [view, setView] = useState<AuthView>('login');
   const [message, setMessage] = useState('');
 
+  // State for the math verification system
+  const [num1, setNum1] = useState(0);
+  const [num2, setNum2] = useState(0);
+  const [operator, setOperator] = useState<'+' | '-'>('+');
+  const [verificationAnswer, setVerificationAnswer] = useState('');
+  const [verificationError, setVerificationError] = useState<string | null>(null);
+
   const { login, signUp, resetPassword, error, loading, clearError } = useAuth();
+  
+  // Generates a new random math problem for verification.
+  const generateProblem = () => {
+    let n1 = Math.floor(Math.random() * 90) + 10; // Random number between 10-99
+    let n2 = Math.floor(Math.random() * 90) + 10;
+    const op = Math.random() > 0.5 ? '+' : '-';
+    
+    // To keep it simple, ensure subtraction doesn't result in a negative number
+    if (op === '-' && n1 < n2) {
+      [n1, n2] = [n2, n1]; // Swap the numbers
+    }
+
+    setNum1(n1);
+    setNum2(n2);
+    setOperator(op);
+    setVerificationAnswer(''); // Clear user's previous answer
+    setVerificationError(null); // Clear any old verification errors
+  };
+  
+  // Generate a problem on the initial render and whenever the view (login/signup) changes.
+  useEffect(() => {
+    if (view === 'login' || view === 'signup') {
+      generateProblem();
+    }
+  }, [view]);
 
   const switchView = (newView: AuthView) => {
     clearError();
@@ -36,6 +68,19 @@ const Login: React.FC<LoginProps> = ({ logoUrl }) => {
     setFormLoading(true);
     setMessage('');
     clearError();
+    setVerificationError(null);
+
+    // --- Verification Check for Login and Signup ---
+    if (view === 'login' || view === 'signup') {
+      const correctAnswer = operator === '+' ? num1 + num2 : num1 - num2;
+      if (parseInt(verificationAnswer, 10) !== correctAnswer) {
+        setVerificationError('Incorrect verification answer. Please try again.');
+        generateProblem(); // Ask a new question
+        setFormLoading(false);
+        return; // Stop the submission
+      }
+    }
+
     try {
       if (view === 'login') {
         await login(email, password);
@@ -46,7 +91,10 @@ const Login: React.FC<LoginProps> = ({ logoUrl }) => {
         setMessage('Password reset email sent! Please check your inbox.');
       }
     } catch (err) {
-      // Error is caught and displayed via the `error` state from useAuth
+      // If any auth error occurs, generate a new problem for the user
+      if (view === 'login' || view === 'signup') {
+        generateProblem();
+      }
       console.error(err);
     } finally {
       setFormLoading(false);
@@ -110,8 +158,25 @@ const Login: React.FC<LoginProps> = ({ logoUrl }) => {
               />
             </div>
           )}
+
+          {(view === 'login' || view === 'signup') && (
+            <div>
+              <label htmlFor="verification" className="block text-sm font-medium text-gray-700">
+                Verification: What is {num1} {operator} {num2}?
+              </label>
+              <input
+                id="verification"
+                type="number"
+                value={verificationAnswer}
+                onChange={(e) => setVerificationAnswer(e.target.value)}
+                required
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                placeholder="Your answer"
+              />
+            </div>
+          )}
           
-          {error && <p className="text-sm text-red-600 text-center">{error}</p>}
+          {(error || verificationError) && <p className="text-sm text-red-600 text-center">{error || verificationError}</p>}
           {message && <p className="text-sm text-green-600 text-center">{message}</p>}
 
           <button
