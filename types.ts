@@ -14,15 +14,6 @@ export interface User {
 }
 
 /**
- * Represents site-wide settings configurable by an admin.
- */
-export interface SiteSettings {
-  siteTitle: string;
-  siteDescription: string;
-  logoUrl: string;
-}
-
-/**
  * Represents a single grocery item purchased.
  */
 export interface GroceryItem {
@@ -60,4 +51,14 @@ export interface Member extends Participant {
     totalPurchase: number;
     totalDeposit: number;
     balance: number;
+}
+
+// Fix: Add missing SiteSettings type definition.
+/**
+ * Represents the global site settings, configurable by an admin.
+ */
+export interface SiteSettings {
+  siteTitle?: string;
+  siteDescription?: string;
+  logoUrl?: string;
 }

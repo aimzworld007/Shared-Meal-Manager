@@ -25,7 +25,7 @@ const MemberAndDepositManager: React.FC<MemberAndDepositManagerProps> = ({ depos
   // --- Member state ---
   const [newMemberName, setNewMemberName] = useState('');
   const [isAddingMember, setIsAddingMember] = useState(false);
-  const [showAddMemberForm, setShowAddMemberForm] = useState(true);
+  const [showAddMemberForm, setShowAddMemberForm] = useState(false);
   const [editingMember, setEditingMember] = useState<Participant | null>(null);
   const [isUpdatingMember, setIsUpdatingMember] = useState(false);
   const [updatedMemberName, setUpdatedMemberName] = useState('');
@@ -280,7 +280,7 @@ const MemberAndDepositManager: React.FC<MemberAndDepositManagerProps> = ({ depos
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.userName}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-800">{formatCurrency(item.amount)}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button onClick={() => openEditDepositModal(item)} className="text-indigo-600 hover:text-indigo-900 mr-4">Edit</button>
+                        <button onClick={() => openEditDepositModal(item)} className="text-indigo-600 hover:text-indigo-900 mr-4">Edit / Transfer</button>
                         <button onClick={() => handleDeleteClick(item)} className="text-red-600 hover:text-red-900">Delete</button>
                       </td>
                     </tr>
@@ -319,7 +319,7 @@ const MemberAndDepositManager: React.FC<MemberAndDepositManagerProps> = ({ depos
       </Modal>
 
       {/* Add/Edit Deposit Modal */}
-      <Modal title={editingDeposit ? `Edit Deposit` : `Add Deposit`} isOpen={isDepositModalOpen} onClose={closeDepositModal}>
+      <Modal title={editingDeposit ? `Edit or Transfer Deposit` : `Add Deposit`} isOpen={isDepositModalOpen} onClose={closeDepositModal}>
         <form onSubmit={handleDepositSubmit} className="space-y-4">
             <div>
               <label htmlFor="deposit_member" className="block text-sm font-medium text-gray-700">Member</label>

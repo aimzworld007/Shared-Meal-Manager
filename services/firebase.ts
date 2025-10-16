@@ -25,7 +25,14 @@ import {
   setDoc,
   getDoc,
 } from "firebase/firestore";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+// Fix: Add Firebase storage imports for site settings features.
+import {
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL,
+} from "firebase/storage";
+// Fix: Import the missing SiteSettings type.
 import { User, GroceryItem, Deposit, Participant, SiteSettings } from "../types";
 
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -43,6 +50,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+// Fix: Initialize Firebase Storage.
 const storage = getStorage(app);
 
 // --- Helper to get user-specific subcollection ref ---
@@ -85,28 +93,6 @@ export const changeUserPassword = (newPassword: string) => {
   if (!auth.currentUser) throw new Error("User not authenticated.");
   return updatePassword(auth.currentUser, newPassword);
 };
-
-// --- Site Settings Service (Admin only) ---
-const siteSettingsRef = doc(db, 'siteSettings', 'config');
-
-export const getSiteSettings = async (): Promise<SiteSettings | null> => {
-    const docSnap = await getDoc(siteSettingsRef);
-    if (docSnap.exists()) {
-        return docSnap.data() as SiteSettings;
-    }
-    return null;
-};
-
-export const updateSiteSettings = (data: Partial<SiteSettings>) => {
-    return setDoc(siteSettingsRef, data, { merge: true });
-};
-
-export const uploadLogo = async (file: File): Promise<string> => {
-    const logoRef = ref(storage, `site/logo-${new Date().getTime()}`);
-    await uploadBytes(logoRef, file);
-    return getDownloadURL(logoRef);
-};
-
 
 // --- Firestore Service (User-Scoped) ---
 
@@ -165,4 +151,27 @@ export const addMember = (name: string) => {
 export const updateMember = (memberId: string, name: string) => {
     const memberDocRef = doc(getUserSubcollection('members'), memberId);
     return updateDoc(memberDocRef, { name });
+};
+
+// Fix: Add missing functions for managing site settings.
+// --- Site Settings (Admin) ---
+export const getSiteSettings = async (): Promise<SiteSettings> => {
+  const settingsDocRef = doc(db, 'settings', 'site');
+  const docSnap = await getDoc(settingsDocRef);
+  if (docSnap.exists()) {
+    return docSnap.data() as SiteSettings;
+  }
+  return {}; // Return empty object if no settings found
+};
+
+export const updateSiteSettings = (data: Partial<SiteSettings>) => {
+  const settingsDocRef = doc(db, 'settings', 'site');
+  return setDoc(settingsDocRef, data, { merge: true });
+};
+
+export const uploadLogo = async (file: File): Promise<string> => {
+  // Use a consistent file path to overwrite the logo
+  const storageRef = ref(storage, 'site/logo.png');
+  await uploadBytes(storageRef, file);
+  return getDownloadURL(storageRef);
 };
