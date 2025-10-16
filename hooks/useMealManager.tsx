@@ -179,7 +179,8 @@ export const useMealManager = () => {
             fetchData();
         } catch (error) {
             console.error("Error importing grocery items:", error);
-            // FIX: The caught 'error' is of type 'unknown'. Safely access its message property.
+            // Fix: The caught 'error' has an 'unknown' type. Check if it's an instance of Error
+            // before accessing the 'message' property to ensure type safety.
             const message = error instanceof Error ? error.message : "Failed to import grocery items.";
             setError(message);
             throw error;
@@ -230,9 +231,9 @@ export const useMealManager = () => {
         }
     };
     
-    const addMember = async (name: string) => {
+    const addMember = async (name: string, phone: string) => {
         try {
-            await api.addMember(name);
+            await api.addMember(name, phone);
             await fetchData();
         } catch(e) {
             console.error("Failed to add member", e);
@@ -241,9 +242,9 @@ export const useMealManager = () => {
         }
     };
     
-    const updateMember = async (memberId: string, name: string) => {
+    const updateMember = async (memberId: string, name: string, phone: string) => {
         try {
-            await api.updateMember(memberId, name);
+            await api.updateMember(memberId, name, phone);
             await fetchData();
         } catch(e) {
             console.error("Failed to update member", e);

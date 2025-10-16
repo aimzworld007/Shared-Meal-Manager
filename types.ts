@@ -42,6 +42,7 @@ export interface Deposit {
 export interface Participant {
   id: string; // Corresponds to Firestore document ID in a user's 'members' sub-collection
   name: string;
+  phone: string;
 }
 
 /**

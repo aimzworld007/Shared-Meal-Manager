@@ -22,6 +22,13 @@ const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED' }).format(amount);
 };
 
+const WhatsAppIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.894 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 4.315 1.731 6.086l.287.468-1.173 4.249 4.35-1.14z" />
+    </svg>
+);
+
+
 const GroceryManager: React.FC<GroceryManagerProps> = ({ groceries, members, onAddGrocery, onImportGroceries, onDeleteGrocery, onUpdateGrocery }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<GroceryItem | null>(null);
@@ -108,6 +115,19 @@ const GroceryManager: React.FC<GroceryManagerProps> = ({ groceries, members, onA
     }
   };
 
+  const handleShareWhatsApp = (item: GroceryItem) => {
+    const dateFormatted = new Date(item.date).toLocaleDateString();
+    const message = `*New Expense Logged*\n\n` +
+                    `*Item:* ${item.name}\n` +
+                    `*Amount:* ${formatCurrency(item.amount)}\n` +
+                    `*Purchased By:* ${item.purchaserName}\n` +
+                    `*Date:* ${dateFormatted}`;
+
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
   return (
     <div className="bg-white border border-gray-200">
       <div className="px-4 py-3 bg-blue-600 text-white flex justify-between items-center flex-wrap gap-2">
@@ -154,8 +174,11 @@ const GroceryManager: React.FC<GroceryManagerProps> = ({ groceries, members, onA
                 <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">{item.name}</td>
                 <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{formatCurrency(item.amount)}</td>
                 <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-600">{item.purchaserName}</td>
-                <td className="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
-                  <button onClick={() => openEditModal(item)} className="text-indigo-600 hover:text-indigo-900 mr-4">Edit</button>
+                <td className="px-4 py-2 whitespace-nowrap text-right text-sm font-medium flex items-center justify-end gap-3">
+                  <button onClick={() => handleShareWhatsApp(item)} className="text-green-600 hover:text-green-800" title="Share on WhatsApp">
+                    <WhatsAppIcon />
+                  </button>
+                  <button onClick={() => openEditModal(item)} className="text-indigo-600 hover:text-indigo-900">Edit</button>
                   <button onClick={() => handleDeleteClick(item)} className="text-red-600 hover:text-red-900">Delete</button>
                 </td>
               </tr>

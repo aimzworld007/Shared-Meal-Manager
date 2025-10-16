@@ -10,8 +10,8 @@ import ConfirmationModal from './ConfirmationModal';
 interface MemberAndDepositManagerProps {
   deposits: Deposit[];
   members: Participant[];
-  onAddMember: (name: string) => Promise<void>;
-  onUpdateMember: (memberId: string, name: string) => Promise<void>;
+  onAddMember: (name: string, phone: string) => Promise<void>;
+  onUpdateMember: (memberId: string, name: string, phone: string) => Promise<void>;
   onAddDeposit: (item: Omit<Deposit, 'id'>) => Promise<void>;
   onDeleteDeposit: (item: Deposit) => Promise<void>;
   onUpdateDeposit: (depositId: string, data: Partial<Omit<Deposit, 'id'>>) => Promise<void>;
@@ -21,14 +21,22 @@ const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED' }).format(amount);
 };
 
+const WhatsAppIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.894 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 4.315 1.731 6.086l.287.468-1.173 4.249 4.35-1.14z" />
+    </svg>
+);
+
 const MemberAndDepositManager: React.FC<MemberAndDepositManagerProps> = ({ deposits, members, onAddMember, onUpdateMember, onAddDeposit, onDeleteDeposit, onUpdateDeposit }) => {
   // --- Member state ---
   const [newMemberName, setNewMemberName] = useState('');
+  const [newMemberPhone, setNewMemberPhone] = useState('');
   const [isAddingMember, setIsAddingMember] = useState(false);
   const [showAddMemberForm, setShowAddMemberForm] = useState(false);
   const [editingMember, setEditingMember] = useState<Participant | null>(null);
   const [isUpdatingMember, setIsUpdatingMember] = useState(false);
   const [updatedMemberName, setUpdatedMemberName] = useState('');
+  const [updatedMemberPhone, setUpdatedMemberPhone] = useState('');
 
   // --- Deposit state ---
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
@@ -45,11 +53,12 @@ const MemberAndDepositManager: React.FC<MemberAndDepositManagerProps> = ({ depos
   // --- Member Handlers ---
   const handleAddMemberSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMemberName.trim() || isAddingMember) return;
+    if (!newMemberName.trim() || !newMemberPhone.trim() || isAddingMember) return;
     setIsAddingMember(true);
     try {
-      await onAddMember(newMemberName.trim());
+      await onAddMember(newMemberName.trim(), newMemberPhone.trim());
       setNewMemberName('');
+      setNewMemberPhone('');
       setShowAddMemberForm(false); // Hide form on success
     } catch (error) {
       console.error(error); // Error is handled globally in the hook
@@ -61,19 +70,21 @@ const MemberAndDepositManager: React.FC<MemberAndDepositManagerProps> = ({ depos
   const openEditMemberModal = (member: Participant) => {
     setEditingMember(member);
     setUpdatedMemberName(member.name);
+    setUpdatedMemberPhone(member.phone);
   };
 
   const closeEditMemberModal = () => {
     setEditingMember(null);
     setUpdatedMemberName('');
+    setUpdatedMemberPhone('');
   };
 
   const handleUpdateMemberSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!updatedMemberName.trim() || !editingMember || isUpdatingMember) return;
+    if (!updatedMemberName.trim() || !updatedMemberPhone.trim() || !editingMember || isUpdatingMember) return;
     setIsUpdatingMember(true);
     try {
-      await onUpdateMember(editingMember.id, updatedMemberName.trim());
+      await onUpdateMember(editingMember.id, updatedMemberName.trim(), updatedMemberPhone.trim());
       closeEditMemberModal();
     } catch (error) {
       console.error(error);
@@ -142,6 +153,19 @@ const MemberAndDepositManager: React.FC<MemberAndDepositManagerProps> = ({ depos
     setItemToDelete(null);
   };
 
+  const handleShareWhatsApp = (item: Deposit) => {
+    const dateFormatted = new Date(item.date).toLocaleDateString();
+    const message = `*Deposit Recorded*\n\n` +
+                    `*Member:* ${item.userName}\n` +
+                    `*Amount:* ${formatCurrency(item.amount)}\n` +
+                    `*Date:* ${dateFormatted}\n\n` +
+                    `Thank you for your contribution!`;
+
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold text-gray-800 px-1">Member & Deposit Management</h2>
@@ -172,10 +196,22 @@ const MemberAndDepositManager: React.FC<MemberAndDepositManagerProps> = ({ depos
                       placeholder="e.g., John Doe"
                     />
                   </div>
+                   <div>
+                    <label htmlFor="memberPhone" className="block text-sm font-medium text-gray-700">Phone Number</label>
+                    <input
+                      id="memberPhone"
+                      type="tel"
+                      value={newMemberPhone}
+                      onChange={(e) => setNewMemberPhone(e.target.value)}
+                      required
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                      placeholder="e.g., +971501234567"
+                    />
+                  </div>
                   <div className="flex justify-end gap-2">
                      <button
                       type="button"
-                      onClick={() => { setShowAddMemberForm(false); setNewMemberName(''); }}
+                      onClick={() => { setShowAddMemberForm(false); setNewMemberName(''); setNewMemberPhone(''); }}
                       className="inline-flex items-center justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
                     >
                         Cancel
@@ -211,14 +247,17 @@ const MemberAndDepositManager: React.FC<MemberAndDepositManagerProps> = ({ depos
               <table className="min-w-full">
                 <thead className="bg-gray-100">
                   <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member Name</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member</th>
                     <th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {members.map(member => (
                     <tr key={member.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{member.name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <div className="font-medium text-gray-900">{member.name}</div>
+                          <div className="text-gray-500">{member.phone}</div>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <button
                           onClick={() => openEditMemberModal(member)}
@@ -270,8 +309,11 @@ const MemberAndDepositManager: React.FC<MemberAndDepositManagerProps> = ({ depos
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(item.date).toLocaleDateString()}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.userName}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-800">{formatCurrency(item.amount)}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button onClick={() => openEditDepositModal(item)} className="text-indigo-600 hover:text-indigo-900 mr-4">Edit / Transfer</button>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex items-center justify-end gap-3">
+                         <button onClick={() => handleShareWhatsApp(item)} className="text-green-600 hover:text-green-800" title="Share on WhatsApp">
+                           <WhatsAppIcon />
+                         </button>
+                        <button onClick={() => openEditDepositModal(item)} className="text-indigo-600 hover:text-indigo-900">Edit / Transfer</button>
                         <button onClick={() => handleDeleteClick(item)} className="text-red-600 hover:text-red-900">Delete</button>
                       </td>
                     </tr>
@@ -293,6 +335,17 @@ const MemberAndDepositManager: React.FC<MemberAndDepositManagerProps> = ({ depos
               type="text"
               value={updatedMemberName}
               onChange={(e) => setUpdatedMemberName(e.target.value)}
+              required
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            />
+          </div>
+          <div>
+            <label htmlFor="editMemberPhone" className="block text-sm font-medium text-gray-700">Phone Number</label>
+            <input
+              id="editMemberPhone"
+              type="tel"
+              value={updatedMemberPhone}
+              onChange={(e) => setUpdatedMemberPhone(e.target.value)}
               required
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             />

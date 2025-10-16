@@ -142,15 +142,15 @@ export const getMembers = async (): Promise<Participant[]> => {
     const membersCol = getUserSubcollection('members');
     const q = query(membersCol, orderBy('name'));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name } as Participant));
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Participant));
 };
-export const addMember = (name: string) => {
+export const addMember = (name: string, phone: string) => {
     const membersCol = getUserSubcollection('members');
-    return addDoc(membersCol, { name });
+    return addDoc(membersCol, { name, phone });
 };
-export const updateMember = (memberId: string, name: string) => {
+export const updateMember = (memberId: string, name: string, phone: string) => {
     const memberDocRef = doc(getUserSubcollection('members'), memberId);
-    return updateDoc(memberDocRef, { name });
+    return updateDoc(memberDocRef, { name, phone });
 };
 
 // Fix: Add missing functions for managing site settings.
