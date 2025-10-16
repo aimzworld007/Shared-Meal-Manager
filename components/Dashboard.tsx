@@ -22,7 +22,7 @@ type View = 'home' | 'grocery' | 'accounts' | 'settings';
 
 // --- Icon Components ---
 const HomeIcon = ({ className = "h-6 w-6" }: { className?: string }) => (
-    <svg xmlns="http://www.w.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
     </svg>
 );
@@ -69,7 +69,7 @@ const Dashboard: React.FC<{ logoUrl?: string }> = ({ logoUrl }) => {
   const { theme, toggleTheme } = useTheme();
   const mealManager = useMealManager();
 
-  const { loading, error, summary, members, groceries, refreshData } = mealManager;
+  const { loading, error, summary, members, groceries, refreshData, activePeriod, isPeriodLoading } = mealManager;
   const isPermissionError = error && error.includes('Permission Denied');
 
   // --- State for Grocery Modal ---
@@ -169,6 +169,24 @@ const Dashboard: React.FC<{ logoUrl?: string }> = ({ logoUrl }) => {
     finally { setIsSubmittingDeposit(false); }
   };
 
+  const NoActivePeriodContent = () => (
+      <div className="text-center bg-white dark:bg-gray-800 p-10 rounded-lg shadow-lg max-w-2xl mx-auto">
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200">Welcome to Shared Meal Manager!</h2>
+          <p className="mt-4 text-gray-600 dark:text-gray-400">
+              It looks like you don't have an active meal period yet. A period (e.g., "July 2024") is how you organize your expenses and deposits.
+          </p>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">
+              Please go to the Settings tab to create your first meal period to get started.
+          </p>
+          <button 
+              onClick={() => setActiveTab('settings')}
+              className="mt-6 inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          >
+              Go to Settings
+          </button>
+      </div>
+  );
+
   const DashboardContent = () => (
     <>
       {loading && <p className="text-center text-gray-600 dark:text-gray-400">Loading your dashboard...</p>}
@@ -237,7 +255,14 @@ const Dashboard: React.FC<{ logoUrl?: string }> = ({ logoUrl }) => {
     <div className="bg-gray-100 dark:bg-gray-900 min-h-screen">
       <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex flex-wrap justify-between items-center gap-4">
-          <img src={logoUrl || defaultLogoUrl} alt="Logo" className="h-10" />
+            <div className="flex items-center gap-4">
+                <img src={logoUrl || defaultLogoUrl} alt="Logo" className="h-10" />
+                {activePeriod && (
+                    <span className="px-3 py-1 text-sm font-semibold text-indigo-800 bg-indigo-100 rounded-full dark:bg-indigo-900 dark:text-indigo-200">
+                        {activePeriod.name}
+                    </span>
+                )}
+            </div>
            <div className="flex items-center gap-4">
                <span className="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">Welcome, {user?.email}</span>
                 <button onClick={toggleTheme} className="p-2 rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
@@ -251,35 +276,43 @@ const Dashboard: React.FC<{ logoUrl?: string }> = ({ logoUrl }) => {
       </header>
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 pb-24">
-         <DashboardContent />
+         {isPeriodLoading ? (
+            <p className="text-center text-gray-600 dark:text-gray-400">Checking for active period...</p>
+         ) : activePeriod ? (
+             <DashboardContent />
+         ) : (
+            <NoActivePeriodContent />
+         )}
       </main>
 
-        <>
-        {activeTab === 'home' && <FAB onAddExpense={openAddGroceryModal} onAddDeposit={openAddDepositModal} />}
-        <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-t-lg z-20">
-            <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
-                <div className="flex justify-around h-16">
-                    {navItems.map((item) => {
-                        const Icon = item.icon;
-                        const isActive = activeTab === item.id;
-                        return (
-                            <button
-                                key={item.id}
-                                onClick={() => setActiveTab(item.id as View)}
-                                aria-current={isActive ? 'page' : undefined}
-                                className={`flex flex-col items-center justify-center w-full text-xs sm:text-sm font-medium transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-md ${
-                                    isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400'
-                                }`}
-                            >
-                                <Icon className="h-6 w-6 mb-1" />
-                                <span>{item.label}</span>
-                            </button>
-                        )
-                    })}
+        {activePeriod && (
+         <>
+            {activeTab === 'home' && <FAB onAddExpense={openAddGroceryModal} onAddDeposit={openAddDepositModal} />}
+            <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-t-lg z-20">
+                <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
+                    <div className="flex justify-around h-16">
+                        {navItems.map((item) => {
+                            const Icon = item.icon;
+                            const isActive = activeTab === item.id;
+                            return (
+                                <button
+                                    key={item.id}
+                                    onClick={() => setActiveTab(item.id as View)}
+                                    aria-current={isActive ? 'page' : undefined}
+                                    className={`flex flex-col items-center justify-center w-full text-xs sm:text-sm font-medium transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-md ${
+                                        isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400'
+                                    }`}
+                                >
+                                    <Icon className="h-6 w-6 mb-1" />
+                                    <span>{item.label}</span>
+                                </button>
+                            )
+                        })}
+                    </div>
                 </div>
-            </div>
-        </nav>
-      </>
+            </nav>
+        </>
+      )}
 
        {/* Grocery Add/Edit Modal */}
       <Modal title={itemToEdit ? "Edit Expense" : "Add New Expense"} isOpen={isGroceryModalOpen} onClose={() => setIsGroceryModalOpen(false)}>
@@ -325,7 +358,7 @@ const Dashboard: React.FC<{ logoUrl?: string }> = ({ logoUrl }) => {
            </div>
            <div>
              <label htmlFor="deposit_amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Amount (AED)</label>
-             <input type="number" id="deposit_amount" value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} required min="0.01" step="0.01" placeholder="e.g., 200.00" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" />
+             <input type="number" id="deposit_amount" value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} required step="0.01" placeholder="e.g., 200.00" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" />
            </div>
            <div className="pt-2 flex justify-end">
              <button type="submit" disabled={isSubmittingDeposit} className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:bg-green-400">

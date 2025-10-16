@@ -1,11 +1,14 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import * as api from '../services/firebase';
-import { GroceryItem, Deposit, Participant, Member } from '../types';
+import { GroceryItem, Deposit, Participant, Member, Period, ArchiveData } from '../types';
 import { ParsedGroceryItem } from '../utils/csvParser';
 
 export const useMealManager = () => {
     const [loading, setLoading] = useState(true);
+    const [isPeriodLoading, setIsPeriodLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    const [activePeriod, setActivePeriod] = useState<Period | null>(null);
     const [groceries, setGroceries] = useState<GroceryItem[]>([]);
     const [allDeposits, setAllDeposits] = useState<Deposit[]>([]);
     const [members, setMembers] = useState<Participant[]>([]);
@@ -16,31 +19,43 @@ export const useMealManager = () => {
     const [minAmount, setMinAmount] = useState<string>('');
     const [maxAmount, setMaxAmount] = useState<string>('');
     const [selectedPurchaser, setSelectedPurchaser] = useState<string>('');
+    
+    const fetchAndSetActivePeriod = useCallback(async () => {
+        setIsPeriodLoading(true);
+        try {
+            const period = await api.getActivePeriod();
+            setActivePeriod(period);
+        } catch (err: any) {
+             setError(err instanceof Error ? err.message : "An unknown error occurred while fetching period data.");
+        } finally {
+            setIsPeriodLoading(false);
+        }
+    }, []);
+    
+    useEffect(() => {
+        fetchAndSetActivePeriod();
+    }, [fetchAndSetActivePeriod]);
 
-    const fetchData = useCallback(async () => {
+    const fetchDataForPeriod = useCallback(async () => {
+        if (!activePeriod) {
+            setGroceries([]);
+            setAllDeposits([]);
+            setLoading(false);
+            return;
+        }
         setLoading(true);
         setError(null);
         try {
-            // Fetch all data in parallel for the logged-in user
             const [membersData, groceriesData, depositsData] = await Promise.all([
                 api.getMembers(),
-                api.getAllGroceries(),
-                api.getAllDeposits()
+                api.getAllGroceries(activePeriod.id),
+                api.getAllDeposits(activePeriod.id)
             ]);
             
-            // Create a map for quick name lookups
             const memberMap = new Map(membersData.map(m => [m.id, m.name]));
 
-            // Join member names with grocery and deposit data
-            const groceriesWithName = groceriesData.map(g => ({
-                ...g,
-                purchaserName: memberMap.get(g.purchaserId) || 'Unknown Member'
-            }));
-
-            const depositsWithName = depositsData.map(d => ({
-                ...d,
-                userName: memberMap.get(d.userId) || 'Unknown Member'
-            }));
+            const groceriesWithName = groceriesData.map(g => ({ ...g, purchaserName: memberMap.get(g.purchaserId) || 'Unknown Member' }));
+            const depositsWithName = depositsData.map(d => ({ ...d, userName: memberMap.get(d.userId) || 'Unknown Member' }));
             
             setGroceries(groceriesWithName);
             setAllDeposits(depositsWithName);
@@ -49,18 +64,18 @@ export const useMealManager = () => {
         } catch (err: any) {
             console.error("Data Fetch Error:", err);
             if (err.code === 'permission-denied') {
-                 setError("Permission Denied: Could not load your data. Please check your Firestore security rules to ensure you are allowed to access your own data.");
+                 setError("Permission Denied: Could not load your data. Please check your Firestore security rules.");
             } else {
                 setError(err instanceof Error ? err.message : "An unknown error occurred while fetching data.");
             }
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [activePeriod]);
 
     useEffect(() => {
-        fetchData();
-    }, [fetchData]);
+        fetchDataForPeriod();
+    }, [fetchDataForPeriod]);
     
     // --- Memoized Calculations ---
     const summary = useMemo(() => {
@@ -69,20 +84,16 @@ export const useMealManager = () => {
             const itemDate = item.date.split('T')[0];
             if (startDate && itemDate < startDate) return false;
             if (endDate && itemDate > endDate) return false;
-            
             if (selectedPurchaser && item.purchaserId !== selectedPurchaser) return false;
-
             const min = parseFloat(minAmount);
             if (!isNaN(min) && item.amount < min) return false;
-
             const max = parseFloat(maxAmount);
             if (!isNaN(max) && item.amount > max) return false;
-
             return true;
         });
 
         const filteredDeposits = allDeposits.filter(item => {
-            if (!startDate && !endDate) return true; // No filter if no dates are set
+            if (!startDate && !endDate) return true;
             const itemDate = item.date.split('T')[0];
             if (startDate && itemDate < startDate) return false;
             if (endDate && itemDate > endDate) return false;
@@ -97,7 +108,7 @@ export const useMealManager = () => {
 
         const mealManager = members.find(m => m.isMealManager);
         const totalDepositsFromOthers = filteredDeposits
-            .filter(d => mealManager && d.userId !== mealManager.id)
+            .filter(d => mealManager && d.userId !== mealManager.id && !d.notes?.includes('Balance transfer')) // Exclude transfers from this calc
             .reduce((sum, item) => sum + item.amount, 0);
 
         const memberData: Member[] = members.map(member => {
@@ -111,18 +122,11 @@ export const useMealManager = () => {
 
             let balance = (totalPurchase + totalDeposit) - averageExpense;
 
-            // If this member is the meal manager, subtract other members' deposits from their balance.
-            // This reflects that the manager is holding the group's money.
             if (mealManager && member.id === mealManager.id) {
                 balance -= totalDepositsFromOthers;
             }
             
-            return {
-                ...member,
-                totalPurchase,
-                totalDeposit,
-                balance,
-            };
+            return { ...member, totalPurchase, totalDeposit, balance };
         });
 
         return {
@@ -138,28 +142,23 @@ export const useMealManager = () => {
 
     // --- CRUD Functions ---
     const addGroceryItem = async (item: Omit<GroceryItem, 'id'>) => {
+        if (!activePeriod) { setError("No active period."); return; }
         try {
-            await api.addGrocery(item);
-            fetchData(); // Refresh data
-        } catch (err) {
-            console.error("Error adding grocery:", err);
-            setError("Failed to add grocery item.");
-            throw err;
-        }
+            await api.addGrocery(activePeriod.id, item);
+            fetchDataForPeriod();
+        } catch (err) { setError("Failed to add grocery item."); throw err; }
     };
     
     const updateGroceryItem = async (itemId: string, data: Partial<Omit<GroceryItem, 'id'>>) => {
+        if (!activePeriod) { setError("No active period."); return; }
         try {
-            await api.updateGrocery(itemId, data);
-            fetchData(); // Refresh data
-        } catch (err) {
-            console.error("Error updating grocery:", err);
-            setError("Failed to update grocery item.");
-            throw err;
-        }
+            await api.updateGrocery(activePeriod.id, itemId, data);
+            fetchDataForPeriod();
+        } catch (err) { setError("Failed to update grocery item."); throw err; }
     };
 
     const importGroceryItems = async (items: ParsedGroceryItem[]) => {
+        if (!activePeriod) { setError("No active period to import into."); return; }
         setError(null);
         try {
             const memberNameMap = new Map(members.map(m => [m.name.toLowerCase().trim(), m.id]));
@@ -169,28 +168,21 @@ export const useMealManager = () => {
             for (const item of items) {
                 const purchaserId = memberNameMap.get(item.purchaserName.toLowerCase().trim());
                 if (purchaserId) {
-                    itemsToAdd.push({
-                        name: item.name,
-                        amount: item.amount,
-                        date: item.date,
-                        purchaserId: purchaserId,
-                    });
+                    itemsToAdd.push({ name: item.name, amount: item.amount, date: item.date, purchaserId: purchaserId });
                 } else {
                     unknownMembers.push(item.purchaserName);
                 }
             }
             
             if (unknownMembers.length > 0) {
-                const uniqueUnknown = [...new Set(unknownMembers)];
-                throw new Error(`The following purchasers were not found: ${uniqueUnknown.join(', ')}. Please add them as members first or check for typos in your CSV.`);
+                throw new Error(`Purchasers not found: ${[...new Set(unknownMembers)].join(', ')}. Please add them as members first.`);
             }
 
-            const promises = itemsToAdd.map(item => api.addGrocery(item));
+            const promises = itemsToAdd.map(item => api.addGrocery(activePeriod.id, item));
             await Promise.all(promises);
-            fetchData();
+            fetchDataForPeriod();
+// Fix: Correctly handle the unknown type in the catch block to prevent type errors.
         } catch (err) {
-            console.error("Error importing grocery items:", err);
-            // FIX: The `err` object in a catch block is of type `unknown`. To prevent a type error when setting the error message, we must first check if `err` is an instance of `Error` before accessing its `message` property.
             let message = "Failed to import grocery items.";
             if (err instanceof Error) {
                 message = err.message;
@@ -201,89 +193,102 @@ export const useMealManager = () => {
     };
 
     const deleteGroceryItem = async (item: GroceryItem) => {
+        if (!activePeriod) { setError("No active period."); return; }
         try {
-            await api.deleteGrocery(item.id);
-            fetchData();
-        } catch (err) {
-            console.error("Error deleting grocery:", err);
-            setError("Failed to delete grocery item.");
-            throw err;
-        }
+            await api.deleteGrocery(activePeriod.id, item.id);
+            fetchDataForPeriod();
+        } catch (err) { setError("Failed to delete grocery item."); throw err; }
     };
 
     const addDepositItem = async (item: Omit<Deposit, 'id'>) => {
+        if (!activePeriod) { setError("No active period."); return; }
         try {
-            await api.addDeposit(item);
-            fetchData();
-        } catch (err) {
-            console.error("Error adding deposit:", err);
-            setError("Failed to add deposit.");
-            throw err;
-        }
+            await api.addDeposit(activePeriod.id, item);
+            fetchDataForPeriod();
+        } catch (err) { setError("Failed to add deposit."); throw err; }
     };
 
     const updateDepositItem = async (depositId: string, data: Partial<Omit<Deposit, 'id'>>) => {
+        if (!activePeriod) { setError("No active period."); return; }
         try {
-            await api.updateDeposit(depositId, data);
-            fetchData(); // Refresh data
-        } catch (err) {
-            console.error("Error updating deposit:", err);
-            setError("Failed to update deposit.");
-            throw err;
-        }
+            await api.updateDeposit(activePeriod.id, depositId, data);
+            fetchDataForPeriod();
+        } catch (err) { setError("Failed to update deposit."); throw err; }
     };
 
     const deleteDepositItem = async (item: Deposit) => {
+        if (!activePeriod) { setError("No active period."); return; }
         try {
-            await api.deleteDeposit(item.id);
-            fetchData();
-        } catch (err) {
-            console.error("Error deleting deposit:", err);
-            setError("Failed to delete deposit.");
-            throw err;
-        }
+            await api.deleteDeposit(activePeriod.id, item.id);
+            fetchDataForPeriod();
+        } catch (err) { setError("Failed to delete deposit."); throw err; }
     };
 
     const addMember = async (name: string, phone: string) => {
         try {
             await api.addMember(name, phone);
-            fetchData();
-        } catch (err) {
-            console.error("Error adding member:", err);
-            setError("Failed to add member.");
-            throw err;
-        }
+            fetchDataForPeriod();
+        } catch (err) { setError("Failed to add member."); throw err; }
     };
 
     const updateMember = async (memberId: string, name: string, phone: string) => {
         try {
             await api.updateMember(memberId, name, phone);
-            fetchData();
-        } catch (err) {
-            console.error("Error updating member:", err);
-            setError("Failed to update member.");
-            throw err;
-        }
+            fetchDataForPeriod();
+        } catch (err) { setError("Failed to update member."); throw err; }
     };
 
     const deleteMember = async (memberId: string) => {
         try {
             await api.deleteMember(memberId);
-            fetchData();
-        } catch (err) {
-            console.error("Error deleting member:", err);
-            setError("Failed to delete member.");
-            throw err;
-        }
+            fetchDataForPeriod();
+        } catch (err) { setError("Failed to delete member."); throw err; }
     };
 
     const setMealManager = async (memberId: string) => {
         try {
             await api.setMealManager(memberId);
-            fetchData();
+            fetchDataForPeriod();
+        } catch (err) { setError("Failed to set meal manager."); throw err; }
+    };
+    
+    // --- Period Management ---
+    const archiveAndStartNewPeriod = async (
+        newPeriodData: Omit<Period, 'id'|'status'>,
+        transferBalances: boolean
+    ) => {
+        if (!activePeriod) throw new Error("No active period to archive.");
+
+        const archiveData: ArchiveData = {
+            members: summary.members,
+            groceries: groceries,
+            deposits: allDeposits,
+            summary: {
+                totalMembers: summary.totalMembers,
+                totalGroceryCost: summary.totalGroceryCost,
+                totalDeposits: summary.totalDeposits,
+                averageExpense: summary.averageExpense,
+                periodName: activePeriod.name,
+                periodStartDate: activePeriod.startDate,
+                periodEndDate: activePeriod.endDate,
+            }
+        };
+
+        try {
+            await api.archivePeriodAndStartNew(activePeriod, archiveData, newPeriodData, transferBalances);
+            await fetchAndSetActivePeriod(); // This will trigger a full data refresh
         } catch (err) {
-            console.error("Error setting meal manager:", err);
-            setError("Failed to set meal manager.");
+            setError("Failed to archive and start new period.");
+            throw err;
+        }
+    };
+
+    const createFirstPeriod = async (periodData: Omit<Period, 'id' | 'status'>) => {
+        try {
+            await api.createFirstPeriod(periodData);
+            await fetchAndSetActivePeriod();
+        } catch (err) {
+            setError("Failed to create the first period.");
             throw err;
         }
     };
@@ -302,7 +307,9 @@ export const useMealManager = () => {
         summary,
         members,
         groceries,
-        refreshData: fetchData,
+        activePeriod,
+        isPeriodLoading,
+        refreshData: fetchDataForPeriod,
         // Groceries
         addGroceryItem,
         updateGroceryItem,
@@ -317,6 +324,9 @@ export const useMealManager = () => {
         updateMember,
         deleteMember,
         setMealManager,
+        // Periods
+        archiveAndStartNewPeriod,
+        createFirstPeriod,
         // Filters
         startDate,
         setStartDate,

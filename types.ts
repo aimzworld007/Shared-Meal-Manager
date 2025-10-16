@@ -34,6 +34,7 @@ export interface Deposit {
   date: string; // ISO string format
   userId: string; // ID of the member who made the deposit
   userName?: string;
+  notes?: string; // For balance transfers
 }
 
 /**
@@ -54,6 +55,42 @@ export interface Member extends Participant {
     totalDeposit: number;
     balance: number;
 }
+
+export interface Period {
+    id: string;
+    name: string;
+    startDate: string;
+    endDate: string;
+    status: 'active' | 'archived';
+    type: 'monthly' | 'weekly';
+}
+
+export interface SummaryData {
+    totalMembers: number;
+    totalGroceryCost: number;
+    totalDeposits: number;
+    averageExpense: number;
+    periodName: string;
+    periodStartDate: string;
+    periodEndDate: string;
+}
+
+export interface ArchiveData {
+    members: Member[];
+    groceries: GroceryItem[];
+    deposits: Deposit[];
+    summary: SummaryData;
+}
+
+export interface Archive {
+    id: string; // Corresponds to the periodId
+    periodName: string;
+    archivedAt: string; // ISO string
+    periodStartDate: string;
+    periodEndDate: string;
+    data: ArchiveData;
+}
+
 
 // Fix: Add missing SiteSettings type definition.
 /**

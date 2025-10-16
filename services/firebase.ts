@@ -25,6 +25,8 @@ import {
   setDoc,
   getDoc,
   writeBatch,
+  where,
+  limit,
 } from "firebase/firestore";
 // Fix: Add Firebase storage imports for site settings features.
 import {
@@ -34,7 +36,7 @@ import {
   getDownloadURL,
 } from "firebase/storage";
 // Fix: Import the missing SiteSettings type.
-import { User, GroceryItem, Deposit, Participant, SiteSettings } from "../types";
+import { User, GroceryItem, Deposit, Participant, SiteSettings, Period, ArchiveData } from "../types";
 
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
@@ -53,14 +55,6 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 // Fix: Initialize Firebase Storage.
 const storage = getStorage(app);
-
-// --- Helper to get user-specific subcollection ref ---
-const getUserSubcollection = (collectionName: string) => {
-    const user = auth.currentUser;
-    if (!user) throw new Error("User not authenticated.");
-    return collection(db, 'users', user.uid, collectionName);
-};
-
 
 // --- Auth Service ---
 export const signIn = (email: string, pass: string) => signInWithEmailAndPassword(auth, email, pass);
@@ -97,48 +91,63 @@ export const changeUserPassword = (newPassword: string) => {
 
 // --- Firestore Service (User-Scoped) ---
 
-// --- Groceries ---
-export const getAllGroceries = async (): Promise<GroceryItem[]> => {
-    const groceriesCol = getUserSubcollection('groceries');
+// --- Helper for period-specific subcollections ---
+const getPeriodSubcollection = (periodId: string, collectionName: string) => {
+    const user = auth.currentUser;
+    if (!user) throw new Error("User not authenticated.");
+    if (!periodId) throw new Error("Period ID is required for this operation.");
+    return collection(db, 'users', user.uid, 'periods', periodId, collectionName);
+};
+
+// --- Helper for user-level subcollections (like members) ---
+const getUserSubcollection = (collectionName: string) => {
+    const user = auth.currentUser;
+    if (!user) throw new Error("User not authenticated.");
+    return collection(db, 'users', user.uid, collectionName);
+};
+
+// --- Groceries (scoped to a period) ---
+export const getAllGroceries = async (periodId: string): Promise<GroceryItem[]> => {
+    const groceriesCol = getPeriodSubcollection(periodId, 'groceries');
     const q = query(groceriesCol, orderBy('date', 'desc'));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GroceryItem));
 };
-export const addGrocery = (item: Omit<GroceryItem, 'id'>) => {
-    const groceriesCol = getUserSubcollection('groceries');
+export const addGrocery = (periodId: string, item: Omit<GroceryItem, 'id'>) => {
+    const groceriesCol = getPeriodSubcollection(periodId, 'groceries');
     return addDoc(groceriesCol, item);
 };
-export const deleteGrocery = (itemId: string) => {
-    const groceryDocRef = doc(getUserSubcollection('groceries'), itemId);
+export const deleteGrocery = (periodId: string, itemId: string) => {
+    const groceryDocRef = doc(getPeriodSubcollection(periodId, 'groceries'), itemId);
     return deleteDoc(groceryDocRef);
 };
-export const updateGrocery = (itemId: string, data: Partial<Omit<GroceryItem, 'id'>>) => {
-    const groceryDocRef = doc(getUserSubcollection('groceries'), itemId);
+export const updateGrocery = (periodId: string, itemId: string, data: Partial<Omit<GroceryItem, 'id'>>) => {
+    const groceryDocRef = doc(getPeriodSubcollection(periodId, 'groceries'), itemId);
     return updateDoc(groceryDocRef, data);
 };
 
 
-// --- Deposits ---
-export const getAllDeposits = async (): Promise<Deposit[]> => {
-    const depositsCol = getUserSubcollection('deposits');
+// --- Deposits (scoped to a period) ---
+export const getAllDeposits = async (periodId: string): Promise<Deposit[]> => {
+    const depositsCol = getPeriodSubcollection(periodId, 'deposits');
     const q = query(depositsCol, orderBy('date', 'desc'));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Deposit));
 };
-export const addDeposit = (deposit: Omit<Deposit, 'id'>) => {
-    const depositsCol = getUserSubcollection('deposits');
+export const addDeposit = (periodId: string, deposit: Omit<Deposit, 'id'>) => {
+    const depositsCol = getPeriodSubcollection(periodId, 'deposits');
     return addDoc(depositsCol, deposit);
 };
-export const deleteDeposit = (depositId: string) => {
-    const depositDocRef = doc(getUserSubcollection('deposits'), depositId);
+export const deleteDeposit = (periodId: string, depositId: string) => {
+    const depositDocRef = doc(getPeriodSubcollection(periodId, 'deposits'), depositId);
     return deleteDoc(depositDocRef);
 };
-export const updateDeposit = (depositId: string, data: Partial<Omit<Deposit, 'id'>>) => {
-    const depositDocRef = doc(getUserSubcollection('deposits'), depositId);
+export const updateDeposit = (periodId: string, depositId: string, data: Partial<Omit<Deposit, 'id'>>) => {
+    const depositDocRef = doc(getPeriodSubcollection(periodId, 'deposits'), depositId);
     return updateDoc(depositDocRef, data);
 };
 
-// --- Members ---
+// --- Members (not period-specific) ---
 export const getMembers = async (): Promise<Participant[]> => {
     const membersCol = getUserSubcollection('members');
     const q = query(membersCol, orderBy('name'));
@@ -162,7 +171,6 @@ export const setMealManager = async (newManagerId: string) => {
     const membersCol = getUserSubcollection('members');
     const batch = writeBatch(db);
 
-    // First, find and unset any current meal managers
     const membersSnapshot = await getDocs(membersCol);
     membersSnapshot.forEach(doc => {
         if (doc.data().isMealManager === true && doc.id !== newManagerId) {
@@ -170,11 +178,115 @@ export const setMealManager = async (newManagerId: string) => {
         }
     });
 
-    // Then, set the new meal manager
     const newManagerRef = doc(membersCol, newManagerId);
     batch.update(newManagerRef, { isMealManager: true });
 
     await batch.commit();
+};
+
+// --- Meal Periods & Archiving ---
+export const getPeriods = async (): Promise<Period[]> => {
+    const periodsCol = getUserSubcollection('periods');
+    const q = query(periodsCol, orderBy('startDate', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Period));
+}
+
+export const getActivePeriod = async (): Promise<Period | null> => {
+    const periodsCol = getUserSubcollection('periods');
+    const q = query(periodsCol, where('status', '==', 'active'), limit(1));
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) {
+        return null;
+    }
+    const doc = snapshot.docs[0];
+    return { id: doc.id, ...doc.data() } as Period;
+};
+
+export const getArchivedPeriods = async (): Promise<Period[]> => {
+    const periodsCol = getUserSubcollection('periods');
+    const q = query(periodsCol, where('status', '==', 'archived'), orderBy('startDate', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Period));
+};
+
+export const getArchive = async (archiveId: string) => {
+    const archiveRef = doc(getUserSubcollection('archives'), archiveId);
+    const docSnap = await getDoc(archiveRef);
+    if (!docSnap.exists()) {
+        throw new Error("Archive not found.");
+    }
+    return { id: docSnap.id, ...docSnap.data() };
+};
+
+export const createFirstPeriod = (periodData: Omit<Period, 'id' | 'status'>) => {
+    const periodsCol = getUserSubcollection('periods');
+    return addDoc(periodsCol, { ...periodData, status: 'active' });
+};
+
+export const archivePeriodAndStartNew = async (
+    currentPeriod: Period,
+    archiveData: ArchiveData,
+    newPeriodData: Omit<Period, 'id' | 'status'>,
+    transferBalances: boolean,
+) => {
+    const user = auth.currentUser;
+    if (!user) throw new Error("User not authenticated.");
+
+    const batch = writeBatch(db);
+
+    // 1. Create the archive document
+    const archiveDocRef = doc(getUserSubcollection('archives'), currentPeriod.id);
+    batch.set(archiveDocRef, {
+        periodName: currentPeriod.name,
+        archivedAt: new Date().toISOString(),
+        periodStartDate: currentPeriod.startDate,
+        periodEndDate: currentPeriod.endDate,
+        data: archiveData,
+    });
+
+    // 2. Update current period to 'archived'
+    const currentPeriodRef = doc(getUserSubcollection('periods'), currentPeriod.id);
+    batch.update(currentPeriodRef, { status: 'archived' });
+
+    // 3. Create the new 'active' period
+    const newPeriodRef = doc(getUserSubcollection('periods'));
+    const newPeriodWithStatus: Omit<Period, 'id'> = {
+        ...newPeriodData,
+        status: 'active',
+    };
+    batch.set(newPeriodRef, newPeriodWithStatus);
+
+    // 4. (Optional) Create transfer deposits in the new period
+    if (transferBalances) {
+        for (const member of archiveData.members) {
+            if (member.balance !== 0) {
+                const depositData: Omit<Deposit, 'id'> = {
+                    amount: member.balance,
+                    date: newPeriodData.startDate,
+                    userId: member.id,
+                    notes: `Balance transfer from '${currentPeriod.name}'`
+                };
+                const newDepositRef = doc(getPeriodSubcollection(newPeriodRef.id, 'deposits'));
+                batch.set(newDepositRef, depositData);
+            }
+        }
+    }
+
+    // 5. Commit batch
+    await batch.commit();
+
+    // 6. Clean up old archives (keep the latest 3)
+    const archivesCol = getUserSubcollection('archives');
+    const archivesQuery = query(archivesCol, orderBy('archivedAt', 'desc'));
+    const snapshot = await getDocs(archivesQuery);
+    if (snapshot.docs.length > 3) {
+        const archivesToDelete = snapshot.docs.slice(3);
+        const deleteBatch = writeBatch(db);
+        archivesToDelete.forEach(doc => deleteBatch.delete(doc.ref));
+        await deleteBatch.commit();
+        console.log(`Deleted ${archivesToDelete.length} old archive(s).`);
+    }
 };
 
 

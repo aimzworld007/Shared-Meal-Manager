@@ -9,8 +9,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "react-dom": "^19.2.0",
-    "react": "^19.2.0",
+    "react-dom": "^18.2.0",
+    "react": "^18.2.0",
     "firebase": "^12.4.0",
     "chart.js": "^4.4.2",
     "@kurkle/color": "^0.3.2",

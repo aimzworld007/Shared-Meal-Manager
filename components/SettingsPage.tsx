@@ -10,6 +10,7 @@ import ConfirmationModal from './ConfirmationModal';
 import CSVImportModal from './CSVImportModal';
 import { Participant } from '../types';
 import { useMealManager } from '../hooks/useMealManager';
+import PeriodManager from './PeriodManager';
 
 interface SettingsPageProps {
   mealManager: ReturnType<typeof useMealManager>;
@@ -171,6 +172,9 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ mealManager }) => {
   return (
     <div className="space-y-8 max-w-4xl mx-auto">
       <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Settings</h1>
+
+      {/* Period Management */}
+      <PeriodManager mealManager={mealManager} />
 
       {/* Member Management */}
       <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg">
