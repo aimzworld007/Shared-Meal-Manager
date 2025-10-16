@@ -4,26 +4,25 @@
  */
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { useTheme } from '../App';
 import { useMealManager } from '../hooks/useMealManager';
-import MainBalanceSummary from './BalanceSummary';
-import IndividualAccounts from './IndividualAccounts';
 import GroceryManager from './GroceryManager';
-import MemberAndDepositManager from './MemberAndDepositManager';
 import PermissionsError from './PermissionsError';
 import SettingsPage from './SettingsPage';
 import MonthlySpendChart from './MonthlySpendChart';
 import FAB from './FAB';
 import SummaryCircle from './SummaryCircle';
 import Modal from './Modal';
-import { GroceryItem, Deposit, Participant } from '../types';
+import AccountsView from './AccountsView';
+import { GroceryItem, Deposit } from '../types';
 import { logoUrl as defaultLogoUrl } from '../assets/logo';
 
 // Define view types for bottom navigation
-type View = 'home' | 'grocery' | 'accounts' | 'deposit';
+type View = 'home' | 'grocery' | 'accounts' | 'settings';
 
 // --- Icon Components ---
 const HomeIcon = ({ className = "h-6 w-6" }: { className?: string }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <svg xmlns="http://www.w.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
     </svg>
 );
@@ -37,20 +36,37 @@ const AccountsIcon = ({ className = "h-6 w-6" }: { className?: string }) => (
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
     </svg>
 );
-const DepositIcon = ({ className = "h-6 w-6" }: { className?: string }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+const SettingsIcon = ({ className = "h-6 w-6" }: { className?: string }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
     </svg>
 );
+const LogoutIcon = ({ className = "h-6 w-6" }: { className?: string }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+    </svg>
+);
+const SunIcon = ({ className = "h-6 w-6" }: { className?: string }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+    </svg>
+);
+const MoonIcon = ({ className = "h-6 w-6" }: { className?: string }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+    </svg>
+);
+
 
 const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED' }).format(amount);
 };
 
 const Dashboard: React.FC<{ logoUrl?: string }> = ({ logoUrl }) => {
-  const [view, setView] = useState<'dashboard' | 'settings'>('dashboard');
   const [activeTab, setActiveTab] = useState<View>('home');
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const mealManager = useMealManager();
 
   const { loading, error, summary, members, groceries, refreshData } = mealManager;
@@ -155,9 +171,9 @@ const Dashboard: React.FC<{ logoUrl?: string }> = ({ logoUrl }) => {
 
   const DashboardContent = () => (
     <>
-      {loading && <p className="text-center text-gray-600">Loading your dashboard...</p>}
+      {loading && <p className="text-center text-gray-600 dark:text-gray-400">Loading your dashboard...</p>}
       {isPermissionError && <PermissionsError errorMessage={error} onRetry={refreshData} />}
-      {!isPermissionError && error && <p className="text-center text-red-500 bg-red-100 p-4 rounded-md">{error}</p>}
+      {!isPermissionError && error && <p className="text-center text-red-500 bg-red-100 dark:bg-red-900/50 dark:text-red-300 p-4 rounded-md">{error}</p>}
       {!loading && !error && (
         <div className="space-y-8">
           {activeTab === 'home' && (
@@ -168,18 +184,18 @@ const Dashboard: React.FC<{ logoUrl?: string }> = ({ logoUrl }) => {
                     <SummaryCircle title="Avg. Expense / Person" value={formatCurrency(summary.averageExpense)} colorClassName="bg-blue-500" />
                 </div>
                 <MonthlySpendChart groceries={groceries} />
-                <div className="bg-white shadow-lg rounded-lg p-6">
-                    <h3 className="text-xl font-bold text-gray-800 mb-4">Member Balances</h3>
-                    <ul className="divide-y divide-gray-200">
+                <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6">
+                    <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-4">Member Balances</h3>
+                    <ul className="divide-y divide-gray-200 dark:divide-gray-700">
                         {summary.members.map(member => (
                             <li key={member.id} className="py-3 flex justify-between items-center">
-                                <span className="font-medium text-gray-700">{member.name}</span>
-                                <span className={`font-semibold text-lg ${member.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                <span className="font-medium text-gray-700 dark:text-gray-300">{member.name}</span>
+                                <span className={`font-semibold text-lg ${member.balance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                                     {formatCurrency(member.balance)}
                                 </span>
                             </li>
                         ))}
-                         {summary.members.length === 0 && <p className="text-center text-gray-500">No members to show.</p>}
+                         {summary.members.length === 0 && <p className="text-center text-gray-500 dark:text-gray-400">No members to show.</p>}
                     </ul>
                 </div>
             </div>
@@ -203,20 +219,8 @@ const Dashboard: React.FC<{ logoUrl?: string }> = ({ logoUrl }) => {
               onResetFilters={mealManager.resetFilters}
             />
           )}
-          {activeTab === 'accounts' && (
-            <div className="space-y-8">
-              <MainBalanceSummary summary={summary} />
-              <IndividualAccounts members={summary.members} groceries={summary.allGroceries} />
-            </div>
-          )}
-          {activeTab === 'deposit' && (
-            <MemberAndDepositManager
-              members={members}
-              deposits={summary.allDeposits}
-              onEditDeposit={openEditDepositModal}
-              onDeleteDeposit={mealManager.deleteDepositItem}
-            />
-          )}
+          {activeTab === 'accounts' && <AccountsView mealManager={mealManager} onEditDeposit={openEditDepositModal} />}
+          {activeTab === 'settings' && <SettingsPage mealManager={mealManager} />}
         </div>
       )}
     </>
@@ -226,42 +230,33 @@ const Dashboard: React.FC<{ logoUrl?: string }> = ({ logoUrl }) => {
       { id: 'home', label: 'Home', icon: HomeIcon },
       { id: 'grocery', label: 'Grocery Bill', icon: GroceryIcon },
       { id: 'accounts', label: 'Accounts', icon: AccountsIcon },
-      { id: 'deposit', label: 'Deposit', icon: DepositIcon },
+      { id: 'settings', label: 'Settings', icon: SettingsIcon },
   ];
 
   return (
-    <div className="bg-gray-100 min-h-screen">
-      <header className="bg-white shadow-sm sticky top-0 z-10">
+    <div className="bg-gray-100 dark:bg-gray-900 min-h-screen">
+      <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex flex-wrap justify-between items-center gap-4">
           <img src={logoUrl || defaultLogoUrl} alt="Logo" className="h-10" />
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-sm text-gray-600 hidden sm:block order-first">Welcome, {user?.email}</span>
-            {view === 'dashboard' ? (
-                 <button onClick={() => setView('settings')} className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50">Settings</button>
-            ) : (
-                 <button onClick={() => setView('dashboard')} className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50">Dashboard</button>
-            )}
-            <button onClick={logout} className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">Logout</button>
-          </div>
+           <div className="flex items-center gap-4">
+               <span className="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">Welcome, {user?.email}</span>
+                <button onClick={toggleTheme} className="p-2 rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    {theme === 'light' ? <MoonIcon /> : <SunIcon />}
+                </button>
+               <button onClick={logout} className="p-2 rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" aria-label="Logout">
+                   <LogoutIcon />
+               </button>
+           </div>
         </div>
       </header>
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 pb-24">
-        {view === 'dashboard' ? <DashboardContent /> : <SettingsPage
-            members={members}
-            summary={summary}
-            onAddMember={mealManager.addMember}
-            onUpdateMember={mealManager.updateMember}
-            onDeleteMember={mealManager.deleteMember}
-            onSetMealManager={mealManager.setMealManager}
-            onImportGroceries={mealManager.importGroceryItems}
-        />}
+         <DashboardContent />
       </main>
 
-      {view === 'dashboard' && (
         <>
         {activeTab === 'home' && <FAB onAddExpense={openAddGroceryModal} onAddDeposit={openAddDepositModal} />}
-        <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-t-lg z-20">
+        <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-t-lg z-20">
             <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
                 <div className="flex justify-around h-16">
                     {navItems.map((item) => {
@@ -273,7 +268,7 @@ const Dashboard: React.FC<{ logoUrl?: string }> = ({ logoUrl }) => {
                                 onClick={() => setActiveTab(item.id as View)}
                                 aria-current={isActive ? 'page' : undefined}
                                 className={`flex flex-col items-center justify-center w-full text-xs sm:text-sm font-medium transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-md ${
-                                    isActive ? 'text-indigo-600' : 'text-gray-500 hover:text-indigo-600'
+                                    isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400'
                                 }`}
                             >
                                 <Icon className="h-6 w-6 mb-1" />
@@ -285,28 +280,27 @@ const Dashboard: React.FC<{ logoUrl?: string }> = ({ logoUrl }) => {
             </div>
         </nav>
       </>
-      )}
 
        {/* Grocery Add/Edit Modal */}
       <Modal title={itemToEdit ? "Edit Expense" : "Add New Expense"} isOpen={isGroceryModalOpen} onClose={() => setIsGroceryModalOpen(false)}>
         <form onSubmit={handleGrocerySubmit} className="space-y-4">
            <div>
-              <label htmlFor="purchaser" className="block text-sm font-medium text-gray-700">Purchased By</label>
-               <select id="purchaser" value={purchaserId} onChange={(e) => setPurchaserId(e.target.value)} required className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+              <label htmlFor="purchaser" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Purchased By</label>
+               <select id="purchaser" value={purchaserId} onChange={(e) => setPurchaserId(e.target.value)} required className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                 {members.map(member => <option key={member.id} value={member.id}>{member.name}</option>)}
               </select>
            </div>
            <div>
-              <label htmlFor="date" className="block text-sm font-medium text-gray-700">Date</label>
-              <input type="date" id="date" value={groceryDate} onChange={(e) => setGroceryDate(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+              <label htmlFor="date" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Date</label>
+              <input type="date" id="date" value={groceryDate} onChange={(e) => setGroceryDate(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" />
            </div>
            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">Item Name / Notes</label>
-              <input type="text" id="name" value={groceryName} onChange={(e) => setGroceryName(e.target.value)} required placeholder="e.g., Milk, Bread, etc." className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Item Name / Notes</label>
+              <input type="text" id="name" value={groceryName} onChange={(e) => setGroceryName(e.target.value)} required placeholder="e.g., Milk, Bread, etc." className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" />
            </div>
            <div>
-             <label htmlFor="amount" className="block text-sm font-medium text-gray-700">Amount (AED)</label>
-             <input type="number" id="amount" value={groceryAmount} onChange={(e) => setGroceryAmount(e.target.value)} required min="0.01" step="0.01" placeholder="e.g., 25.50" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+             <label htmlFor="amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Amount (AED)</label>
+             <input type="number" id="amount" value={groceryAmount} onChange={(e) => setGroceryAmount(e.target.value)} required min="0.01" step="0.01" placeholder="e.g., 25.50" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" />
            </div>
            <div className="pt-2 flex justify-end">
              <button type="submit" disabled={isSubmittingGrocery || members.length === 0} className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400">
@@ -320,18 +314,18 @@ const Dashboard: React.FC<{ logoUrl?: string }> = ({ logoUrl }) => {
       <Modal title={editingDeposit ? `Edit or Transfer Deposit` : `Add Deposit`} isOpen={isDepositModalOpen} onClose={() => setIsDepositModalOpen(false)}>
         <form onSubmit={handleDepositSubmit} className="space-y-4">
             <div>
-              <label htmlFor="deposit_member" className="block text-sm font-medium text-gray-700">Member</label>
-              <select id="deposit_member" value={selectedUserIdForDeposit} onChange={(e) => setSelectedUserIdForDeposit(e.target.value)} required className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+              <label htmlFor="deposit_member" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Member</label>
+              <select id="deposit_member" value={selectedUserIdForDeposit} onChange={(e) => setSelectedUserIdForDeposit(e.target.value)} required className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                 {members.map(member => <option key={member.id} value={member.id}>{member.name}</option>)}
               </select>
             </div>
            <div>
-              <label htmlFor="deposit_date" className="block text-sm font-medium text-gray-700">Date</label>
-              <input type="date" id="deposit_date" value={depositDate} onChange={(e) => setDepositDate(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+              <label htmlFor="deposit_date" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Date</label>
+              <input type="date" id="deposit_date" value={depositDate} onChange={(e) => setDepositDate(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600" />
            </div>
            <div>
-             <label htmlFor="deposit_amount" className="block text-sm font-medium text-gray-700">Amount (AED)</label>
-             <input type="number" id="deposit_amount" value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} required min="0.01" step="0.01" placeholder="e.g., 200.00" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+             <label htmlFor="deposit_amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Amount (AED)</label>
+             <input type="number" id="deposit_amount" value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} required min="0.01" step="0.01" placeholder="e.g., 200.00" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" />
            </div>
            <div className="pt-2 flex justify-end">
              <button type="submit" disabled={isSubmittingDeposit} className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:bg-green-400">

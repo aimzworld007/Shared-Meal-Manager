@@ -8,26 +8,17 @@ import ReauthModal from './ReauthModal';
 import Modal from './Modal';
 import ConfirmationModal from './ConfirmationModal';
 import CSVImportModal from './CSVImportModal';
-import { Participant, Deposit, GroceryItem, Member } from '../types';
-import { ParsedGroceryItem } from '../utils/csvParser';
+import { Participant } from '../types';
+import { useMealManager } from '../hooks/useMealManager';
 
 interface SettingsPageProps {
-  members: Participant[];
-  summary: {
-    allGroceries: GroceryItem[];
-    allDeposits: Deposit[];
-    members: Member[];
-  };
-  onAddMember: (name: string, phone: string) => Promise<void>;
-  onUpdateMember: (memberId: string, name: string, phone: string) => Promise<void>;
-  onDeleteMember: (memberId: string) => Promise<void>;
-  onSetMealManager: (memberId: string) => Promise<void>;
-  onImportGroceries: (items: ParsedGroceryItem[]) => Promise<void>;
+  mealManager: ReturnType<typeof useMealManager>;
 }
 
 
-const SettingsPage: React.FC<SettingsPageProps> = ({ members, summary, onAddMember, onUpdateMember, onDeleteMember, onSetMealManager, onImportGroceries }) => {
+const SettingsPage: React.FC<SettingsPageProps> = ({ mealManager }) => {
   const { user, changeEmail, changePassword, error: authError, clearError } = useAuth();
+  const { members, summary, addMember, updateMember, deleteMember, setMealManager, importGroceryItems } = mealManager;
   
   // --- Account Security State ---
   const [reauthAction, setReauthAction] = useState<'email' | 'password' | null>(null);
@@ -109,9 +100,9 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ members, summary, onAddMemb
     setIsSubmittingMember(true);
     try {
       if (editingMember) {
-        await onUpdateMember(editingMember.id, memberName, memberPhone);
+        await updateMember(editingMember.id, memberName, memberPhone);
       } else {
-        await onAddMember(memberName, memberPhone);
+        await addMember(memberName, memberPhone);
       }
       setIsMemberModalOpen(false);
     } catch (err) {
@@ -128,7 +119,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ members, summary, onAddMemb
 
   const handleConfirmDelete = async () => {
     if (memberToDelete) {
-      await onDeleteMember(memberToDelete.id);
+      await deleteMember(memberToDelete.id);
     }
     setIsConfirmDeleteOpen(false);
     setMemberToDelete(null);
@@ -179,86 +170,86 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ members, summary, onAddMemb
 
   return (
     <div className="space-y-8 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
+      <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Settings</h1>
 
       {/* Member Management */}
-      <div className="bg-white shadow-lg rounded-lg">
-        <div className="px-6 py-4 bg-gray-50 border-b rounded-t-lg flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-gray-800">Member Management</h3>
+      <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg">
+        <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 rounded-t-lg flex justify-between items-center">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Member Management</h3>
           <button onClick={openAddMemberModal} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
             Add New Member
           </button>
         </div>
         <div className="p-6">
-            <ul className="divide-y divide-gray-200">
+            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
                 {members.map(member => (
                     <li key={member.id} className="py-4 flex justify-between items-center">
                         <div>
-                            <p className="text-sm font-medium text-gray-900">{member.name}</p>
-                            <p className="text-sm text-gray-500">{member.phone}</p>
+                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{member.name}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">{member.phone}</p>
                         </div>
                         <div className="space-x-3 flex items-center">
                              {member.isMealManager ? (
-                                <span className="px-2 py-1 text-xs font-semibold leading-tight text-green-700 bg-green-100 rounded-full">
+                                <span className="px-2 py-1 text-xs font-semibold leading-tight text-green-700 bg-green-100 dark:bg-green-900/50 dark:text-green-300 rounded-full">
                                     Meal Manager
                                 </span>
                             ) : (
                                 <button 
-                                    onClick={() => onSetMealManager(member.id)} 
-                                    className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
+                                    onClick={() => setMealManager(member.id)} 
+                                    className="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300"
                                 >
                                     Make Manager
                                 </button>
                             )}
-                            <button onClick={() => openEditMemberModal(member)} className="text-sm font-medium text-indigo-600 hover:text-indigo-800">Edit</button>
-                            <button onClick={() => handleDeleteMemberClick(member)} className="text-sm font-medium text-red-600 hover:text-red-800">Delete</button>
+                            <button onClick={() => openEditMemberModal(member)} className="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300">Edit</button>
+                            <button onClick={() => handleDeleteMemberClick(member)} className="text-sm font-medium text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300">Delete</button>
                         </div>
                     </li>
                 ))}
-                {members.length === 0 && <p className="text-sm text-gray-500 text-center py-4">No members have been added yet.</p>}
+                {members.length === 0 && <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">No members have been added yet.</p>}
             </ul>
         </div>
       </div>
       
       {/* Data Management */}
-      <div className="bg-white shadow-lg rounded-lg">
-        <div className="px-6 py-4 bg-gray-50 border-b rounded-t-lg">
-          <h3 className="text-lg font-semibold text-gray-800">Data Management</h3>
+      <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg">
+        <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 rounded-t-lg">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Data Management</h3>
         </div>
         <div className="p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            <button onClick={() => setIsImportModalOpen(true)} className="w-full text-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50">Import Groceries</button>
-            <button onClick={handleExportGroceries} className="w-full text-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50">Export Groceries</button>
-            <button onClick={handleExportDeposits} className="w-full text-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50">Export Deposits</button>
-            <button onClick={handleExportSummary} className="w-full text-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50">Export Summary</button>
+            <button onClick={() => setIsImportModalOpen(true)} className="w-full text-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">Import Groceries</button>
+            <button onClick={handleExportGroceries} className="w-full text-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">Export Groceries</button>
+            <button onClick={handleExportDeposits} className="w-full text-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">Export Deposits</button>
+            <button onClick={handleExportSummary} className="w-full text-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600">Export Summary</button>
         </div>
       </div>
 
        {/* Account Security */}
-      <div className="bg-white shadow-lg rounded-lg">
-        <div className="px-6 py-4 bg-gray-50 border-b rounded-t-lg">
-          <h3 className="text-lg font-semibold text-gray-800">Account Security</h3>
+      <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg">
+        <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 rounded-t-lg">
+          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Account Security</h3>
         </div>
         <div className="p-6 space-y-6">
-            <div className="space-y-4 border-b pb-6">
-                <h4 className="font-medium">Change Email Address</h4>
-                <p className="text-sm text-gray-600">Current Email: <span className="font-semibold">{user?.email}</span></p>
+            <div className="space-y-4 border-b border-gray-200 dark:border-gray-700 pb-6">
+                <h4 className="font-medium text-gray-900 dark:text-gray-100">Change Email Address</h4>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Current Email: <span className="font-semibold">{user?.email}</span></p>
                  <div>
-                    <label htmlFor="newEmail" className="block text-sm font-medium text-gray-700">New Email</label>
-                    <input id="newEmail" type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} className="mt-1 block w-full sm:w-80 px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
+                    <label htmlFor="newEmail" className="block text-sm font-medium text-gray-700 dark:text-gray-300">New Email</label>
+                    <input id="newEmail" type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} className="mt-1 block w-full sm:w-80 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700" />
                 </div>
                 <button onClick={handleEmailChange} className="inline-flex items-center justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
                     Change Email
                 </button>
             </div>
             <div className="space-y-4">
-                 <h4 className="font-medium">Change Password</h4>
+                 <h4 className="font-medium text-gray-900 dark:text-gray-100">Change Password</h4>
                  <div>
-                    <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">New Password</label>
-                    <input id="newPassword" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="mt-1 block w-full sm:w-80 px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="Min. 6 characters" />
+                    <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">New Password</label>
+                    <input id="newPassword" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="mt-1 block w-full sm:w-80 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700" placeholder="Min. 6 characters" />
                 </div>
                  <div>
-                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">Confirm New Password</label>
-                    <input id="confirmPassword" type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="mt-1 block w-full sm:w-80 px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
+                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Confirm New Password</label>
+                    <input id="confirmPassword" type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="mt-1 block w-full sm:w-80 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700" />
                 </div>
                  <button onClick={handlePasswordChange} className="inline-flex items-center justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
                     Change Password
@@ -280,12 +271,12 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ members, summary, onAddMemb
       <Modal title={editingMember ? "Edit Member" : "Add Member"} isOpen={isMemberModalOpen} onClose={() => setIsMemberModalOpen(false)}>
         <form onSubmit={handleMemberSubmit} className="space-y-4">
           <div>
-            <label htmlFor="memberName" className="block text-sm font-medium text-gray-700">Member Name</label>
-            <input id="memberName" type="text" value={memberName} onChange={e => setMemberName(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
+            <label htmlFor="memberName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Member Name</label>
+            <input id="memberName" type="text" value={memberName} onChange={e => setMemberName(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700" />
           </div>
           <div>
-            <label htmlFor="memberPhone" className="block text-sm font-medium text-gray-700">Phone Number</label>
-            <input id="memberPhone" type="tel" value={memberPhone} onChange={e => setMemberPhone(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" />
+            <label htmlFor="memberPhone" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number</label>
+            <input id="memberPhone" type="tel" value={memberPhone} onChange={e => setMemberPhone(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700" />
           </div>
           <div className="pt-2 flex justify-end">
             <button type="submit" disabled={isSubmittingMember} className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400">
@@ -303,7 +294,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ members, summary, onAddMemb
         message={`Are you sure you want to delete ${memberToDelete?.name}? All associated groceries and deposits will remain but will be linked to an "Unknown Member". This action cannot be undone.`}
       />
       
-      <CSVImportModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} onImport={onImportGroceries} />
+      <CSVImportModal isOpen={isImportModalOpen} onClose={() => setIsImportModalOpen(false)} onImport={importGroceryItems} />
     </div>
   );
 };

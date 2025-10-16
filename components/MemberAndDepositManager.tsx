@@ -8,7 +8,6 @@ import ConfirmationModal from './ConfirmationModal';
 
 interface MemberAndDepositManagerProps {
   deposits: Deposit[];
-  members: Participant[];
   onEditDeposit: (deposit: Deposit) => void;
   onDeleteDeposit: (item: Deposit) => Promise<void>;
 }

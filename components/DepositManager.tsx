@@ -93,7 +93,8 @@ const DepositManager: React.FC<DepositManagerProps> = ({ deposits, members, onAd
             {deposits.map((item) => (
               <tr key={item.id}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(item.date).toLocaleDateString()}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.userEmail}</td>
+                {/* Fix: Property 'userEmail' does not exist on type 'Deposit'. Use 'userName' instead. */}
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.userName}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-800">{formatCurrency(item.amount)}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                    <button onClick={() => handleDeleteClick(item)} className="text-red-600 hover:text-red-900">Delete</button>
@@ -110,7 +111,8 @@ const DepositManager: React.FC<DepositManagerProps> = ({ deposits, members, onAd
               <label htmlFor="user" className="block text-sm font-medium text-gray-700">Member</label>
                <select id="user" value={userId} onChange={(e) => setUserId(e.target.value)} required className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                 {members.map(member => (
-                    <option key={member.id} value={member.id}>{member.email}</option>
+                    // Fix: Property 'email' does not exist on type 'Participant'. Use 'name' instead.
+                    <option key={member.id} value={member.id}>{member.name}</option>
                 ))}
               </select>
            </div>

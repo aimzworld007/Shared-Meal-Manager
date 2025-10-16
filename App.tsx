@@ -4,12 +4,58 @@
  * It uses the authentication context to conditionally render either the
  * Login page or the main Dashboard, acting as a simple router.
  */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, createContext, useContext } from 'react';
 import { useAuth } from './hooks/useAuth';
 import Dashboard from './components/Dashboard';
 import Login from './components/Login';
 import Footer from './components/Footer';
 import { logoUrl as defaultLogoUrl } from './assets/logo';
+
+// --- Theme Context ---
+type Theme = 'light' | 'dark';
+interface ThemeContextType {
+  theme: Theme;
+  toggleTheme: () => void;
+}
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+export const useTheme = () => {
+    const context = useContext(ThemeContext);
+    if (!context) throw new Error('useTheme must be used within a ThemeProvider');
+    return context;
+};
+
+const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const [theme, setTheme] = useState<Theme>(() => {
+        if (typeof window !== 'undefined' && window.localStorage) {
+            const storedTheme = window.localStorage.getItem('theme');
+            if (storedTheme === 'light' || storedTheme === 'dark') {
+                return storedTheme;
+            }
+            if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                return 'dark';
+            }
+        }
+        return 'light';
+    });
+
+    useEffect(() => {
+        const root = window.document.documentElement;
+        root.classList.remove(theme === 'light' ? 'dark' : 'light');
+        root.classList.add(theme);
+        localStorage.setItem('theme', theme);
+    }, [theme]);
+
+    const toggleTheme = () => {
+        setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
+    };
+
+    return (
+        <ThemeContext.Provider value={{ theme, toggleTheme }}>
+            {children}
+        </ThemeContext.Provider>
+    );
+};
+
 
 // Define the BeforeInstallPromptEvent interface for PWA installation
 interface BeforeInstallPromptEvent extends Event {
@@ -73,26 +119,28 @@ const App: React.FC = () => {
   const loading = authLoading;
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 text-gray-800">
-      <main className="flex-grow flex flex-col">
-        {loading ? (
-           <div className="flex-grow flex items-center justify-center">
-             <p className="text-gray-600">Loading your session...</p>
-           </div>
-        ) : user ? (
-          <Dashboard
-            logoUrl={defaultLogoUrl}
-          />
-        ) : (
-          <Login
-            logoUrl={defaultLogoUrl}
-            installPromptEvent={installPromptEvent}
-            onInstallClick={handleInstallClick}
-          />
-        )}
-      </main>
-      <Footer />
-    </div>
+    <ThemeProvider>
+        <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+          <main className="flex-grow flex flex-col">
+            {loading ? (
+               <div className="flex-grow flex items-center justify-center">
+                 <p className="text-gray-600 dark:text-gray-400">Loading your session...</p>
+               </div>
+            ) : user ? (
+              <Dashboard
+                logoUrl={defaultLogoUrl}
+              />
+            ) : (
+              <Login
+                logoUrl={defaultLogoUrl}
+                installPromptEvent={installPromptEvent}
+                onInstallClick={handleInstallClick}
+              />
+            )}
+          </main>
+          <Footer />
+        </div>
+    </ThemeProvider>
   );
 };
 

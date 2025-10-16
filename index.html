@@ -13,6 +13,14 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="description" content="A web application to manage shared meal expenses, helping you easily track finances for your group, mess, or household." />
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      // Prevents Flash of Unstyled Content (FOUC) for dark mode
+      if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    </script>
   <script type="importmap">
 {
   "imports": {
@@ -27,12 +35,14 @@
     "chart.js": "https://cdn.jsdelivr.net/npm/chart.js@^4.4.2/dist/chart.js",
     "@kurkle/color": "https://cdn.jsdelivr.net/npm/@kurkle/color@^0.3.2/+esm",
     "react-chartjs-2": "https://cdn.jsdelivr.net/npm/react-chartjs-2@^5.2.0/+esm",
-    "react-dropzone": "https://aistudiocdn.com/react-dropzone@^14.3.8"
+    "react-dropzone": "https://aistudiocdn.com/react-dropzone@^14.3.8",
+    "jspdf": "https://aistudiocdn.com/jspdf@^2.5.1",
+    "jspdf-autotable": "https://aistudiocdn.com/jspdf-autotable@^3.8.2"
   }
 }
 </script>
 </head>
-  <body class="bg-gray-100">
+  <body class="bg-gray-100 dark:bg-gray-900">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>

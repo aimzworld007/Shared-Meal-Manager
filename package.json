@@ -15,7 +15,9 @@
     "chart.js": "^4.4.2",
     "@kurkle/color": "^0.3.2",
     "react-chartjs-2": "^5.2.0",
-    "react-dropzone": "^14.3.8"
+    "react-dropzone": "^14.3.8",
+    "jspdf": "^2.5.1",
+    "jspdf-autotable": "^3.8.2"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
