@@ -4,13 +4,21 @@
  */
 import { GroceryItem } from '../types';
 
+export interface ParsedGroceryItem {
+    date: string;
+    name: string;
+    amount: number;
+    purchaserName: string;
+}
+
+
 /**
  * Parses a CSV file and returns an array of grocery items.
  * A simple implementation without external libraries.
  * @param {File} file - The CSV file to parse.
- * @returns {Promise<Omit<GroceryItem, 'id' | 'purchaserId'>[]>} A promise that resolves with the parsed data.
+ * @returns {Promise<ParsedGroceryItem[]>} A promise that resolves with the parsed data.
  */
-export const parseCsv = (file: File): Promise<Omit<GroceryItem, 'id' | 'purchaserId'>[]> => {
+export const parseCsv = (file: File): Promise<ParsedGroceryItem[]> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (event) => {
@@ -26,14 +34,14 @@ export const parseCsv = (file: File): Promise<Omit<GroceryItem, 'id' | 'purchase
           throw new Error("CSV file is empty or has no header row.");
         }
         
-        // Simple CSV parsing: assumes no commas within quoted fields
         const headers = headerLine.split(',').map(h => h.trim().toLowerCase());
         const dateIndex = headers.indexOf('date');
-        const nameIndex = headers.indexOf('name');
-        const amountIndex = headers.indexOf('amount');
+        const nameIndex = headers.indexOf('name') > -1 ? headers.indexOf('name') : headers.indexOf('item');
+        const amountIndex = headers.indexOf('amount') > -1 ? headers.indexOf('amount') : headers.indexOf('price');
+        const purchaserIndex = headers.indexOf('purchased by');
 
-        if (dateIndex === -1 || nameIndex === -1 || amountIndex === -1) {
-          throw new Error("CSV must contain 'date', 'name', and 'amount' headers.");
+        if (dateIndex === -1 || nameIndex === -1 || amountIndex === -1 || purchaserIndex === -1) {
+          throw new Error("CSV must contain 'date', 'name' (or 'item'), 'amount' (or 'price'), and 'purchased by' headers.");
         }
 
         const data = lines
@@ -45,11 +53,15 @@ export const parseCsv = (file: File): Promise<Omit<GroceryItem, 'id' | 'purchase
             if (isNaN(amount)) {
                 throw new Error(`Invalid amount found on row ${index + 2}.`);
             }
+             if (!values[dateIndex]?.trim() || !values[nameIndex]?.trim() || !values[purchaserIndex]?.trim()) {
+                 throw new Error(`Missing data on row ${index + 2}.`);
+            }
 
             return {
-              date: values[dateIndex]?.trim(),
-              name: values[nameIndex]?.trim(),
+              date: values[dateIndex].trim(),
+              name: values[nameIndex].trim(),
               amount: amount,
+              purchaserName: values[purchaserIndex].trim(),
             };
           });
         

@@ -10,27 +10,21 @@ import {
   updatePassword,
   reauthenticateWithCredential,
   EmailAuthProvider,
+  sendPasswordResetEmail as firebaseSendPasswordResetEmail,
 } from "firebase/auth";
 import {
   getFirestore,
   collection,
   doc,
-  getDoc,
   getDocs,
   addDoc,
   updateDoc,
   deleteDoc,
   query,
   orderBy,
-  setDoc
+  setDoc,
 } from "firebase/firestore";
-import { 
-  getStorage, 
-  ref, 
-  uploadBytes, 
-  getDownloadURL 
-} from "firebase/storage";
-import { User, GroceryItem, Deposit, Participant, SiteConfig } from "../types";
+import { User, GroceryItem, Deposit, Participant } from "../types";
 
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
@@ -47,28 +41,35 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const storage = getStorage(app);
+
+// --- Helper to get user-specific subcollection ref ---
+const getUserSubcollection = (collectionName: string) => {
+    const user = auth.currentUser;
+    if (!user) throw new Error("User not authenticated.");
+    return collection(db, 'users', user.uid, collectionName);
+};
+
 
 // --- Auth Service ---
 export const signIn = (email: string, pass: string) => signInWithEmailAndPassword(auth, email, pass);
 export const signUp = async (email: string, pass: string) => {
   const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
   const user = userCredential.user;
-  await setDoc(doc(db, "users", user.uid), { email: user.email, role: "user" });
+  // Create a document for the new user so we can add subcollections to it.
+  await setDoc(doc(db, "users", user.uid), { email: user.email, createdAt: new Date() });
   return userCredential;
 };
 export const signOut = () => firebaseSignOut(auth);
 export const onAuthChange = (callback: (user: User | null) => void) => {
   return onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
     if (firebaseUser) {
-      const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-      const role = userDoc.exists() ? userDoc.data().role : 'user';
-      callback({ uid: firebaseUser.uid, email: firebaseUser.email, role });
+      callback({ uid: firebaseUser.uid, email: firebaseUser.email });
     } else {
       callback(null);
     }
   });
 };
+export const sendPasswordResetEmail = (email: string) => firebaseSendPasswordResetEmail(auth, email);
 export const reauthenticateUser = async (password: string) => {
   const user = auth.currentUser;
   if (user && user.email) {
@@ -86,57 +87,48 @@ export const changeUserPassword = (newPassword: string) => {
   return updatePassword(auth.currentUser, newPassword);
 };
 
-// --- Firestore Service ---
-const groceriesCol = collection(db, 'groceries');
-const depositsCol = collection(db, 'deposits');
-const membersCol = collection(db, 'members');
-const settingsDoc = doc(db, 'settings', 'siteConfig');
-
-// --- Settings ---
-export const getSiteConfig = async (): Promise<SiteConfig> => {
-    const docSnap = await getDoc(settingsDoc);
-    if (docSnap.exists()) {
-        return docSnap.data() as SiteConfig;
-    }
-    // Return a default config if it doesn't exist
-    return {
-        title: "Shared Meal Manager",
-        description: "A web application to manage shared meal expenses.",
-        logoUrl: '', // Default to no logo
-    };
-};
-export const updateSiteConfig = (data: Partial<SiteConfig>) => setDoc(settingsDoc, data, { merge: true });
+// --- Firestore Service (User-Scoped) ---
 
 // --- Groceries ---
 export const getAllGroceries = async (): Promise<GroceryItem[]> => {
+    const groceriesCol = getUserSubcollection('groceries');
     const q = query(groceriesCol, orderBy('date', 'desc'));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GroceryItem));
 };
-export const addGrocery = (item: Omit<GroceryItem, 'id'>) => addDoc(groceriesCol, item);
-export const deleteGrocery = (itemId: string) => deleteDoc(doc(groceriesCol, itemId));
+export const addGrocery = (item: Omit<GroceryItem, 'id'>) => {
+    const groceriesCol = getUserSubcollection('groceries');
+    return addDoc(groceriesCol, item);
+};
+export const deleteGrocery = (itemId: string) => {
+    const groceryDocRef = doc(getUserSubcollection('groceries'), itemId);
+    return deleteDoc(groceryDocRef);
+};
 
 // --- Deposits ---
 export const getAllDeposits = async (): Promise<Deposit[]> => {
+    const depositsCol = getUserSubcollection('deposits');
     const q = query(depositsCol, orderBy('date', 'desc'));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Deposit));
 };
-export const addDeposit = (deposit: Omit<Deposit, 'id'>) => addDoc(depositsCol, deposit);
-export const deleteDeposit = (depositId: string) => deleteDoc(doc(depositsCol, depositId));
+export const addDeposit = (deposit: Omit<Deposit, 'id'>) => {
+    const depositsCol = getUserSubcollection('deposits');
+    return addDoc(depositsCol, deposit);
+};
+export const deleteDeposit = (depositId: string) => {
+    const depositDocRef = doc(getUserSubcollection('deposits'), depositId);
+    return deleteDoc(depositDocRef);
+};
 
 // --- Members ---
 export const getMembers = async (): Promise<Participant[]> => {
+    const membersCol = getUserSubcollection('members');
     const q = query(membersCol, orderBy('name'));
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name } as Participant));
 };
-export const addMember = (name: string) => addDoc(membersCol, { name });
-
-// --- Storage Service ---
-export const uploadLogo = async (file: File): Promise<string> => {
-    // Use a fixed path to always overwrite the same logo file
-    const logoRef = ref(storage, 'site/logo');
-    await uploadBytes(logoRef, file);
-    return getDownloadURL(logoRef);
+export const addMember = (name: string) => {
+    const membersCol = getUserSubcollection('members');
+    return addDoc(membersCol, { name });
 };

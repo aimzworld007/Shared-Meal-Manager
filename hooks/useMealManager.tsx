@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import * as api from '../services/firebase';
 import { GroceryItem, Deposit, Participant, Member } from '../types';
+import { ParsedGroceryItem } from '../utils/csvParser';
 
 export const useMealManager = () => {
     const [loading, setLoading] = useState(true);
@@ -9,38 +10,22 @@ export const useMealManager = () => {
     const [allDeposits, setAllDeposits] = useState<Deposit[]>([]);
     const [members, setMembers] = useState<Participant[]>([]);
     
-    // State for date filtering
+    // State for filtering
     const [startDate, setStartDate] = useState<string>('');
     const [endDate, setEndDate] = useState<string>('');
+    const [minAmount, setMinAmount] = useState<string>('');
+    const [maxAmount, setMaxAmount] = useState<string>('');
+    const [selectedPurchaser, setSelectedPurchaser] = useState<string>('');
 
     const fetchData = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
-            // Fetch members first, as this is a common point of failure for admin permissions
-            let membersData: Participant[];
-            try {
-                membersData = await api.getMembers();
-            } catch (err: any) {
-                console.error("Failed to fetch members:", err);
-                if (err.code === 'permission-denied') {
-                    throw new Error("Permission Denied: Could not load members list. Please check your Firestore security rules and ensure the logged-in user has a document in the 'users' collection with a 'role' field set to 'admin'.");
-                }
-                throw err;
-            }
-
-            // Fetch groceries and deposits in parallel
-            const [groceriesData, depositsData] = await Promise.all([
-                api.getAllGroceries().catch(err => {
-                    console.error("Failed to fetch groceries:", err);
-                    if (err.code === 'permission-denied') throw new Error("Permission Denied: Could not load grocery data. Please check security rules for the 'groceries' collection.");
-                    throw err;
-                }),
-                api.getAllDeposits().catch(err => {
-                    console.error("Failed to fetch deposits:", err);
-                    if (err.code === 'permission-denied') throw new Error("Permission Denied: Could not load deposit data. Please check security rules for the 'deposits' collection.");
-                    throw err;
-                })
+            // Fetch all data in parallel for the logged-in user
+            const [membersData, groceriesData, depositsData] = await Promise.all([
+                api.getMembers(),
+                api.getAllGroceries(),
+                api.getAllDeposits()
             ]);
             
             // Create a map for quick name lookups
@@ -62,8 +47,12 @@ export const useMealManager = () => {
             setMembers(membersData);
 
         } catch (err: any) {
-            // The more specific error from inner catches will be caught and displayed
-            setError(err.message || "An unknown error occurred while fetching data.");
+            console.error("Data Fetch Error:", err);
+            if (err.code === 'permission-denied') {
+                 setError("Permission Denied: Could not load your data. Please check your Firestore security rules to ensure you are allowed to access your own data.");
+            } else {
+                setError(err instanceof Error ? err.message : "An unknown error occurred while fetching data.");
+            }
         } finally {
             setLoading(false);
         }
@@ -77,10 +66,18 @@ export const useMealManager = () => {
     const summary = useMemo(() => {
         // Filter groceries and deposits based on the selected date range
         const filteredGroceries = allGroceries.filter(item => {
-            if (!startDate && !endDate) return true; // No filter if no dates are set
             const itemDate = item.date.split('T')[0];
             if (startDate && itemDate < startDate) return false;
             if (endDate && itemDate > endDate) return false;
+            
+            if (selectedPurchaser && item.purchaserId !== selectedPurchaser) return false;
+
+            const min = parseFloat(minAmount);
+            if (!isNaN(min) && item.amount < min) return false;
+
+            const max = parseFloat(maxAmount);
+            if (!isNaN(max) && item.amount > max) return false;
+
             return true;
         });
 
@@ -126,7 +123,7 @@ export const useMealManager = () => {
             allGroceries: filteredGroceries.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
             allDeposits: filteredDeposits.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
         };
-    }, [allGroceries, allDeposits, members, startDate, endDate]);
+    }, [allGroceries, allDeposits, members, startDate, endDate, minAmount, maxAmount, selectedPurchaser]);
 
     // --- CRUD Functions ---
     const addGroceryItem = async (item: Omit<GroceryItem, 'id'>) => {
@@ -140,15 +137,41 @@ export const useMealManager = () => {
         }
     };
     
-    const addMultipleGroceryItems = async (items: Omit<GroceryItem, 'id'>[], memberId: string) => {
-        if (!memberId) return;
+    const importGroceryItems = async (items: ParsedGroceryItem[]) => {
+        setError(null);
         try {
-            const promises = items.map(item => api.addGrocery({ ...item, purchaserId: memberId }));
+            const memberNameMap = new Map(members.map(m => [m.name.toLowerCase().trim(), m.id]));
+            const itemsToAdd: Omit<GroceryItem, 'id'>[] = [];
+            const unknownMembers: string[] = [];
+
+            for (const item of items) {
+                const purchaserId = memberNameMap.get(item.purchaserName.toLowerCase().trim());
+                if (purchaserId) {
+                    itemsToAdd.push({
+                        name: item.name,
+                        amount: item.amount,
+                        date: item.date,
+                        purchaserId: purchaserId,
+                    });
+                } else {
+                    unknownMembers.push(item.purchaserName);
+                }
+            }
+            
+            if (unknownMembers.length > 0) {
+                const uniqueUnknown = [...new Set(unknownMembers)];
+                throw new Error(`The following purchasers were not found: ${uniqueUnknown.join(', ')}. Please add them as members first or check for typos in your CSV.`);
+            }
+
+            const promises = itemsToAdd.map(item => api.addGrocery(item));
             await Promise.all(promises);
             fetchData();
         } catch (error) {
-            console.error("Error adding multiple grocery items:", error);
-            setError("Failed to import grocery items.");
+            console.error("Error importing grocery items:", error);
+            // FIX: The caught 'error' is of type 'unknown'. Check if it is an instance of Error
+            // to safely access its `message` property before setting the error state.
+            const message = error instanceof Error ? error.message : "Failed to import grocery items.";
+            setError(message);
             throw error;
         }
     };
@@ -197,9 +220,12 @@ export const useMealManager = () => {
         }
     };
     
-    const resetDateFilter = () => {
+    const resetFilters = () => {
         setStartDate('');
         setEndDate('');
+        setMinAmount('');
+        setMaxAmount('');
+        setSelectedPurchaser('');
     };
 
 
@@ -208,17 +234,25 @@ export const useMealManager = () => {
         error,
         members,
         summary,
+        // filters
         startDate,
         endDate,
+        minAmount,
+        maxAmount,
+        selectedPurchaser,
         setStartDate,
         setEndDate,
+        setMinAmount,
+        setMaxAmount,
+        setSelectedPurchaser,
+        resetFilters,
+        // actions
         addGroceryItem,
-        addMultipleGroceryItems,
+        importGroceryItems,
         deleteGroceryItem,
         addDepositItem,
         deleteDepositItem,
         addMember,
         refreshData: fetchData,
-        resetDateFilter,
     };
 };

@@ -4,13 +4,12 @@
  */
 
 /**
- * Represents a user in the system, mirroring the Firebase Auth user object
- * with an added custom role. This is for the admin login.
+ * Represents a user in the system, mirroring the Firebase Auth user object.
+ * This is for an individual user managing their own meal group.
  */
 export interface User {
   uid: string;
   email: string | null;
-  role?: 'admin' | 'user';
 }
 
 /**
@@ -40,7 +39,7 @@ export interface Deposit {
  * Represents a participant (member) in the meal sharing group.
  */
 export interface Participant {
-  id: string; // Corresponds to Firestore document ID in 'members' collection
+  id: string; // Corresponds to Firestore document ID in a user's 'members' sub-collection
   name: string;
 }
 
@@ -51,13 +50,4 @@ export interface Member extends Participant {
     totalPurchase: number;
     totalDeposit: number;
     balance: number;
-}
-
-/**
- * Represents the configuration for the entire site, editable by an admin.
- */
-export interface SiteConfig {
-  title: string;
-  description: string;
-  logoUrl: string;
 }

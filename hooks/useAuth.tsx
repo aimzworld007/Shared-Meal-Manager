@@ -18,6 +18,7 @@ interface AuthContextType {
   login: (email: string, pass: string) => Promise<void>;
   signUp: (email: string, pass: string) => Promise<void>;
   logout: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
   reauthenticate: (password: string) => Promise<void>;
   changeEmail: (newEmail: string) => Promise<void>;
   changePassword: (newPassword: string) => Promise<void>;
@@ -31,6 +32,8 @@ const getAuthErrorMessage = (errorCode: string | undefined): string => {
   switch (errorCode) {
     case 'auth/invalid-email': return 'The email address is not valid.';
     case 'auth/user-disabled': return 'This user account has been disabled.';
+    case 'auth/user-not-found': return 'No account found with this email address.';
+    case 'auth/wrong-password':
     case 'auth/invalid-credential':
     case 'auth/invalid-login-credentials': return 'Invalid email or password. Please check your credentials and try again.';
     case 'auth/email-already-in-use': return 'This email address is already in use by another account.';
@@ -84,6 +87,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     await api.signOut();
   };
   
+  const resetPassword = async (email: string) => {
+      setError(null);
+      try {
+          await api.sendPasswordResetEmail(email);
+      } catch (err) {
+          handleError(err);
+      }
+  };
+
   const reauthenticate = async (password: string) => {
     setError(null);
     try {
@@ -113,7 +125,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const value = { user, loading, login, signUp, logout, reauthenticate, changeEmail, changePassword, error, clearError };
+  const value = { user, loading, login, signUp, logout, resetPassword, reauthenticate, changeEmail, changePassword, error, clearError };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

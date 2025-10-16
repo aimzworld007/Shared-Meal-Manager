@@ -1,6 +1,6 @@
 /**
  * @file Dashboard.tsx
- * @summary The main administrator dashboard, displaying all meal and expense data.
+ * @summary The main user dashboard, displaying all meal and expense data for the logged-in user.
  */
 import React, { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
@@ -9,27 +9,34 @@ import MainBalanceSummary from './BalanceSummary';
 import IndividualAccounts from './IndividualAccounts';
 import GroceryManager from './GroceryManager';
 import MemberAndDepositManager from './MemberAndDepositManager';
-import { useSettings } from '../hooks/useSettings';
 import PermissionsError from './PermissionsError';
-import DateFilter from './DateFilter';
+import DataFilter from './DateFilter';
 import SettingsPage from './SettingsPage';
+import { logoDataUri } from '../assets/logo';
 
 const Dashboard: React.FC = () => {
   const [view, setView] = useState<'dashboard' | 'settings'>('dashboard');
   const { user, logout } = useAuth();
-  const { config } = useSettings();
   const { 
     loading, 
     error, 
     summary,
     members,
+    // filters
     startDate,
     endDate,
+    minAmount,
+    maxAmount,
+    selectedPurchaser,
     setStartDate,
     setEndDate,
-    resetDateFilter,
+    setMinAmount,
+    setMaxAmount,
+    setSelectedPurchaser,
+    resetFilters,
+    // actions
     addGroceryItem,
-    addMultipleGroceryItems,
+    importGroceryItems,
     deleteGroceryItem, 
     addDepositItem, 
     deleteDepositItem,
@@ -41,27 +48,34 @@ const Dashboard: React.FC = () => {
 
   const DashboardContent = () => (
     <>
-      {loading && <p className="text-center text-gray-600">Loading dashboard data...</p>}
+      {loading && <p className="text-center text-gray-600">Loading your dashboard...</p>}
       {isPermissionError && <PermissionsError errorMessage={error} onRetry={refreshData} />}
       {!isPermissionError && error && <p className="text-center text-red-500 bg-red-100 p-4 rounded-md">{error}</p>}
       {!loading && !error && (
         <div className="space-y-8">
-          <DateFilter 
+          <DataFilter 
             startDate={startDate}
             endDate={endDate}
+            minAmount={minAmount}
+            maxAmount={maxAmount}
+            selectedPurchaser={selectedPurchaser}
+            members={members}
             onStartDateChange={setStartDate}
             onEndDateChange={setEndDate}
-            onReset={resetDateFilter}
+            onMinAmountChange={setMinAmount}
+            onMaxAmountChange={setMaxAmount}
+            onPurchaserChange={setSelectedPurchaser}
+            onReset={resetFilters}
           />
-          <MainBalanceSummary summary={summary} />
-          <IndividualAccounts members={summary.members} groceries={summary.allGroceries} />
           <GroceryManager 
             groceries={summary.allGroceries} 
             members={members}
             onAddGrocery={addGroceryItem} 
-            onAddMultipleGroceries={addMultipleGroceryItems}
+            onImportGroceries={importGroceryItems}
             onDeleteGrocery={deleteGroceryItem} 
           />
+           <IndividualAccounts members={summary.members} groceries={summary.allGroceries} />
+           <MainBalanceSummary summary={summary} />
           <MemberAndDepositManager
             members={members}
             deposits={summary.allDeposits}
@@ -78,7 +92,7 @@ const Dashboard: React.FC = () => {
     <div className="bg-gray-100">
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <img src={config?.logoUrl} alt="Logo" className="h-10" />
+          <img src={logoDataUri} alt="Logo" className="h-10" />
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-600 hidden sm:block">Welcome, {user?.email}</span>
             {view === 'dashboard' ? (

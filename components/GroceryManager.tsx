@@ -7,12 +7,13 @@ import { GroceryItem, Participant } from '../types';
 import Modal from './Modal';
 import ConfirmationModal from './ConfirmationModal';
 import CSVImportModal from './CSVImportModal';
+import { ParsedGroceryItem } from '../utils/csvParser';
 
 interface GroceryManagerProps {
   groceries: GroceryItem[];
   members: Participant[];
   onAddGrocery: (item: Omit<GroceryItem, 'id'>) => Promise<void>;
-  onAddMultipleGroceries: (items: Omit<GroceryItem, 'id' | 'purchaserId'>[], memberId: string) => Promise<void>;
+  onImportGroceries: (items: ParsedGroceryItem[]) => Promise<void>;
   onDeleteGrocery: (item: GroceryItem) => Promise<void>;
 }
 
@@ -20,7 +21,7 @@ const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED' }).format(amount);
 };
 
-const GroceryManager: React.FC<GroceryManagerProps> = ({ groceries, members, onAddGrocery, onAddMultipleGroceries, onDeleteGrocery }) => {
+const GroceryManager: React.FC<GroceryManagerProps> = ({ groceries, members, onAddGrocery, onImportGroceries, onDeleteGrocery }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<GroceryItem | null>(null);
@@ -65,11 +66,11 @@ const GroceryManager: React.FC<GroceryManagerProps> = ({ groceries, members, onA
     setItemToDelete(null);
   };
 
-  const handleImport = async (items: Omit<GroceryItem, 'id' | 'purchaserId'>[]) => {
-    if (purchaserId) {
-      await onAddMultipleGroceries(items, purchaserId);
-    } else {
-      alert("Please select a member to assign the imported groceries to.");
+  const handleImport = async (items: ParsedGroceryItem[]) => {
+    try {
+        await onImportGroceries(items);
+    } catch (error) {
+        // Error is handled by the hook and displayed on the dashboard
     }
   };
 
@@ -79,7 +80,13 @@ const GroceryManager: React.FC<GroceryManagerProps> = ({ groceries, members, onA
         <h3 className="text-lg font-bold">TOTAL GROCERY BILL</h3>
         <div className="flex items-center gap-2">
             <button
-              onClick={() => setIsImportModalOpen(true)}
+              onClick={() => {
+                if(members.length > 0) {
+                    setIsImportModalOpen(true)
+                } else {
+                    alert("Please add at least one member before importing expenses.");
+                }
+              }}
               className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-blue-600 bg-white hover:bg-gray-200"
             >
               Import CSV

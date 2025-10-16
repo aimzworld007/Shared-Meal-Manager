@@ -4,14 +4,13 @@
  */
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { parseCsv } from '../utils/csvParser';
-import { GroceryItem } from '../types';
+import { parseCsv, ParsedGroceryItem } from '../utils/csvParser';
 import Modal from './Modal';
 
 interface CSVImportModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onImport: (items: Omit<GroceryItem, 'id' | 'purchaserId'>[]) => Promise<void>;
+  onImport: (items: ParsedGroceryItem[]) => Promise<void>;
 }
 
 const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose, onImport }) => {
@@ -41,10 +40,6 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose, onImpo
     setError(null);
     try {
       const items = await parseCsv(file);
-      // Basic validation
-      if (items.some(item => !item.name || isNaN(item.amount) || !item.date)) {
-          throw new Error('CSV file has invalid data. Required columns are: name, amount, date (YYYY-MM-DD).');
-      }
       await onImport(items);
       handleClose();
     } catch (err: any) {
@@ -65,7 +60,7 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose, onImpo
     <Modal isOpen={isOpen} onClose={handleClose} title="Import Expenses from CSV">
       <div className="space-y-4">
         <p className="text-sm text-gray-600">
-          Upload a CSV file with the headers: <code>date</code>, <code>name</code>, <code>amount</code>.
+          Upload a CSV file with the headers: <code>date</code>, <code>name</code> (or <code>item</code>), <code>amount</code> (or <code>price</code>), and <code>purchased by</code>.
           The date should be in <code>YYYY-MM-DD</code> format.
         </p>
         <div
