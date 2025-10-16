@@ -1,5 +1,7 @@
 # Shared Meal Manager
 
+[![Logo](https://i.ibb.co/ycwhj9tt/logo.jpg)](https://i.ibb.co/ycwhj9tt/logo.jpg)
+
 A web application to manage shared meal expenses, helping you easily track finances for your group, mess, or household.
 
 This application provides a secure, private space for each registered user to manage their own group's finances. Data is not shared between users, ensuring that your group's information remains confidential.
