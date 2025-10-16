@@ -253,6 +253,17 @@ export const useMealManager = () => {
         }
     };
 
+    const deleteMember = async (memberId: string) => {
+        try {
+            await api.deleteMember(memberId);
+            fetchData();
+        } catch (error) {
+            console.error("Error deleting member:", error);
+            setError("Failed to delete member.");
+            throw error;
+        }
+    };
+
     const resetFilters = () => {
         setStartDate('');
         setEndDate('');
@@ -289,6 +300,7 @@ export const useMealManager = () => {
         deleteDepositItem,
         addMember,
         updateMember,
+        deleteMember,
         refreshData: fetchData,
     };
 };

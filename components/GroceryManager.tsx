@@ -6,200 +6,166 @@ import React, { useState } from 'react';
 import { GroceryItem, Participant } from '../types';
 import Modal from './Modal';
 import ConfirmationModal from './ConfirmationModal';
-import CSVImportModal from './CSVImportModal';
-import { ParsedGroceryItem } from '../utils/csvParser';
+import DataFilter from './DateFilter';
 
 interface GroceryManagerProps {
   groceries: GroceryItem[];
   members: Participant[];
   onAddGrocery: (item: Omit<GroceryItem, 'id'>) => Promise<void>;
-  onImportGroceries: (items: ParsedGroceryItem[]) => Promise<void>;
   onDeleteGrocery: (item: GroceryItem) => Promise<void>;
   onUpdateGrocery: (itemId: string, data: Partial<Omit<GroceryItem, 'id'>>) => Promise<void>;
+  // Filter props
+  startDate: string;
+  endDate: string;
+  minAmount: string;
+  maxAmount: string;
+  selectedPurchaser: string;
+  onStartDateChange: (date: string) => void;
+  onEndDateChange: (date: string) => void;
+  onMinAmountChange: (amount: string) => void;
+  onMaxAmountChange: (amount: string) => void;
+  onPurchaserChange: (purchaserId: string) => void;
+  onResetFilters: () => void;
 }
 
 const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED' }).format(amount);
 };
 
-const WhatsAppIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.894 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 4.315 1.731 6.086l.287.468-1.173 4.249 4.35-1.14z" />
-    </svg>
+const FilterIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V19l-4 2v-5.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+  </svg>
 );
 
-
-const GroceryManager: React.FC<GroceryManagerProps> = ({ groceries, members, onAddGrocery, onImportGroceries, onDeleteGrocery, onUpdateGrocery }) => {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<GroceryItem | null>(null);
-  
+const GroceryManager: React.FC<GroceryManagerProps> = (props) => {
+  const [isAddEditModalOpen, setIsAddEditModalOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
+  
+  const [itemToEdit, setItemToEdit] = useState<GroceryItem | null>(null);
   const [itemToDelete, setItemToDelete] = useState<GroceryItem | null>(null);
-  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-
+  
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [purchaserId, setPurchaserId] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const totalAmount = groceries.reduce((sum, item) => sum + item.amount, 0);
-  
   const openAddModal = () => {
-    if(members.length > 0) {
-      setEditingItem(null);
-      setName('');
-      setAmount('');
-      setDate(new Date().toISOString().split('T')[0]);
-      setPurchaserId(members[0].id);
-      setIsModalOpen(true);
-    } else {
-      alert("Please add a member first before adding an expense.");
-    }
+    setItemToEdit(null);
+    setName('');
+    setAmount('');
+    setDate(new Date().toISOString().split('T')[0]);
+    setPurchaserId(props.members.length > 0 ? props.members[0].id : '');
+    setIsAddEditModalOpen(true);
   };
-  
+
   const openEditModal = (item: GroceryItem) => {
-    setEditingItem(item);
+    setItemToEdit(item);
     setName(item.name);
     setAmount(String(item.amount));
-    // Ensure date is in YYYY-MM-DD format for the input
     setDate(new Date(item.date).toISOString().split('T')[0]);
     setPurchaserId(item.purchaserId);
-    setIsModalOpen(true);
-  };
-  
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setEditingItem(null);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name || !amount || !date || !purchaserId || isSubmitting) return;
-    setIsSubmitting(true);
-
-    const itemData = { name, amount: parseFloat(amount), date, purchaserId };
-
-    try {
-        if (editingItem) {
-            await onUpdateGrocery(editingItem.id, itemData);
-        } else {
-            await onAddGrocery(itemData);
-        }
-        closeModal();
-    } catch (error) {
-        // Error is handled by the hook and displayed on the dashboard
-    } finally {
-        setIsSubmitting(false);
-    }
+    setIsAddEditModalOpen(true);
   };
   
   const handleDeleteClick = (item: GroceryItem) => {
     setItemToDelete(item);
     setIsConfirmOpen(true);
   };
-
+  
   const handleConfirmDelete = async () => {
     if (itemToDelete) {
-      await onDeleteGrocery(itemToDelete);
+      await props.onDeleteGrocery(itemToDelete);
     }
     setIsConfirmOpen(false);
     setItemToDelete(null);
   };
 
-  const handleImport = async (items: ParsedGroceryItem[]) => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name || !amount || !date || !purchaserId || isSubmitting) return;
+    setIsSubmitting(true);
+    
+    const groceryData = {
+      name,
+      amount: parseFloat(amount),
+      date,
+      purchaserId,
+    };
+    
     try {
-        await onImportGroceries(items);
-    } catch (error) {
-        // Error is handled by the hook and displayed on the dashboard
+      if (itemToEdit) {
+        await props.onUpdateGrocery(itemToEdit.id, groceryData);
+      } else {
+        await props.onAddGrocery(groceryData);
+      }
+      setIsAddEditModalOpen(false);
+    } catch(error) {
+        // Error is handled by the hook
+    } finally {
+        setIsSubmitting(false);
     }
   };
-
-  const handleShareWhatsApp = (item: GroceryItem) => {
-    const dateFormatted = new Date(item.date).toLocaleDateString();
-    const message = `*New Expense Logged*\n\n` +
-                    `*Item:* ${item.name}\n` +
-                    `*Amount:* ${formatCurrency(item.amount)}\n` +
-                    `*Purchased By:* ${item.purchaserName}\n` +
-                    `*Date:* ${dateFormatted}`;
-
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
-    window.open(whatsappUrl, '_blank');
-  };
+  
+  const totalGroceryCost = props.groceries.reduce((sum, item) => sum + item.amount, 0);
 
   return (
-    <div className="bg-white border border-gray-200">
-      <div className="px-4 py-3 bg-blue-600 text-white flex justify-between items-center flex-wrap gap-2">
-        <h3 className="text-lg font-bold">TOTAL GROCERY BILL</h3>
+    <div className="bg-white shadow-lg rounded-lg">
+      <div className="px-6 py-4 bg-gray-50 border-b rounded-t-lg flex justify-between items-center flex-wrap gap-2">
+        <div>
+          <h3 className="text-xl font-bold text-gray-800">TOTAL GROCERY BILL</h3>
+          <p className="text-2xl font-semibold text-indigo-600">{formatCurrency(totalGroceryCost)}</p>
+        </div>
         <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                if(members.length > 0) {
-                    setIsImportModalOpen(true)
-                } else {
-                    alert("Please add at least one member before importing expenses.");
-                }
-              }}
-              className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-blue-600 bg-white hover:bg-gray-200"
-            >
-              Import CSV
+            <button onClick={() => setIsFilterModalOpen(true)} className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50">
+                <FilterIcon />
+                Filter
             </button>
-            <button
-              onClick={openAddModal}
-              className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-blue-600 bg-white hover:bg-gray-200"
-            >
-              Add Expense
+            <button onClick={openAddModal} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+                Add Expense
             </button>
         </div>
       </div>
+
       <div className="overflow-x-auto">
-        <table className="min-w-full">
+        <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-100">
             <tr>
-              <th scope="col" className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Date</th>
-              <th scope="col" className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Item</th>
-              <th scope="col" className="px-4 py-2 text-left text-sm font-semibold text-gray-700">Amount</th>
-              <th scope="col" className="px-4 py-2 text-left text-sm font-semibold text-gray-700">By</th>
-              <th scope="col" className="relative px-4 py-2"><span className="sr-only">Actions</span></th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Purchased By</th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+              <th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {groceries.length === 0 && (
-              <tr><td colSpan={5} className="px-4 py-4 text-center text-sm text-gray-500">No expenses added yet.</td></tr>
+            {props.groceries.length === 0 && (
+              <tr><td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">No expenses recorded for the selected period.</td></tr>
             )}
-            {groceries.map((item) => (
+            {props.groceries.map((item) => (
               <tr key={item.id}>
-                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-600">{new Date(item.date).toLocaleDateString()}</td>
-                <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900">{item.name}</td>
-                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700">{formatCurrency(item.amount)}</td>
-                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-600">{item.purchaserName}</td>
-                <td className="px-4 py-2 whitespace-nowrap text-right text-sm font-medium flex items-center justify-end gap-3">
-                  <button onClick={() => handleShareWhatsApp(item)} className="text-green-600 hover:text-green-800" title="Share on WhatsApp">
-                    <WhatsAppIcon />
-                  </button>
-                  <button onClick={() => openEditModal(item)} className="text-indigo-600 hover:text-indigo-900">Edit</button>
-                  <button onClick={() => handleDeleteClick(item)} className="text-red-600 hover:text-red-900">Delete</button>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{new Date(item.date).toLocaleDateString()}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.name}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{item.purchaserName}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-800">{formatCurrency(item.amount)}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-3">
+                   <button onClick={() => openEditModal(item)} className="text-indigo-600 hover:text-indigo-900">Edit</button>
+                   <button onClick={() => handleDeleteClick(item)} className="text-red-600 hover:text-red-900">Delete</button>
                 </td>
               </tr>
             ))}
           </tbody>
-           <tfoot className="bg-gray-100 border-t-2 border-gray-300">
-              <tr>
-                  <td colSpan={2} className="px-4 py-2 text-right font-bold text-gray-800">Total Amount</td>
-                  <td className="px-4 py-2 font-bold text-gray-900">{formatCurrency(totalAmount)}</td>
-                  <td colSpan={2}></td>
-              </tr>
-           </tfoot>
         </table>
       </div>
 
-      <Modal title={editingItem ? "Edit Expense" : "Add New Expense"} isOpen={isModalOpen} onClose={closeModal}>
+      <Modal title={itemToEdit ? "Edit Expense" : "Add New Expense"} isOpen={isAddEditModalOpen} onClose={() => setIsAddEditModalOpen(false)}>
         <form onSubmit={handleSubmit} className="space-y-4">
            <div>
               <label htmlFor="purchaser" className="block text-sm font-medium text-gray-700">Purchased By</label>
-              <select id="purchaser" value={purchaserId} onChange={(e) => setPurchaserId(e.target.value)} required className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                {members.map(member => (
+               <select id="purchaser" value={purchaserId} onChange={(e) => setPurchaserId(e.target.value)} required className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                {props.members.map(member => (
                     <option key={member.id} value={member.id}>{member.name}</option>
                 ))}
               </select>
@@ -209,16 +175,16 @@ const GroceryManager: React.FC<GroceryManagerProps> = ({ groceries, members, onA
               <input type="date" id="date" value={date} onChange={(e) => setDate(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
            </div>
            <div>
-             <label htmlFor="name" className="block text-sm font-medium text-gray-700">Item Name</label>
-             <input type="text" id="name" value={name} onChange={(e) => setName(e.target.value)} required placeholder="e.g., Chicken, Rice" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700">Item Name / Notes</label>
+              <input type="text" id="name" value={name} onChange={(e) => setName(e.target.value)} required placeholder="e.g., Milk, Bread, etc." className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
            </div>
            <div>
              <label htmlFor="amount" className="block text-sm font-medium text-gray-700">Amount (AED)</label>
-             <input type="number" id="amount" value={amount} onChange={(e) => setAmount(e.target.value)} required min="0.01" step="0.01" placeholder="e.g., 50.75" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+             <input type="number" id="amount" value={amount} onChange={(e) => setAmount(e.target.value)} required min="0.01" step="0.01" placeholder="e.g., 25.50" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
            </div>
            <div className="pt-2 flex justify-end">
-             <button type="submit" disabled={isSubmitting} className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400">
-                {isSubmitting ? 'Saving...' : (editingItem ? 'Save Changes' : 'Add Expense')}
+             <button type="submit" disabled={isSubmitting || props.members.length === 0} className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400">
+                {isSubmitting ? 'Saving...' : (itemToEdit ? 'Save Changes' : 'Add Expense')}
              </button>
            </div>
         </form>
@@ -231,12 +197,26 @@ const GroceryManager: React.FC<GroceryManagerProps> = ({ groceries, members, onA
         title="Delete Expense"
         message="Are you sure you want to delete this expense? This action cannot be undone."
       />
-
-      <CSVImportModal
-        isOpen={isImportModalOpen}
-        onClose={() => setIsImportModalOpen(false)}
-        onImport={handleImport}
-      />
+      
+      <Modal title="Filter Expenses" isOpen={isFilterModalOpen} onClose={() => setIsFilterModalOpen(false)}>
+        <DataFilter 
+          startDate={props.startDate}
+          endDate={props.endDate}
+          minAmount={props.minAmount}
+          maxAmount={props.maxAmount}
+          selectedPurchaser={props.selectedPurchaser}
+          members={props.members}
+          onStartDateChange={props.onStartDateChange}
+          onEndDateChange={props.onEndDateChange}
+          onMinAmountChange={props.onMinAmountChange}
+          onMaxAmountChange={props.onMaxAmountChange}
+          onPurchaserChange={props.onPurchaserChange}
+          onReset={() => {
+            props.onResetFilters();
+            setIsFilterModalOpen(false);
+          }}
+        />
+      </Modal>
     </div>
   );
 };

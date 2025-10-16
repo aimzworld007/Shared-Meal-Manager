@@ -152,6 +152,11 @@ export const updateMember = (memberId: string, name: string, phone: string) => {
     const memberDocRef = doc(getUserSubcollection('members'), memberId);
     return updateDoc(memberDocRef, { name, phone });
 };
+export const deleteMember = (memberId: string) => {
+    const memberDocRef = doc(getUserSubcollection('members'), memberId);
+    return deleteDoc(memberDocRef);
+};
+
 
 // Fix: Add missing functions for managing site settings.
 // --- Site Settings (Admin) ---

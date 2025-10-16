@@ -10,8 +10,6 @@ import ConfirmationModal from './ConfirmationModal';
 interface MemberAndDepositManagerProps {
   deposits: Deposit[];
   members: Participant[];
-  onAddMember: (name: string, phone: string) => Promise<void>;
-  onUpdateMember: (memberId: string, name: string, phone: string) => Promise<void>;
   onAddDeposit: (item: Omit<Deposit, 'id'>) => Promise<void>;
   onDeleteDeposit: (item: Deposit) => Promise<void>;
   onUpdateDeposit: (depositId: string, data: Partial<Omit<Deposit, 'id'>>) => Promise<void>;
@@ -27,17 +25,7 @@ const WhatsAppIcon = () => (
     </svg>
 );
 
-const MemberAndDepositManager: React.FC<MemberAndDepositManagerProps> = ({ deposits, members, onAddMember, onUpdateMember, onAddDeposit, onDeleteDeposit, onUpdateDeposit }) => {
-  // --- Member state ---
-  const [newMemberName, setNewMemberName] = useState('');
-  const [newMemberPhone, setNewMemberPhone] = useState('');
-  const [isAddingMember, setIsAddingMember] = useState(false);
-  const [showAddMemberForm, setShowAddMemberForm] = useState(false);
-  const [editingMember, setEditingMember] = useState<Participant | null>(null);
-  const [isUpdatingMember, setIsUpdatingMember] = useState(false);
-  const [updatedMemberName, setUpdatedMemberName] = useState('');
-  const [updatedMemberPhone, setUpdatedMemberPhone] = useState('');
-
+const MemberAndDepositManager: React.FC<MemberAndDepositManagerProps> = ({ deposits, members, onAddDeposit, onDeleteDeposit, onUpdateDeposit }) => {
   // --- Deposit state ---
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [editingDeposit, setEditingDeposit] = useState<Deposit | null>(null);
@@ -50,53 +38,14 @@ const MemberAndDepositManager: React.FC<MemberAndDepositManagerProps> = ({ depos
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<Deposit | null>(null);
 
-  // --- Member Handlers ---
-  const handleAddMemberSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMemberName.trim() || !newMemberPhone.trim() || isAddingMember) return;
-    setIsAddingMember(true);
-    try {
-      await onAddMember(newMemberName.trim(), newMemberPhone.trim());
-      setNewMemberName('');
-      setNewMemberPhone('');
-      setShowAddMemberForm(false); // Hide form on success
-    } catch (error) {
-      console.error(error); // Error is handled globally in the hook
-    } finally {
-      setIsAddingMember(false);
-    }
-  };
-
-  const openEditMemberModal = (member: Participant) => {
-    setEditingMember(member);
-    setUpdatedMemberName(member.name);
-    setUpdatedMemberPhone(member.phone);
-  };
-
-  const closeEditMemberModal = () => {
-    setEditingMember(null);
-    setUpdatedMemberName('');
-    setUpdatedMemberPhone('');
-  };
-
-  const handleUpdateMemberSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!updatedMemberName.trim() || !updatedMemberPhone.trim() || !editingMember || isUpdatingMember) return;
-    setIsUpdatingMember(true);
-    try {
-      await onUpdateMember(editingMember.id, updatedMemberName.trim(), updatedMemberPhone.trim());
-      closeEditMemberModal();
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsUpdatingMember(false);
-    }
-  };
-
   // --- Deposit Handlers ---
-  const openAddDepositModal = (member: Participant) => {
+  const openAddDepositModal = () => {
+    if (members.length === 0) {
+        alert("Please add a member in Settings before adding a deposit.");
+        return;
+    }
     setEditingDeposit(null);
-    setSelectedUserIdForDeposit(member.id);
+    setSelectedUserIdForDeposit(members[0].id);
     setDepositAmount('');
     setDepositDate(new Date().toISOString().split('T')[0]);
     setIsDepositModalOpen(true);
@@ -167,200 +116,44 @@ const MemberAndDepositManager: React.FC<MemberAndDepositManagerProps> = ({ depos
   };
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-800 px-1">Member & Deposit Management</h2>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-        
-        {/* Left Column */}
-        <div className="lg:col-span-2 space-y-8">
-          
-          {/* Add New Member Box */}
-          <div className="bg-white shadow-lg rounded-lg">
-             <div className="px-6 py-4 bg-gray-50 border-b rounded-t-lg">
-                <h3 className="text-lg font-semibold text-gray-800">New Member</h3>
-            </div>
-            {showAddMemberForm ? (
-              <div className="p-6">
-                <form onSubmit={handleAddMemberSubmit} className="space-y-4">
-                  <div>
-                    <label htmlFor="memberName" className="block text-sm font-medium text-gray-700">Member Name</label>
-                    <input
-                      id="memberName"
-                      type="text"
-                      value={newMemberName}
-                      onChange={(e) => setNewMemberName(e.target.value)}
-                      required
-                      autoFocus
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                      placeholder="e.g., John Doe"
-                    />
-                  </div>
-                   <div>
-                    <label htmlFor="memberPhone" className="block text-sm font-medium text-gray-700">Phone Number</label>
-                    <input
-                      id="memberPhone"
-                      type="tel"
-                      value={newMemberPhone}
-                      onChange={(e) => setNewMemberPhone(e.target.value)}
-                      required
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                      placeholder="e.g., +971501234567"
-                    />
-                  </div>
-                  <div className="flex justify-end gap-2">
-                     <button
-                      type="button"
-                      onClick={() => { setShowAddMemberForm(false); setNewMemberName(''); setNewMemberPhone(''); }}
-                      className="inline-flex items-center justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isAddingMember}
-                      className="inline-flex items-center justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400"
-                    >
-                      {isAddingMember ? 'Adding...' : 'Add Member'}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            ) : (
-                <div className="p-6">
-                    <button
-                        onClick={() => setShowAddMemberForm(true)}
-                        className="w-full inline-flex items-center justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-                    >
-                        Add New Member
-                    </button>
-                </div>
-            )}
-          </div>
-
-          {/* Current Members Box */}
-          <div className="bg-white shadow-lg rounded-lg">
-            <div className="px-6 py-4 bg-gray-50 border-b rounded-t-lg">
-              <h3 className="text-lg font-semibold text-gray-800">Current Members <span className="text-gray-500 font-normal">({members.length})</span></h3>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member</th>
-                    <th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {members.map(member => (
-                    <tr key={member.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          <div className="font-medium text-gray-900">{member.name}</div>
-                          <div className="text-gray-500">{member.phone}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <button
-                          onClick={() => openEditMemberModal(member)}
-                          className="text-indigo-600 hover:text-indigo-900 mr-3"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => openAddDepositModal(member)}
-                          className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
-                        >
-                          Add Deposit
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                  {members.length === 0 && (
-                    <tr><td colSpan={2} className="px-6 py-4 text-center text-sm text-gray-500">No members have been added.</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column */}
-        <div className="lg:col-span-3">
-          {/* Deposit History Box */}
-          <div className="bg-white shadow-lg rounded-lg h-full">
-            <div className="px-6 py-4 bg-gray-50 border-b rounded-t-lg">
-              <h3 className="text-lg font-semibold text-gray-800">Deposit History</h3>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                    <th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {deposits.length === 0 && (
-                    <tr><td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500">No deposits added yet.</td></tr>
-                  )}
-                  {deposits.map((item) => (
-                    <tr key={item.id}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(item.date).toLocaleDateString()}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.userName}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-800">{formatCurrency(item.amount)}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex items-center justify-end gap-3">
-                         <button onClick={() => handleShareWhatsApp(item)} className="text-green-600 hover:text-green-800" title="Share on WhatsApp">
-                           <WhatsAppIcon />
-                         </button>
-                        <button onClick={() => openEditDepositModal(item)} className="text-indigo-600 hover:text-indigo-900">Edit / Transfer</button>
-                        <button onClick={() => handleDeleteClick(item)} className="text-red-600 hover:text-red-900">Delete</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Edit Member Modal */}
-      <Modal title="Edit Member" isOpen={!!editingMember} onClose={closeEditMemberModal}>
-        <form onSubmit={handleUpdateMemberSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="editMemberName" className="block text-sm font-medium text-gray-700">Member Name</label>
-            <input
-              id="editMemberName"
-              type="text"
-              value={updatedMemberName}
-              onChange={(e) => setUpdatedMemberName(e.target.value)}
-              required
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            />
-          </div>
-          <div>
-            <label htmlFor="editMemberPhone" className="block text-sm font-medium text-gray-700">Phone Number</label>
-            <input
-              id="editMemberPhone"
-              type="tel"
-              value={updatedMemberPhone}
-              onChange={(e) => setUpdatedMemberPhone(e.target.value)}
-              required
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            />
-          </div>
-          <div className="pt-2 flex justify-end">
-            <button
-              type="submit"
-              disabled={isUpdatingMember}
-              className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400"
-            >
-              {isUpdatingMember ? 'Saving...' : 'Save Changes'}
+    <div className="bg-white shadow-lg rounded-lg">
+        <div className="px-6 py-4 bg-gray-50 border-b rounded-t-lg flex justify-between items-center">
+            <h3 className="text-lg font-semibold text-gray-800">Deposit History</h3>
+            <button onClick={openAddDepositModal} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
+                Add Deposit
             </button>
-          </div>
-        </form>
-      </Modal>
+        </div>
+        <div className="overflow-x-auto">
+            <table className="min-w-full">
+            <thead className="bg-gray-100">
+                <tr>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                <th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
+                </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+                {deposits.length === 0 && (
+                <tr><td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500">No deposits added yet.</td></tr>
+                )}
+                {deposits.map((item) => (
+                <tr key={item.id}>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(item.date).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.userName}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-800">{formatCurrency(item.amount)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex items-center justify-end gap-3">
+                        <button onClick={() => handleShareWhatsApp(item)} className="text-green-600 hover:text-green-800" title="Share on WhatsApp">
+                        <WhatsAppIcon />
+                        </button>
+                    <button onClick={() => openEditDepositModal(item)} className="text-indigo-600 hover:text-indigo-900">Edit / Transfer</button>
+                    <button onClick={() => handleDeleteClick(item)} className="text-red-600 hover:text-red-900">Delete</button>
+                    </td>
+                </tr>
+                ))}
+            </tbody>
+            </table>
+        </div>
 
       {/* Add/Edit Deposit Modal */}
       <Modal title={editingDeposit ? `Edit or Transfer Deposit` : `Add Deposit`} isOpen={isDepositModalOpen} onClose={closeDepositModal}>

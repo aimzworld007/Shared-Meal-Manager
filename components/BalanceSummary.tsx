@@ -22,70 +22,12 @@ const formatCurrency = (amount: number): string => {
 };
 
 const MainBalanceSummary: React.FC<MainBalanceSummaryProps> = ({ summary }) => {
-
-  const handleDownloadCsv = () => {
-    const headers = ['S.N', 'Name', 'Paid Amount', 'Deposit', 'Balance'];
-    const rows = summary.members.map((member, index) => [
-      index + 1,
-      `"${member.name}"`,
-      member.totalPurchase.toFixed(2),
-      member.totalDeposit.toFixed(2),
-      member.balance.toFixed(2),
-    ]);
-
-    const csvContent = "data:text/csv;charset=utf-8," 
-      + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-    
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "main_balance_summary.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const handleShareWhatsApp = () => {
-    let message = `*Shared Meal Summary*\n\n`;
-    message += `Hello Team, here is the latest balance summary:\n\n`;
-    message += `*Total Grocery Cost:* ${formatCurrency(summary.totalGroceryCost)}\n`;
-    message += `*Total Deposits:* ${formatCurrency(summary.totalDeposits)}\n`;
-    message += `*Average per person:* ${formatCurrency(summary.averageExpense)}\n\n`;
-    message += `*Balances:*\n`;
-
-    summary.members.forEach(member => {
-        const balanceText = formatCurrency(member.balance);
-        const status = member.balance >= 0 ? `(Owed)` : `(Owes)`;
-        message += `- ${member.name}: *${balanceText}* ${status}\n`;
-    });
-
-    message += `\nPlease settle up accordingly. Thanks!`;
-    
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/?text=${encodedMessage}`;
-    window.open(whatsappUrl, '_blank');
-  };
-
   const totalPaidAmount = summary.members.reduce((sum, member) => sum + member.totalPurchase, 0);
 
   return (
     <div className="bg-white border border-gray-200">
       <div className="px-4 py-3 bg-teal-700 text-white flex justify-between items-center flex-wrap gap-2">
         <h3 className="text-lg font-bold">MAIN BALANCE SUMMARY</h3>
-        <div className="flex gap-2">
-          <button
-            onClick={handleShareWhatsApp}
-            className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-teal-700 bg-white hover:bg-gray-200"
-          >
-            Share on WhatsApp
-          </button>
-          <button
-            onClick={handleDownloadCsv}
-            className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-teal-700 bg-white hover:bg-gray-200"
-          >
-            Download CSV
-          </button>
-        </div>
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full">

@@ -10,7 +10,6 @@ import IndividualAccounts from './IndividualAccounts';
 import GroceryManager from './GroceryManager';
 import MemberAndDepositManager from './MemberAndDepositManager';
 import PermissionsError from './PermissionsError';
-import DataFilter from './DateFilter';
 import SettingsPage from './SettingsPage';
 import { logoUrl as defaultLogoUrl } from '../assets/logo';
 
@@ -21,35 +20,15 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
   const [view, setView] = useState<'dashboard' | 'settings'>('dashboard');
   const { user, logout } = useAuth();
-  const { 
-    loading, 
-    error, 
+  const mealManager = useMealManager();
+
+  const {
+    loading,
+    error,
     summary,
     members,
-    // filters
-    startDate,
-    endDate,
-    minAmount,
-    maxAmount,
-    selectedPurchaser,
-    setStartDate,
-    setEndDate,
-    setMinAmount,
-    setMaxAmount,
-    setSelectedPurchaser,
-    resetFilters,
-    // actions
-    addGroceryItem,
-    importGroceryItems,
-    deleteGroceryItem,
-    updateGroceryItem, 
-    addDepositItem, 
-    deleteDepositItem,
-    updateDepositItem,
-    addMember,
-    updateMember,
     refreshData,
-  } = useMealManager();
+  } = mealManager;
 
   const isPermissionError = error && error.includes('Permission Denied');
 
@@ -60,38 +39,33 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
       {!isPermissionError && error && <p className="text-center text-red-500 bg-red-100 p-4 rounded-md">{error}</p>}
       {!loading && !error && (
         <div className="space-y-8">
-          <DataFilter 
-            startDate={startDate}
-            endDate={endDate}
-            minAmount={minAmount}
-            maxAmount={maxAmount}
-            selectedPurchaser={selectedPurchaser}
+          <GroceryManager
+            groceries={summary.allGroceries}
             members={members}
-            onStartDateChange={setStartDate}
-            onEndDateChange={setEndDate}
-            onMinAmountChange={setMinAmount}
-            onMaxAmountChange={setMaxAmount}
-            onPurchaserChange={setSelectedPurchaser}
-            onReset={resetFilters}
-          />
-          <GroceryManager 
-            groceries={summary.allGroceries} 
-            members={members}
-            onAddGrocery={addGroceryItem} 
-            onImportGroceries={importGroceryItems}
-            onDeleteGrocery={deleteGroceryItem}
-            onUpdateGrocery={updateGroceryItem} 
+            onAddGrocery={mealManager.addGroceryItem}
+            onDeleteGrocery={mealManager.deleteGroceryItem}
+            onUpdateGrocery={mealManager.updateGroceryItem}
+            // Filter props
+            startDate={mealManager.startDate}
+            endDate={mealManager.endDate}
+            minAmount={mealManager.minAmount}
+            maxAmount={mealManager.maxAmount}
+            selectedPurchaser={mealManager.selectedPurchaser}
+            onStartDateChange={mealManager.setStartDate}
+            onEndDateChange={mealManager.setEndDate}
+            onMinAmountChange={mealManager.setMinAmount}
+            onMaxAmountChange={mealManager.setMaxAmount}
+            onPurchaserChange={mealManager.setSelectedPurchaser}
+            onResetFilters={mealManager.resetFilters}
           />
            <IndividualAccounts members={summary.members} groceries={summary.allGroceries} />
            <MainBalanceSummary summary={summary} />
           <MemberAndDepositManager
             members={members}
             deposits={summary.allDeposits}
-            onAddMember={addMember}
-            onUpdateMember={updateMember}
-            onAddDeposit={addDepositItem}
-            onDeleteDeposit={deleteDepositItem}
-            onUpdateDeposit={updateDepositItem}
+            onAddDeposit={mealManager.addDepositItem}
+            onDeleteDeposit={mealManager.deleteDepositItem}
+            onUpdateDeposit={mealManager.updateDepositItem}
           />
         </div>
       )}
@@ -116,7 +90,14 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
       </header>
 
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        {view === 'dashboard' ? <DashboardContent /> : <SettingsPage />}
+        {view === 'dashboard' ? <DashboardContent /> : <SettingsPage
+            members={members}
+            summary={summary}
+            onAddMember={mealManager.addMember}
+            onUpdateMember={mealManager.updateMember}
+            onDeleteMember={mealManager.deleteMember}
+            onImportGroceries={mealManager.importGroceryItems}
+        />}
       </main>
     </div>
   );
