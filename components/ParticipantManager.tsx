@@ -10,6 +10,25 @@ interface MemberManagerProps {
   onAddMember: (email: string, pass: string) => Promise<void>;
 }
 
+/**
+ * Translates Firebase auth error codes from sign-up into user-friendly messages.
+ * @param {string | undefined} errorCode - The error code from the Firebase auth error object.
+ * @returns {string} A user-friendly error message.
+ */
+const getSignUpErrorMessage = (errorCode: string | undefined): string => {
+    switch (errorCode) {
+      case 'auth/email-already-in-use':
+        return 'This email address is already in use by another account.';
+      case 'auth/invalid-email':
+        return 'The email address is not valid.';
+      case 'auth/weak-password':
+        return 'Password is too weak. It must be at least 6 characters long.';
+      default:
+        return 'An unexpected error occurred while creating the member.';
+    }
+  };
+
+
 const MemberManager: React.FC<MemberManagerProps> = ({ members, onAddMember }) => {
   const [email, setEmail] =useState('');
   const [password, setPassword] = useState('');
@@ -30,7 +49,7 @@ const MemberManager: React.FC<MemberManagerProps> = ({ members, onAddMember }) =
         setPassword('');
         alert("Member successfully created. NOTE: This action may have logged you out. You might need to sign in again to see the changes.");
     } catch (err: any) {
-        setError(err.message.replace('Firebase: ', ''));
+        setError(getSignUpErrorMessage(err.code));
     } finally {
         setIsSubmitting(false);
     }

@@ -19,9 +19,13 @@ export const useMealManager = () => {
             ]);
             setAllData(data);
             setMembers(membersData);
-        } catch (err) {
+        } catch (err: any) {
             console.error("Failed to fetch admin data:", err);
-            setError("Could not load all meal data. Please try again later.");
+            if (err.code === 'permission-denied') {
+                setError("Permission Denied: Could not load all user data. Please check your Firestore security rules to ensure the logged-in admin has permission to read all user collections and documents.");
+            } else {
+                setError("Could not load all meal data. Please try again later.");
+            }
         } finally {
             setLoading(false);
         }

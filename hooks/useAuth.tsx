@@ -30,6 +30,32 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 /**
+ * Translates Firebase auth error codes into user-friendly messages.
+ * @param {string | undefined} errorCode - The error code from the Firebase auth error object.
+ * @returns {string} A user-friendly error message.
+ */
+const getAuthErrorMessage = (errorCode: string | undefined): string => {
+  switch (errorCode) {
+    case 'auth/invalid-email':
+      return 'The email address is not valid.';
+    case 'auth/user-disabled':
+      return 'This user account has been disabled.';
+    case 'auth/user-not-found': // Legacy, but good to have
+    case 'auth/wrong-password': // Legacy, but good to have
+    case 'auth/invalid-credential': // v9+
+    case 'auth/invalid-login-credentials': // v9+
+      return 'Invalid email or password. Please check your credentials and try again.';
+    case 'auth/email-already-in-use':
+      return 'This email address is already in use by another account.';
+    case 'auth/weak-password':
+      return 'The password is too weak. Please use a stronger password.';
+    default:
+      return 'An unexpected authentication error occurred. Please try again.';
+  }
+};
+
+
+/**
  * Provides the authentication context to its children components.
  * It manages the user state by subscribing to Firebase's auth state changes
  * and provides login/logout functions.
@@ -70,7 +96,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       await api.signIn(email, pass);
     } catch (error: any) {
       console.error("Login failed:", error);
-      setError(error.message);
+      setError(getAuthErrorMessage(error.code));
       throw error; // Re-throw to be caught in component if needed
     }
   };
@@ -86,7 +112,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       await api.signUp(email, pass);
     } catch (error: any) {
       console.error("Sign up failed:", error);
-      setError(error.message);
+      setError(getAuthErrorMessage(error.code));
       throw error;
     }
   };
