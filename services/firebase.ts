@@ -24,6 +24,7 @@ import {
   orderBy,
   setDoc,
   getDoc,
+  writeBatch,
 } from "firebase/firestore";
 // Fix: Add Firebase storage imports for site settings features.
 import {
@@ -146,7 +147,7 @@ export const getMembers = async (): Promise<Participant[]> => {
 };
 export const addMember = (name: string, phone: string) => {
     const membersCol = getUserSubcollection('members');
-    return addDoc(membersCol, { name, phone });
+    return addDoc(membersCol, { name, phone, isMealManager: false });
 };
 export const updateMember = (memberId: string, name: string, phone: string) => {
     const memberDocRef = doc(getUserSubcollection('members'), memberId);
@@ -155,6 +156,25 @@ export const updateMember = (memberId: string, name: string, phone: string) => {
 export const deleteMember = (memberId: string) => {
     const memberDocRef = doc(getUserSubcollection('members'), memberId);
     return deleteDoc(memberDocRef);
+};
+
+export const setMealManager = async (newManagerId: string) => {
+    const membersCol = getUserSubcollection('members');
+    const batch = writeBatch(db);
+
+    // First, find and unset any current meal managers
+    const membersSnapshot = await getDocs(membersCol);
+    membersSnapshot.forEach(doc => {
+        if (doc.data().isMealManager === true && doc.id !== newManagerId) {
+            batch.update(doc.ref, { isMealManager: false });
+        }
+    });
+
+    // Then, set the new meal manager
+    const newManagerRef = doc(membersCol, newManagerId);
+    batch.update(newManagerRef, { isMealManager: true });
+
+    await batch.commit();
 };
 
 

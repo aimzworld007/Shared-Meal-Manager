@@ -95,6 +95,11 @@ export const useMealManager = () => {
         const memberCount = members.length > 0 ? members.length : 1;
         const averageExpense = totalGroceryCost / memberCount;
 
+        const mealManager = members.find(m => m.isMealManager);
+        const totalDepositsFromOthers = filteredDeposits
+            .filter(d => mealManager && d.userId !== mealManager.id)
+            .reduce((sum, item) => sum + item.amount, 0);
+
         const memberData: Member[] = members.map(member => {
             const totalPurchase = filteredGroceries
                 .filter(g => g.purchaserId === member.id)
@@ -104,7 +109,13 @@ export const useMealManager = () => {
                 .filter(d => d.userId === member.id)
                 .reduce((sum, item) => sum + item.amount, 0);
 
-            const balance = (totalPurchase + totalDeposit) - averageExpense;
+            let balance = (totalPurchase + totalDeposit) - averageExpense;
+
+            // If this member is the meal manager, subtract other members' deposits from their balance.
+            // This reflects that the manager is holding the group's money.
+            if (mealManager && member.id === mealManager.id) {
+                balance -= totalDepositsFromOthers;
+            }
             
             return {
                 ...member,
@@ -130,10 +141,10 @@ export const useMealManager = () => {
         try {
             await api.addGrocery(item);
             fetchData(); // Refresh data
-        } catch (error) {
-            console.error("Error adding grocery:", error);
+        } catch (err) {
+            console.error("Error adding grocery:", err);
             setError("Failed to add grocery item.");
-            throw error;
+            throw err;
         }
     };
     
@@ -141,10 +152,10 @@ export const useMealManager = () => {
         try {
             await api.updateGrocery(itemId, data);
             fetchData(); // Refresh data
-        } catch (error) {
-            console.error("Error updating grocery:", error);
+        } catch (err) {
+            console.error("Error updating grocery:", err);
             setError("Failed to update grocery item.");
-            throw error;
+            throw err;
         }
     };
 
@@ -177,13 +188,12 @@ export const useMealManager = () => {
             const promises = itemsToAdd.map(item => api.addGrocery(item));
             await Promise.all(promises);
             fetchData();
-        } catch (error) {
-            console.error("Error importing grocery items:", error);
-            // FIX: The caught 'error' has an 'unknown' type. Check if it's an instance of Error
-            // before accessing the 'message' property to ensure type safety.
-            const message = error instanceof Error ? error.message : "Failed to import grocery items.";
+        } catch (err) {
+            console.error("Error importing grocery items:", err);
+            // Fix: Rename `error` to `err` to avoid shadowing the state variable.
+            const message = err instanceof Error ? err.message : "Failed to import grocery items.";
             setError(message);
-            throw error;
+            throw err;
         }
     };
 
@@ -191,10 +201,10 @@ export const useMealManager = () => {
         try {
             await api.deleteGrocery(item.id);
             fetchData();
-        } catch (error) {
-            console.error("Error deleting grocery:", error);
+        } catch (err) {
+            console.error("Error deleting grocery:", err);
             setError("Failed to delete grocery item.");
-            throw error;
+            throw err;
         }
     };
 
@@ -202,10 +212,10 @@ export const useMealManager = () => {
         try {
             await api.addDeposit(item);
             fetchData();
-        } catch (error) {
-            console.error("Error adding deposit:", error);
+        } catch (err) {
+            console.error("Error adding deposit:", err);
             setError("Failed to add deposit.");
-            throw error;
+            throw err;
         }
     };
 
@@ -213,10 +223,10 @@ export const useMealManager = () => {
         try {
             await api.updateDeposit(depositId, data);
             fetchData(); // Refresh data
-        } catch (error) {
-            console.error("Error updating deposit:", error);
+        } catch (err) {
+            console.error("Error updating deposit:", err);
             setError("Failed to update deposit.");
-            throw error;
+            throw err;
         }
     };
 
@@ -224,32 +234,32 @@ export const useMealManager = () => {
         try {
             await api.deleteDeposit(item.id);
             fetchData();
-        } catch (error) {
-            console.error("Error deleting deposit:", error);
+        } catch (err) {
+            console.error("Error deleting deposit:", err);
             setError("Failed to delete deposit.");
-            throw error;
+            throw err;
         }
     };
-    
+
     const addMember = async (name: string, phone: string) => {
         try {
             await api.addMember(name, phone);
-            await fetchData();
-        } catch(e) {
-            console.error("Failed to add member", e);
-            setError("Failed to add new member.");
-            throw e;
+            fetchData();
+        } catch (err) {
+            console.error("Error adding member:", err);
+            setError("Failed to add member.");
+            throw err;
         }
     };
-    
+
     const updateMember = async (memberId: string, name: string, phone: string) => {
         try {
             await api.updateMember(memberId, name, phone);
-            await fetchData();
-        } catch(e) {
-            console.error("Failed to update member", e);
-            setError("Failed to update member name.");
-            throw e;
+            fetchData();
+        } catch (err) {
+            console.error("Error updating member:", err);
+            setError("Failed to update member.");
+            throw err;
         }
     };
 
@@ -257,10 +267,21 @@ export const useMealManager = () => {
         try {
             await api.deleteMember(memberId);
             fetchData();
-        } catch (error) {
-            console.error("Error deleting member:", error);
+        } catch (err) {
+            console.error("Error deleting member:", err);
             setError("Failed to delete member.");
-            throw error;
+            throw err;
+        }
+    };
+
+    const setMealManager = async (memberId: string) => {
+        try {
+            await api.setMealManager(memberId);
+            fetchData();
+        } catch (err) {
+            console.error("Error setting meal manager:", err);
+            setError("Failed to set meal manager.");
+            throw err;
         }
     };
 
@@ -272,35 +293,37 @@ export const useMealManager = () => {
         setSelectedPurchaser('');
     };
 
-
     return {
         loading,
         error,
-        members,
         summary,
-        // filters
-        startDate,
-        endDate,
-        minAmount,
-        maxAmount,
-        selectedPurchaser,
-        setStartDate,
-        setEndDate,
-        setMinAmount,
-        setMaxAmount,
-        setSelectedPurchaser,
-        resetFilters,
-        // actions
+        members,
+        refreshData: fetchData,
+        // Groceries
         addGroceryItem,
         updateGroceryItem,
         importGroceryItems,
         deleteGroceryItem,
+        // Deposits
         addDepositItem,
         updateDepositItem,
         deleteDepositItem,
+        // Members
         addMember,
         updateMember,
         deleteMember,
-        refreshData: fetchData,
+        setMealManager,
+        // Filters
+        startDate,
+        setStartDate,
+        endDate,
+        setEndDate,
+        minAmount,
+        setMinAmount,
+        maxAmount,
+        setMaxAmount,
+        selectedPurchaser,
+        setSelectedPurchaser,
+        resetFilters,
     };
 };

@@ -120,6 +120,7 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl, installPromptEvent, onIn
             onAddMember={mealManager.addMember}
             onUpdateMember={mealManager.updateMember}
             onDeleteMember={mealManager.deleteMember}
+            onSetMealManager={mealManager.setMealManager}
             onImportGroceries={mealManager.importGroceryItems}
         />}
       </main>

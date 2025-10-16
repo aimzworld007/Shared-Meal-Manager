@@ -21,11 +21,12 @@ interface SettingsPageProps {
   onAddMember: (name: string, phone: string) => Promise<void>;
   onUpdateMember: (memberId: string, name: string, phone: string) => Promise<void>;
   onDeleteMember: (memberId: string) => Promise<void>;
+  onSetMealManager: (memberId: string) => Promise<void>;
   onImportGroceries: (items: ParsedGroceryItem[]) => Promise<void>;
 }
 
 
-const SettingsPage: React.FC<SettingsPageProps> = ({ members, summary, onAddMember, onUpdateMember, onDeleteMember, onImportGroceries }) => {
+const SettingsPage: React.FC<SettingsPageProps> = ({ members, summary, onAddMember, onUpdateMember, onDeleteMember, onSetMealManager, onImportGroceries }) => {
   const { user, changeEmail, changePassword, error: authError, clearError } = useAuth();
   
   // --- Account Security State ---
@@ -196,7 +197,19 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ members, summary, onAddMemb
                             <p className="text-sm font-medium text-gray-900">{member.name}</p>
                             <p className="text-sm text-gray-500">{member.phone}</p>
                         </div>
-                        <div className="space-x-2">
+                        <div className="space-x-3 flex items-center">
+                             {member.isMealManager ? (
+                                <span className="px-2 py-1 text-xs font-semibold leading-tight text-green-700 bg-green-100 rounded-full">
+                                    Meal Manager
+                                </span>
+                            ) : (
+                                <button 
+                                    onClick={() => onSetMealManager(member.id)} 
+                                    className="text-sm font-medium text-indigo-600 hover:text-indigo-800"
+                                >
+                                    Make Manager
+                                </button>
+                            )}
                             <button onClick={() => openEditMemberModal(member)} className="text-sm font-medium text-indigo-600 hover:text-indigo-800">Edit</button>
                             <button onClick={() => handleDeleteMemberClick(member)} className="text-sm font-medium text-red-600 hover:text-red-800">Delete</button>
                         </div>
