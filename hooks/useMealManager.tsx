@@ -190,7 +190,7 @@ export const useMealManager = () => {
             fetchData();
         } catch (err) {
             console.error("Error importing grocery items:", err);
-            // Fix: The `err` object in a catch block is of type `unknown`. We must check if it's an instance of `Error` before accessing the `message` property to avoid a type error.
+            // FIX: The `err` object in a catch block is of type `unknown`. To prevent a type error when setting the error message, we must first check if `err` is an instance of `Error` before accessing its `message` property.
             let message = "Failed to import grocery items.";
             if (err instanceof Error) {
                 message = err.message;

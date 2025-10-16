@@ -4,15 +4,13 @@
  */
 import React, { useState } from 'react';
 import { Deposit, Participant } from '../types';
-import Modal from './Modal';
 import ConfirmationModal from './ConfirmationModal';
 
 interface MemberAndDepositManagerProps {
   deposits: Deposit[];
   members: Participant[];
-  onAddDeposit: (item: Omit<Deposit, 'id'>) => Promise<void>;
+  onEditDeposit: (deposit: Deposit) => void;
   onDeleteDeposit: (item: Deposit) => Promise<void>;
-  onUpdateDeposit: (depositId: string, data: Partial<Omit<Deposit, 'id'>>) => Promise<void>;
 }
 
 const formatCurrency = (amount: number): string => {
@@ -25,69 +23,9 @@ const WhatsAppIcon = () => (
     </svg>
 );
 
-const MemberAndDepositManager: React.FC<MemberAndDepositManagerProps> = ({ deposits, members, onAddDeposit, onDeleteDeposit, onUpdateDeposit }) => {
-  // --- Deposit state ---
-  const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
-  const [editingDeposit, setEditingDeposit] = useState<Deposit | null>(null);
-  const [depositAmount, setDepositAmount] = useState('');
-  const [depositDate, setDepositDate] = useState(new Date().toISOString().split('T')[0]);
-  const [selectedUserIdForDeposit, setSelectedUserIdForDeposit] = useState('');
-  const [isSubmittingDeposit, setIsSubmittingDeposit] = useState(false);
-
-  // --- Deletion state ---
+const MemberAndDepositManager: React.FC<MemberAndDepositManagerProps> = ({ deposits, onEditDeposit, onDeleteDeposit }) => {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<Deposit | null>(null);
-
-  // --- Deposit Handlers ---
-  const openAddDepositModal = () => {
-    if (members.length === 0) {
-        alert("Please add a member in Settings before adding a deposit.");
-        return;
-    }
-    setEditingDeposit(null);
-    setSelectedUserIdForDeposit(members[0].id);
-    setDepositAmount('');
-    setDepositDate(new Date().toISOString().split('T')[0]);
-    setIsDepositModalOpen(true);
-  };
-
-  const openEditDepositModal = (deposit: Deposit) => {
-    setEditingDeposit(deposit);
-    setSelectedUserIdForDeposit(deposit.userId);
-    setDepositAmount(String(deposit.amount));
-    setDepositDate(new Date(deposit.date).toISOString().split('T')[0]);
-    setIsDepositModalOpen(true);
-  };
-
-  const closeDepositModal = () => {
-    setIsDepositModalOpen(false);
-    setEditingDeposit(null);
-  };
-
-  const handleDepositSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!depositAmount || !depositDate || !selectedUserIdForDeposit || isSubmittingDeposit) return;
-    setIsSubmittingDeposit(true);
-    
-    const depositData = {
-      amount: parseFloat(depositAmount),
-      date: depositDate,
-      userId: selectedUserIdForDeposit,
-    };
-
-    try {
-      if (editingDeposit) {
-        await onUpdateDeposit(editingDeposit.id, depositData);
-      } else {
-        await onAddDeposit(depositData);
-      }
-      closeDepositModal();
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setIsSubmittingDeposit(false);
-    }
-  };
 
   const handleDeleteClick = (item: Deposit) => {
     setItemToDelete(item);
@@ -118,10 +56,7 @@ const MemberAndDepositManager: React.FC<MemberAndDepositManagerProps> = ({ depos
   return (
     <div className="bg-white shadow-lg rounded-lg">
         <div className="px-6 py-4 bg-gray-50 border-b rounded-t-lg flex flex-wrap justify-between items-center gap-2">
-            <h3 className="text-lg font-semibold text-gray-800">Deposit</h3>
-            <button onClick={openAddDepositModal} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
-                Add Deposit
-            </button>
+            <h3 className="text-lg font-semibold text-gray-800">Deposit History</h3>
         </div>
         <div className="overflow-x-auto">
             <table className="min-w-full">
@@ -146,7 +81,7 @@ const MemberAndDepositManager: React.FC<MemberAndDepositManagerProps> = ({ depos
                         <button onClick={() => handleShareWhatsApp(item)} className="text-green-600 hover:text-green-800" title="Share on WhatsApp">
                         <WhatsAppIcon />
                         </button>
-                    <button onClick={() => openEditDepositModal(item)} className="text-indigo-600 hover:text-indigo-900">Edit / Transfer</button>
+                    <button onClick={() => onEditDeposit(item)} className="text-indigo-600 hover:text-indigo-900">Edit / Transfer</button>
                     <button onClick={() => handleDeleteClick(item)} className="text-red-600 hover:text-red-900">Delete</button>
                     </td>
                 </tr>
@@ -154,39 +89,6 @@ const MemberAndDepositManager: React.FC<MemberAndDepositManagerProps> = ({ depos
             </tbody>
             </table>
         </div>
-
-      {/* Add/Edit Deposit Modal */}
-      <Modal title={editingDeposit ? `Edit or Transfer Deposit` : `Add Deposit`} isOpen={isDepositModalOpen} onClose={closeDepositModal}>
-        <form onSubmit={handleDepositSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="deposit_member" className="block text-sm font-medium text-gray-700">Member</label>
-              <select
-                id="deposit_member"
-                value={selectedUserIdForDeposit}
-                onChange={(e) => setSelectedUserIdForDeposit(e.target.value)}
-                required
-                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-              >
-                {members.map(member => (
-                    <option key={member.id} value={member.id}>{member.name}</option>
-                ))}
-              </select>
-            </div>
-           <div>
-              <label htmlFor="deposit_date" className="block text-sm font-medium text-gray-700">Date</label>
-              <input type="date" id="deposit_date" value={depositDate} onChange={(e) => setDepositDate(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-           </div>
-           <div>
-             <label htmlFor="deposit_amount" className="block text-sm font-medium text-gray-700">Amount (AED)</label>
-             <input type="number" id="deposit_amount" value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} required min="0.01" step="0.01" placeholder="e.g., 200.00" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
-           </div>
-           <div className="pt-2 flex justify-end">
-             <button type="submit" disabled={isSubmittingDeposit} className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:bg-green-400">
-                {isSubmittingDeposit ? 'Saving...' : (editingDeposit ? 'Save Changes' : 'Add Deposit')}
-             </button>
-           </div>
-        </form>
-      </Modal>
 
       <ConfirmationModal
         isOpen={isConfirmOpen}
