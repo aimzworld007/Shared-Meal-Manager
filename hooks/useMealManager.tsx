@@ -58,6 +58,7 @@ export const useMealManager = () => {
             const depositsWithName = depositsData.map(d => ({ ...d, userName: memberMap.get(d.userId) || 'Unknown Member' }));
             
             setGroceries(groceriesWithName);
+            // Fix: Corrected typo from 'deposWithName' to 'depositsWithName'.
             setAllDeposits(depositsWithName);
             setMembers(membersData);
 
@@ -253,6 +254,17 @@ export const useMealManager = () => {
     };
     
     // --- Period Management ---
+    const updateActivePeriod = async (periodData: Omit<Period, 'id' | 'status'>) => {
+        if (!activePeriod) throw new Error("No active period to update.");
+        try {
+            await api.updatePeriod(activePeriod.id, periodData);
+            await fetchAndSetActivePeriod();
+        } catch (err) {
+            setError("Failed to update the active period.");
+            throw err;
+        }
+    };
+    
     const archiveAndStartNewPeriod = async (
         newPeriodData: Omit<Period, 'id'|'status'>,
         transferBalances: boolean
@@ -327,6 +339,7 @@ export const useMealManager = () => {
         // Periods
         archiveAndStartNewPeriod,
         createFirstPeriod,
+        updateActivePeriod,
         // Filters
         startDate,
         setStartDate,

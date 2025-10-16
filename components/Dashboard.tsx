@@ -58,315 +58,275 @@ const MoonIcon = ({ className = "h-6 w-6" }: { className?: string }) => (
     </svg>
 );
 
-
 const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED' }).format(amount);
 };
 
-const Dashboard: React.FC<{ logoUrl?: string }> = ({ logoUrl }) => {
-  const [activeTab, setActiveTab] = useState<View>('home');
+interface DashboardProps {
+  logoUrl?: string;
+}
+
+const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const mealManager = useMealManager();
-
-  const { loading, error, summary, members, groceries, refreshData, activePeriod, isPeriodLoading } = mealManager;
-  const isPermissionError = error && error.includes('Permission Denied');
-
-  // --- State for Grocery Modal ---
-  const [isGroceryModalOpen, setIsGroceryModalOpen] = useState(false);
-  const [itemToEdit, setItemToEdit] = useState<GroceryItem | null>(null);
-  const [isSubmittingGrocery, setIsSubmittingGrocery] = useState(false);
-  const [groceryName, setGroceryName] = useState('');
-  const [groceryAmount, setGroceryAmount] = useState('');
-  const [groceryDate, setGroceryDate] = useState(new Date().toISOString().split('T')[0]);
-  const [purchaserId, setPurchaserId] = useState('');
+  const [view, setView] = useState<View>('home');
   
-  // --- State for Deposit Modal ---
+  // State for modals
+  const [isGroceryModalOpen, setIsGroceryModalOpen] = useState(false);
+  const [editingGrocery, setEditingGrocery] = useState<GroceryItem | null>(null);
+  const [groceryForm, setGroceryForm] = useState({ name: '', amount: '', date: new Date().toISOString().split('T')[0], purchaserId: '' });
+  
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [editingDeposit, setEditingDeposit] = useState<Deposit | null>(null);
-  const [isSubmittingDeposit, setIsSubmittingDeposit] = useState(false);
-  const [depositAmount, setDepositAmount] = useState('');
-  const [depositDate, setDepositDate] = useState(new Date().toISOString().split('T')[0]);
-  const [selectedUserIdForDeposit, setSelectedUserIdForDeposit] = useState('');
+  const [depositForm, setDepositForm] = useState({ amount: '', date: new Date().toISOString().split('T')[0], userId: '', notes: '' });
 
-  // --- Grocery Modal Handlers ---
-  const openAddGroceryModal = () => {
+  const { members, activePeriod, isPeriodLoading } = mealManager;
+
+  const openGroceryModal = (item: GroceryItem | null = null) => {
     if (members.length === 0) {
-        alert("Please add a member in Settings before adding an expense.");
-        return;
+      alert("Please add a member first before adding an expense.");
+      return;
     }
-    setItemToEdit(null);
-    setGroceryName('');
-    setGroceryAmount('');
-    setGroceryDate(new Date().toISOString().split('T')[0]);
-    setPurchaserId(members[0].id);
-    setIsGroceryModalOpen(true);
-  };
-
-  const openEditGroceryModal = (item: GroceryItem) => {
-    setItemToEdit(item);
-    setGroceryName(item.name);
-    setGroceryAmount(String(item.amount));
-    setGroceryDate(new Date(item.date).toISOString().split('T')[0]);
-    setPurchaserId(item.purchaserId);
+    if (item) {
+        setEditingGrocery(item);
+        setGroceryForm({ name: item.name, amount: item.amount.toString(), date: item.date, purchaserId: item.purchaserId });
+    } else {
+        setEditingGrocery(null);
+        setGroceryForm({ name: '', amount: '', date: new Date().toISOString().split('T')[0], purchaserId: members[0].id });
+    }
     setIsGroceryModalOpen(true);
   };
   
   const handleGrocerySubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!groceryName || !groceryAmount || !groceryDate || !purchaserId || isSubmittingGrocery) return;
-    setIsSubmittingGrocery(true);
-    
-    const groceryData = { name: groceryName, amount: parseFloat(groceryAmount), date: groceryDate, purchaserId };
-    
-    try {
-      if (itemToEdit) {
-        await mealManager.updateGroceryItem(itemToEdit.id, groceryData);
-      } else {
-        await mealManager.addGroceryItem(groceryData);
-      }
-      setIsGroceryModalOpen(false);
-    } catch(error) { /* Handled by hook */ } 
-    finally { setIsSubmittingGrocery(false); }
+      e.preventDefault();
+      try {
+          const data = {
+              name: groceryForm.name,
+              amount: parseFloat(groceryForm.amount),
+              date: groceryForm.date,
+              purchaserId: groceryForm.purchaserId
+          };
+          if (editingGrocery) {
+              await mealManager.updateGroceryItem(editingGrocery.id, data);
+          } else {
+              await mealManager.addGroceryItem(data);
+          }
+          setIsGroceryModalOpen(false);
+      } catch (err) { console.error(err); }
   };
-
-  // --- Deposit Modal Handlers ---
-  const openAddDepositModal = () => {
+  
+  const openDepositModal = (item: Deposit | null = null) => {
     if (members.length === 0) {
-        alert("Please add a member in Settings before adding a deposit.");
-        return;
+      alert("Please add a member first before adding a deposit.");
+      return;
     }
-    setEditingDeposit(null);
-    setSelectedUserIdForDeposit(members[0].id);
-    setDepositAmount('');
-    setDepositDate(new Date().toISOString().split('T')[0]);
-    setIsDepositModalOpen(true);
-  };
-
-  const openEditDepositModal = (deposit: Deposit) => {
-    setEditingDeposit(deposit);
-    setSelectedUserIdForDeposit(deposit.userId);
-    setDepositAmount(String(deposit.amount));
-    setDepositDate(new Date(deposit.date).toISOString().split('T')[0]);
+    if (item) {
+        setEditingDeposit(item);
+        setDepositForm({ amount: item.amount.toString(), date: item.date, userId: item.userId, notes: item.notes || '' });
+    } else {
+        setEditingDeposit(null);
+        setDepositForm({ amount: '', date: new Date().toISOString().split('T')[0], userId: members[0].id, notes: '' });
+    }
     setIsDepositModalOpen(true);
   };
 
   const handleDepositSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!depositAmount || !depositDate || !selectedUserIdForDeposit || isSubmittingDeposit) return;
-    setIsSubmittingDeposit(true);
-    
-    const depositData = { amount: parseFloat(depositAmount), date: depositDate, userId: selectedUserIdForDeposit };
-
-    try {
-      if (editingDeposit) {
-        await mealManager.updateDepositItem(editingDeposit.id, depositData);
-      } else {
-        await mealManager.addDepositItem(depositData);
-      }
-      setIsDepositModalOpen(false);
-    } catch (error) { /* Handled by hook */ } 
-    finally { setIsSubmittingDeposit(false); }
+      e.preventDefault();
+      try {
+           const data = {
+              amount: parseFloat(depositForm.amount),
+              date: depositForm.date,
+              userId: depositForm.userId,
+              notes: depositForm.notes,
+          };
+          if (editingDeposit) {
+              await mealManager.updateDepositItem(editingDeposit.id, data);
+          } else {
+              await mealManager.addDepositItem(data);
+          }
+          setIsDepositModalOpen(false);
+      } catch(err) { console.error(err); }
   };
 
-  const NoActivePeriodContent = () => (
-      <div className="text-center bg-white dark:bg-gray-800 p-10 rounded-lg shadow-lg max-w-2xl mx-auto">
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200">Welcome to Shared Meal Manager!</h2>
-          <p className="mt-4 text-gray-600 dark:text-gray-400">
-              It looks like you don't have an active meal period yet. A period (e.g., "July 2024") is how you organize your expenses and deposits.
-          </p>
-          <p className="mt-2 text-gray-600 dark:text-gray-400">
-              Please go to the Settings tab to create your first meal period to get started.
-          </p>
-          <button 
-              onClick={() => setActiveTab('settings')}
-              className="mt-6 inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
-              Go to Settings
-          </button>
-      </div>
-  );
-
-  const DashboardContent = () => (
-    <>
-      {loading && <p className="text-center text-gray-600 dark:text-gray-400">Loading your dashboard...</p>}
-      {isPermissionError && <PermissionsError errorMessage={error} onRetry={refreshData} />}
-      {!isPermissionError && error && <p className="text-center text-red-500 bg-red-100 dark:bg-red-900/50 dark:text-red-300 p-4 rounded-md">{error}</p>}
-      {!loading && !error && (
-        <div className="space-y-8">
-          {activeTab === 'home' && (
-            <div className="space-y-8">
-                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                    <SummaryCircle title="Total Grocery Spend" value={formatCurrency(summary.totalGroceryCost)} colorClassName="bg-red-500" />
-                    <SummaryCircle title="Total Deposits" value={formatCurrency(summary.totalDeposits)} colorClassName="bg-green-500" />
-                    <SummaryCircle title="Avg. Expense / Person" value={formatCurrency(summary.averageExpense)} colorClassName="bg-blue-500" />
-                </div>
-                <MonthlySpendChart groceries={groceries} />
-                <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6">
-                    <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-4">Member Balances</h3>
-                    <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-                        {summary.members.map(member => (
-                            <li key={member.id} className="py-3 flex justify-between items-center">
-                                <span className="font-medium text-gray-700 dark:text-gray-300">{member.name}</span>
-                                <span className={`font-semibold text-lg ${member.balance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                                    {formatCurrency(member.balance)}
-                                </span>
-                            </li>
-                        ))}
-                         {summary.members.length === 0 && <p className="text-center text-gray-500 dark:text-gray-400">No members to show.</p>}
-                    </ul>
-                </div>
+  const renderView = () => {
+    if (isPeriodLoading) {
+        return (
+            <div className="flex-grow flex items-center justify-center">
+                 <p className="text-gray-600 dark:text-gray-400">Loading period data...</p>
             </div>
-          )}
-          {activeTab === 'grocery' && (
-            <GroceryManager
-              groceries={summary.allGroceries}
-              members={members}
-              onEditGrocery={openEditGroceryModal}
-              onDeleteGrocery={mealManager.deleteGroceryItem}
-              startDate={mealManager.startDate}
-              endDate={mealManager.endDate}
-              minAmount={mealManager.minAmount}
-              maxAmount={mealManager.maxAmount}
-              selectedPurchaser={mealManager.selectedPurchaser}
-              onStartDateChange={mealManager.setStartDate}
-              onEndDateChange={mealManager.setEndDate}
-              onMinAmountChange={mealManager.setMinAmount}
-              onMaxAmountChange={mealManager.setMaxAmount}
-              onPurchaserChange={mealManager.setSelectedPurchaser}
-              onResetFilters={mealManager.resetFilters}
-            />
-          )}
-          {activeTab === 'accounts' && <AccountsView mealManager={mealManager} onEditDeposit={openEditDepositModal} />}
-          {activeTab === 'settings' && <SettingsPage mealManager={mealManager} />}
-        </div>
-      )}
-    </>
-  );
+        );
+    }
 
-  const navItems = [
-      { id: 'home', label: 'Home', icon: HomeIcon },
-      { id: 'grocery', label: 'Grocery Bill', icon: GroceryIcon },
-      { id: 'accounts', label: 'Accounts', icon: AccountsIcon },
-      { id: 'settings', label: 'Settings', icon: SettingsIcon },
-  ];
+    if (!activePeriod) {
+        return <SettingsPage mealManager={mealManager} />;
+    }
+
+    if (mealManager.loading) {
+        return (
+            <div className="flex-grow flex items-center justify-center">
+                 <p className="text-gray-600 dark:text-gray-400">Loading meal data...</p>
+            </div>
+        );
+    }
+    
+    if (mealManager.error?.includes('Permission Denied')) {
+        return <PermissionsError errorMessage={mealManager.error} onRetry={mealManager.refreshData} />;
+    }
+      
+    switch (view) {
+      case 'home':
+        return <HomeView />;
+      case 'grocery':
+        return <GroceryManager 
+                    groceries={mealManager.summary.allGroceries} 
+                    members={members}
+                    onEditGrocery={openGroceryModal}
+                    onDeleteGrocery={mealManager.deleteGroceryItem}
+                    startDate={mealManager.startDate}
+                    endDate={mealManager.endDate}
+                    minAmount={mealManager.minAmount}
+                    maxAmount={mealManager.maxAmount}
+                    selectedPurchaser={mealManager.selectedPurchaser}
+                    onStartDateChange={mealManager.setStartDate}
+                    onEndDateChange={mealManager.setEndDate}
+                    onMinAmountChange={mealManager.setMinAmount}
+                    onMaxAmountChange={mealManager.setMaxAmount}
+                    onPurchaserChange={mealManager.setSelectedPurchaser}
+                    onResetFilters={mealManager.resetFilters}
+                />;
+      case 'accounts':
+        return <AccountsView mealManager={mealManager} onEditDeposit={openDepositModal} />;
+      case 'settings':
+        return <SettingsPage mealManager={mealManager} />;
+      default:
+        return <HomeView />;
+    }
+  };
+
+  const HomeView: React.FC = () => {
+      const { summary } = mealManager;
+      return (
+          <div className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <SummaryCircle title="Total Members" value={summary.totalMembers.toString()} colorClassName="bg-blue-500" />
+                  <SummaryCircle title="Total Grocery Cost" value={formatCurrency(summary.totalGroceryCost)} colorClassName="bg-red-500" />
+                  <SummaryCircle title="Total Deposits" value={formatCurrency(summary.totalDeposits)} colorClassName="bg-green-500" />
+                  <SummaryCircle title="Avg. Expense/Person" value={formatCurrency(summary.averageExpense)} colorClassName="bg-yellow-500" />
+              </div>
+              <MonthlySpendChart groceries={summary.allGroceries} />
+          </div>
+      );
+  };
 
   return (
-    <div className="bg-gray-100 dark:bg-gray-900 min-h-screen">
-      <header className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex flex-wrap justify-between items-center gap-4">
-            <div className="flex items-center gap-4">
-                <img src={logoUrl || defaultLogoUrl} alt="Logo" className="h-10" />
-                {activePeriod && (
-                    <span className="px-3 py-1 text-sm font-semibold text-indigo-800 bg-indigo-100 rounded-full dark:bg-indigo-900 dark:text-indigo-200">
-                        {activePeriod.name}
-                    </span>
-                )}
+    <div className="flex flex-col min-h-screen">
+      {/* Header */}
+      <header className="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center">
+              <img src={logoUrl || defaultLogoUrl} alt="Logo" className="h-10 w-10 object-contain" />
+              <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 ml-3">{activePeriod?.name || 'Meal Manager'}</h1>
             </div>
-           <div className="flex items-center gap-4">
-               <span className="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">Welcome, {user?.email}</span>
-                <button onClick={toggleTheme} className="p-2 rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                    {theme === 'light' ? <MoonIcon /> : <SunIcon />}
-                </button>
-               <button onClick={logout} className="p-2 rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" aria-label="Logout">
-                   <LogoutIcon />
-               </button>
-           </div>
+            <div className="flex items-center space-x-2">
+              <button onClick={toggleTheme} className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">
+                  {theme === 'light' ? <MoonIcon /> : <SunIcon />}
+              </button>
+              <button onClick={logout} className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">
+                <LogoutIcon />
+              </button>
+            </div>
+          </div>
         </div>
       </header>
-
-      <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8 pb-24">
-         {isPeriodLoading ? (
-            <p className="text-center text-gray-600 dark:text-gray-400">Checking for active period...</p>
-         ) : activePeriod ? (
-             <DashboardContent />
-         ) : (
-            <NoActivePeriodContent />
-         )}
+      
+      {/* Main Content */}
+      <main className="flex-grow p-4 sm:p-6 pb-24">
+        {renderView()}
       </main>
 
-        {activePeriod && (
-         <>
-            {activeTab === 'home' && <FAB onAddExpense={openAddGroceryModal} onAddDeposit={openAddDepositModal} />}
-            <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-t-lg z-20">
-                <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
-                    <div className="flex justify-around h-16">
-                        {navItems.map((item) => {
-                            const Icon = item.icon;
-                            const isActive = activeTab === item.id;
-                            return (
-                                <button
-                                    key={item.id}
-                                    onClick={() => setActiveTab(item.id as View)}
-                                    aria-current={isActive ? 'page' : undefined}
-                                    className={`flex flex-col items-center justify-center w-full text-xs sm:text-sm font-medium transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 rounded-md ${
-                                        isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400'
-                                    }`}
-                                >
-                                    <Icon className="h-6 w-6 mb-1" />
-                                    <span>{item.label}</span>
-                                </button>
-                            )
-                        })}
-                    </div>
-                </div>
-            </nav>
-        </>
-      )}
+      {/* Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-lg z-40">
+        <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
+          <div className="flex justify-around h-16">
+            {[{ name: 'home', Icon: HomeIcon }, { name: 'grocery', Icon: GroceryIcon }, { name: 'accounts', Icon: AccountsIcon }, { name: 'settings', Icon: SettingsIcon }].map(item => (
+                <button
+                    key={item.name}
+                    onClick={() => setView(item.name as View)}
+                    disabled={!activePeriod && item.name !== 'settings'}
+                    className={`flex flex-col items-center justify-center w-full text-sm font-medium transition-colors duration-200 ${
+                        view === item.name ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+                    } ${!activePeriod && item.name !== 'settings' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                    <item.Icon className="h-6 w-6 mb-1" />
+                    <span className="capitalize">{item.name}</span>
+                </button>
+            ))}
+          </div>
+        </div>
+      </nav>
 
-       {/* Grocery Add/Edit Modal */}
-      <Modal title={itemToEdit ? "Edit Expense" : "Add New Expense"} isOpen={isGroceryModalOpen} onClose={() => setIsGroceryModalOpen(false)}>
+      {activePeriod && <FAB onAddExpense={openGroceryModal} onAddDeposit={openDepositModal} />}
+
+      {/* Grocery Modal */}
+      <Modal title={editingGrocery ? "Edit Expense" : "Add New Expense"} isOpen={isGroceryModalOpen} onClose={() => setIsGroceryModalOpen(false)}>
         <form onSubmit={handleGrocerySubmit} className="space-y-4">
            <div>
               <label htmlFor="purchaser" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Purchased By</label>
-               <select id="purchaser" value={purchaserId} onChange={(e) => setPurchaserId(e.target.value)} required className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+               <select id="purchaser" value={groceryForm.purchaserId} onChange={(e) => setGroceryForm({...groceryForm, purchaserId: e.target.value})} required className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                 {members.map(member => <option key={member.id} value={member.id}>{member.name}</option>)}
               </select>
            </div>
            <div>
               <label htmlFor="date" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Date</label>
-              <input type="date" id="date" value={groceryDate} onChange={(e) => setGroceryDate(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" />
+              <input type="date" id="date" value={groceryForm.date} onChange={(e) => setGroceryForm({...groceryForm, date: e.target.value})} required className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
            </div>
            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Item Name / Notes</label>
-              <input type="text" id="name" value={groceryName} onChange={(e) => setGroceryName(e.target.value)} required placeholder="e.g., Milk, Bread, etc." className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" />
+             <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Item Name</label>
+             <input type="text" id="name" value={groceryForm.name} onChange={(e) => setGroceryForm({...groceryForm, name: e.target.value})} required placeholder="e.g., Rice, Vegetables" className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
            </div>
            <div>
              <label htmlFor="amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Amount (AED)</label>
-             <input type="number" id="amount" value={groceryAmount} onChange={(e) => setGroceryAmount(e.target.value)} required min="0.01" step="0.01" placeholder="e.g., 25.50" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" />
+             <input type="number" id="amount" value={groceryForm.amount} onChange={(e) => setGroceryForm({...groceryForm, amount: e.target.value})} required min="0.01" step="0.01" placeholder="e.g., 55.50" className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
            </div>
            <div className="pt-2 flex justify-end">
-             <button type="submit" disabled={isSubmittingGrocery || members.length === 0} className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400">
-                {isSubmittingGrocery ? 'Saving...' : (itemToEdit ? 'Save Changes' : 'Add Expense')}
+             <button type="submit" className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                {editingGrocery ? "Update Expense" : "Add Expense"}
+             </button>
+           </div>
+        </form>
+      </Modal>
+      
+      {/* Deposit Modal */}
+      <Modal title={editingDeposit ? "Edit Deposit" : "Add New Deposit"} isOpen={isDepositModalOpen} onClose={() => setIsDepositModalOpen(false)}>
+        <form onSubmit={handleDepositSubmit} className="space-y-4">
+           <div>
+              <label htmlFor="user" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Member</label>
+               <select id="user" value={depositForm.userId} onChange={(e) => setDepositForm({...depositForm, userId: e.target.value})} required className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                {members.map(member => <option key={member.id} value={member.id}>{member.name}</option>)}
+              </select>
+           </div>
+           <div>
+              <label htmlFor="deposit_date" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Date</label>
+              <input type="date" id="deposit_date" value={depositForm.date} onChange={(e) => setDepositForm({...depositForm, date: e.target.value})} required className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+           </div>
+            <div>
+             <label htmlFor="deposit_amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Amount (AED)</label>
+             <input type="number" id="deposit_amount" value={depositForm.amount} onChange={(e) => setDepositForm({...depositForm, amount: e.target.value})} required min="0.01" step="0.01" placeholder="e.g., 200.00" className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+           </div>
+           <div>
+             <label htmlFor="notes" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Notes (Optional)</label>
+             <input type="text" id="notes" value={depositForm.notes} onChange={(e) => setDepositForm({...depositForm, notes: e.target.value})} placeholder="e.g., Balance transfer" className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+           </div>
+           <div className="pt-2 flex justify-end">
+             <button type="submit" className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
+                {editingDeposit ? "Update Deposit" : "Add Deposit"}
              </button>
            </div>
         </form>
       </Modal>
 
-      {/* Deposit Add/Edit Modal */}
-      <Modal title={editingDeposit ? `Edit or Transfer Deposit` : `Add Deposit`} isOpen={isDepositModalOpen} onClose={() => setIsDepositModalOpen(false)}>
-        <form onSubmit={handleDepositSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="deposit_member" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Member</label>
-              <select id="deposit_member" value={selectedUserIdForDeposit} onChange={(e) => setSelectedUserIdForDeposit(e.target.value)} required className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
-                {members.map(member => <option key={member.id} value={member.id}>{member.name}</option>)}
-              </select>
-            </div>
-           <div>
-              <label htmlFor="deposit_date" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Date</label>
-              <input type="date" id="deposit_date" value={depositDate} onChange={(e) => setDepositDate(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600" />
-           </div>
-           <div>
-             <label htmlFor="deposit_amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Amount (AED)</label>
-             <input type="number" id="deposit_amount" value={depositAmount} onChange={(e) => setDepositAmount(e.target.value)} required step="0.01" placeholder="e.g., 200.00" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400" />
-           </div>
-           <div className="pt-2 flex justify-end">
-             <button type="submit" disabled={isSubmittingDeposit} className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:bg-green-400">
-                {isSubmittingDeposit ? 'Saving...' : (editingDeposit ? 'Save Changes' : 'Add Deposit')}
-             </button>
-           </div>
-        </form>
-      </Modal>
     </div>
   );
 };

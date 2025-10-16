@@ -192,6 +192,11 @@ export const getPeriods = async (): Promise<Period[]> => {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Period));
 }
 
+export const updatePeriod = (periodId: string, data: Partial<Omit<Period, 'id' | 'status'>>) => {
+    const periodDocRef = doc(getUserSubcollection('periods'), periodId);
+    return updateDoc(periodDocRef, data);
+};
+
 export const getActivePeriod = async (): Promise<Period | null> => {
     const periodsCol = getUserSubcollection('periods');
     const q = query(periodsCol, where('status', '==', 'active'), limit(1));

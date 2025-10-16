@@ -6,8 +6,9 @@ import * as api from '../services/firebase';
 import { generateArchivePdf } from '../utils/pdfGenerator';
 
 const PeriodManager: React.FC<{ mealManager: ReturnType<typeof useMealManager> }> = ({ mealManager }) => {
-    const { activePeriod, archiveAndStartNewPeriod, createFirstPeriod } = mealManager;
+    const { activePeriod, archiveAndStartNewPeriod, createFirstPeriod, updateActivePeriod } = mealManager;
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isEditMode, setIsEditMode] = useState(false);
     const [archivedPeriods, setArchivedPeriods] = useState<Period[]>([]);
     const [isLoadingArchives, setIsLoadingArchives] = useState(true);
 
@@ -33,7 +34,8 @@ const PeriodManager: React.FC<{ mealManager: ReturnType<typeof useMealManager> }
         fetchArchives();
     }, [activePeriod]); // Refetch archives when a new period starts
 
-    const handleOpenModal = () => {
+    const handleOpenCreateModal = () => {
+        setIsEditMode(false);
         const today = new Date();
         const year = today.getFullYear();
         const month = today.toLocaleString('default', { month: 'long' });
@@ -44,20 +46,32 @@ const PeriodManager: React.FC<{ mealManager: ReturnType<typeof useMealManager> }
         setTransferBalances(true);
         setIsModalOpen(true);
     };
+    
+    const handleOpenEditModal = () => {
+        if (!activePeriod) return;
+        setIsEditMode(true);
+        setPeriodName(activePeriod.name);
+        setPeriodType(activePeriod.type);
+        setStartDate(activePeriod.startDate);
+        setEndDate(activePeriod.endDate);
+        setIsModalOpen(true);
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!periodName || !startDate || !endDate) {
-            alert("Please fill in all fields for the new period.");
+            alert("Please fill in all fields for the period.");
             return;
         }
         setIsSubmitting(true);
         try {
-            const newPeriodData = { name: periodName, type: periodType, startDate, endDate };
-            if (activePeriod) {
-                await archiveAndStartNewPeriod(newPeriodData, transferBalances);
+            const periodData = { name: periodName, type: periodType, startDate, endDate };
+            if (isEditMode) {
+                await updateActivePeriod(periodData);
+            } else if (activePeriod) {
+                await archiveAndStartNewPeriod(periodData, transferBalances);
             } else {
-                await createFirstPeriod(newPeriodData);
+                await createFirstPeriod(periodData);
             }
             setIsModalOpen(false);
         } catch (error) {
@@ -77,15 +91,41 @@ const PeriodManager: React.FC<{ mealManager: ReturnType<typeof useMealManager> }
             alert("Could not download the archive PDF. It may have been deleted or an error occurred.");
         }
     };
+    
+    const modalTitle = isEditMode
+        ? "Edit Active Period"
+        : (activePeriod ? "Archive & Start New Period" : "Create First Meal Period");
+        
+    const submitButtonText = isSubmitting
+        ? 'Processing...'
+        : (isEditMode ? 'Save Changes' : (activePeriod ? 'Archive & Start New' : 'Create Period'));
 
     return (
         <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg">
             <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 rounded-t-lg flex justify-between items-center">
                 <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Meal Period Management</h3>
-                <button onClick={handleOpenModal} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
+                <button onClick={handleOpenCreateModal} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
                     {activePeriod ? 'Archive & Start New' : 'Create First Period'}
                 </button>
             </div>
+            
+             {activePeriod && (
+                <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                    <h4 className="text-md font-medium text-gray-700 dark:text-gray-300 mb-2">Active Period</h4>
+                    <div className="flex justify-between items-center">
+                        <div>
+                            <p className="font-semibold text-lg text-gray-800 dark:text-gray-200">{activePeriod.name}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                                {new Date(activePeriod.startDate).toLocaleDateString()} - {new Date(activePeriod.endDate).toLocaleDateString()}
+                            </p>
+                        </div>
+                        <button onClick={handleOpenEditModal} className="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300">
+                            Edit Period
+                        </button>
+                    </div>
+                </div>
+            )}
+            
             <div className="p-6">
                 <h4 className="text-md font-medium text-gray-700 dark:text-gray-300 mb-2">Archive History</h4>
                 {isLoadingArchives ? (
@@ -111,15 +151,15 @@ const PeriodManager: React.FC<{ mealManager: ReturnType<typeof useMealManager> }
                 )}
             </div>
 
-            <Modal title={activePeriod ? "Archive & Start New Period" : "Create First Meal Period"} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+            <Modal title={modalTitle} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    {activePeriod && (
+                    {activePeriod && !isEditMode && (
                         <div className="p-4 bg-yellow-50 dark:bg-yellow-900/50 border-l-4 border-yellow-400 text-yellow-800 dark:text-yellow-300 rounded-md">
                             <p className="font-bold">You are about to archive the current period: "{activePeriod.name}".</p>
                             <p className="text-sm">This will save a final report and start a fresh period. This action cannot be undone.</p>
                         </div>
                     )}
-                    <h4 className="font-medium text-gray-900 dark:text-gray-100">New Period Details</h4>
+                    <h4 className="font-medium text-gray-900 dark:text-gray-100">{isEditMode ? 'Edit Period Details' : 'New Period Details'}</h4>
                     <div>
                         <label htmlFor="periodName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Period Name</label>
                         <input id="periodName" type="text" value={periodName} onChange={e => setPeriodName(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700" placeholder="e.g., July 2024" />
@@ -141,7 +181,7 @@ const PeriodManager: React.FC<{ mealManager: ReturnType<typeof useMealManager> }
                             <option value="weekly">Weekly</option>
                         </select>
                     </div>
-                    {activePeriod && (
+                    {activePeriod && !isEditMode && (
                         <div className="flex items-start">
                             <div className="flex items-center h-5">
                                 <input id="transferBalances" name="transferBalances" type="checkbox" checked={transferBalances} onChange={e => setTransferBalances(e.target.checked)} className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded" />
@@ -154,7 +194,7 @@ const PeriodManager: React.FC<{ mealManager: ReturnType<typeof useMealManager> }
                     )}
                     <div className="pt-2 flex justify-end">
                         <button type="submit" disabled={isSubmitting} className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:bg-green-400">
-                           {isSubmitting ? 'Processing...' : (activePeriod ? 'Archive & Start New' : 'Create Period')}
+                           {submitButtonText}
                         </button>
                     </div>
                 </form>
