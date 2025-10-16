@@ -52,3 +52,12 @@ export interface Member extends Participant {
     totalDeposit: number;
     balance: number;
 }
+
+/**
+ * Represents the configuration for the entire site, editable by an admin.
+ */
+export interface SiteConfig {
+  title: string;
+  description: string;
+  logoUrl: string;
+}

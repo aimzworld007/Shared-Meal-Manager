@@ -6,6 +6,10 @@ import {
   signOut as firebaseSignOut,
   onAuthStateChanged,
   User as FirebaseUser,
+  updateEmail,
+  updatePassword,
+  reauthenticateWithCredential,
+  EmailAuthProvider,
 } from "firebase/auth";
 import {
   getFirestore,
@@ -20,7 +24,13 @@ import {
   orderBy,
   setDoc
 } from "firebase/firestore";
-import { User, GroceryItem, Deposit, Participant } from "../types";
+import { 
+  getStorage, 
+  ref, 
+  uploadBytes, 
+  getDownloadURL 
+} from "firebase/storage";
+import { User, GroceryItem, Deposit, Participant, SiteConfig } from "../types";
 
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
@@ -37,101 +47,96 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+const storage = getStorage(app);
 
 // --- Auth Service ---
-
-/**
- * Signs a user in with email and password.
- */
-export const signIn = (email: string, pass: string) => {
-  return signInWithEmailAndPassword(auth, email, pass);
-};
-
-/**
- * Creates a new user with email and password for authentication purposes.
- * Primarily for creating new admin users.
- */
+export const signIn = (email: string, pass: string) => signInWithEmailAndPassword(auth, email, pass);
 export const signUp = async (email: string, pass: string) => {
   const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
   const user = userCredential.user;
-  // Create a document for the new auth user, e.g., for role management
-  await setDoc(doc(db, "users", user.uid), {
-    email: user.email,
-    // New users created via sign-up could be assigned a default role.
-    // Admin role must be set manually in Firestore for security.
-    role: "user" 
-  });
+  await setDoc(doc(db, "users", user.uid), { email: user.email, role: "user" });
   return userCredential;
 };
-
-/**
- * Signs the current user out.
- */
-export const signOut = () => {
-  return firebaseSignOut(auth);
-};
-
-/**
- * Listens for authentication state changes and retrieves user role from Firestore.
- */
+export const signOut = () => firebaseSignOut(auth);
 export const onAuthChange = (callback: (user: User | null) => void) => {
   return onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
     if (firebaseUser) {
-      const userDocRef = doc(db, 'users', firebaseUser.uid);
-      const userDoc = await getDoc(userDocRef);
-      // Default to 'user' role if not specified in Firestore
+      const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
       const role = userDoc.exists() ? userDoc.data().role : 'user';
-
-      callback({
-        uid: firebaseUser.uid,
-        email: firebaseUser.email,
-        role: role,
-      });
+      callback({ uid: firebaseUser.uid, email: firebaseUser.email, role });
     } else {
       callback(null);
     }
   });
 };
+export const reauthenticateUser = async (password: string) => {
+  const user = auth.currentUser;
+  if (user && user.email) {
+    const credential = EmailAuthProvider.credential(user.email, password);
+    return reauthenticateWithCredential(user, credential);
+  }
+  throw new Error("No user is currently signed in or user has no email.");
+};
+export const changeUserEmail = (newEmail: string) => {
+  if (!auth.currentUser) throw new Error("User not authenticated.");
+  return updateEmail(auth.currentUser, newEmail);
+};
+export const changeUserPassword = (newPassword: string) => {
+  if (!auth.currentUser) throw new Error("User not authenticated.");
+  return updatePassword(auth.currentUser, newPassword);
+};
 
 // --- Firestore Service ---
-
-// Top-level collection references
 const groceriesCol = collection(db, 'groceries');
 const depositsCol = collection(db, 'deposits');
-const membersCol = collection(db, 'members'); // New collection for members
+const membersCol = collection(db, 'members');
+const settingsDoc = doc(db, 'settings', 'siteConfig');
+
+// --- Settings ---
+export const getSiteConfig = async (): Promise<SiteConfig> => {
+    const docSnap = await getDoc(settingsDoc);
+    if (docSnap.exists()) {
+        return docSnap.data() as SiteConfig;
+    }
+    // Return a default config if it doesn't exist
+    return {
+        title: "Shared Meal Manager",
+        description: "A web application to manage shared meal expenses.",
+        logoUrl: '', // Default to no logo
+    };
+};
+export const updateSiteConfig = (data: Partial<SiteConfig>) => setDoc(settingsDoc, data, { merge: true });
 
 // --- Groceries ---
 export const getAllGroceries = async (): Promise<GroceryItem[]> => {
-    const querySnapshot = await getDocs(query(groceriesCol, orderBy('date', 'desc')));
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GroceryItem));
+    const q = query(groceriesCol, orderBy('date', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GroceryItem));
 };
 export const addGrocery = (item: Omit<GroceryItem, 'id'>) => addDoc(groceriesCol, item);
-export const updateGrocery = (itemId: string, data: Partial<GroceryItem>) => updateDoc(doc(groceriesCol, itemId), data);
 export const deleteGrocery = (itemId: string) => deleteDoc(doc(groceriesCol, itemId));
 
 // --- Deposits ---
 export const getAllDeposits = async (): Promise<Deposit[]> => {
-    const querySnapshot = await getDocs(query(depositsCol, orderBy('date', 'desc')));
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Deposit));
+    const q = query(depositsCol, orderBy('date', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Deposit));
 };
 export const addDeposit = (deposit: Omit<Deposit, 'id'>) => addDoc(depositsCol, deposit);
-export const updateDeposit = (depositId: string, data: Partial<Deposit>) => updateDoc(doc(depositsCol, depositId), data);
 export const deleteDeposit = (depositId: string) => deleteDoc(doc(depositsCol, depositId));
 
-
 // --- Members ---
-/**
- * Retrieves all members from the 'members' collection.
- */
 export const getMembers = async (): Promise<Participant[]> => {
-    const membersQuery = query(membersCol, orderBy('name'));
-    const querySnapshot = await getDocs(membersQuery);
-    return querySnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name } as Participant));
+    const q = query(membersCol, orderBy('name'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name } as Participant));
 };
+export const addMember = (name: string) => addDoc(membersCol, { name });
 
-/**
- * Adds a new member to the 'members' collection.
- */
-export const addMember = (name: string) => {
-    return addDoc(membersCol, { name });
+// --- Storage Service ---
+export const uploadLogo = async (file: File): Promise<string> => {
+    // Use a fixed path to always overwrite the same logo file
+    const logoRef = ref(storage, 'site/logo');
+    await uploadBytes(logoRef, file);
+    return getDownloadURL(logoRef);
 };

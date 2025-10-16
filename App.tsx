@@ -9,6 +9,7 @@ import { useAuth } from './hooks/useAuth';
 import Dashboard from './components/Dashboard';
 import Login from './components/Login';
 import Footer from './components/Footer';
+import DynamicMetadata from './components/DynamicMetadata';
 
 /**
  * The main application component.
@@ -21,6 +22,7 @@ const App: React.FC = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50 text-gray-800">
+      <DynamicMetadata />
       <main className="flex-grow">
         {user ? <Dashboard /> : <Login />}
       </main>

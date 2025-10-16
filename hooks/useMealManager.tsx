@@ -8,6 +8,10 @@ export const useMealManager = () => {
     const [allGroceries, setAllGroceries] = useState<GroceryItem[]>([]);
     const [allDeposits, setAllDeposits] = useState<Deposit[]>([]);
     const [members, setMembers] = useState<Participant[]>([]);
+    
+    // State for date filtering
+    const [startDate, setStartDate] = useState<string>('');
+    const [endDate, setEndDate] = useState<string>('');
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -71,18 +75,35 @@ export const useMealManager = () => {
     
     // --- Memoized Calculations ---
     const summary = useMemo(() => {
-        const totalGroceryCost = allGroceries.reduce((sum, item) => sum + item.amount, 0);
-        const totalDeposits = allDeposits.reduce((sum, item) => sum + item.amount, 0);
+        // Filter groceries and deposits based on the selected date range
+        const filteredGroceries = allGroceries.filter(item => {
+            if (!startDate && !endDate) return true; // No filter if no dates are set
+            const itemDate = item.date.split('T')[0];
+            if (startDate && itemDate < startDate) return false;
+            if (endDate && itemDate > endDate) return false;
+            return true;
+        });
+
+        const filteredDeposits = allDeposits.filter(item => {
+            if (!startDate && !endDate) return true; // No filter if no dates are set
+            const itemDate = item.date.split('T')[0];
+            if (startDate && itemDate < startDate) return false;
+            if (endDate && itemDate > endDate) return false;
+            return true;
+        });
+
+        const totalGroceryCost = filteredGroceries.reduce((sum, item) => sum + item.amount, 0);
+        const totalDeposits = filteredDeposits.reduce((sum, item) => sum + item.amount, 0);
 
         const memberCount = members.length > 0 ? members.length : 1;
         const averageExpense = totalGroceryCost / memberCount;
 
         const memberData: Member[] = members.map(member => {
-            const totalPurchase = allGroceries
+            const totalPurchase = filteredGroceries
                 .filter(g => g.purchaserId === member.id)
                 .reduce((sum, item) => sum + item.amount, 0);
             
-            const totalDeposit = allDeposits
+            const totalDeposit = filteredDeposits
                 .filter(d => d.userId === member.id)
                 .reduce((sum, item) => sum + item.amount, 0);
 
@@ -102,10 +123,10 @@ export const useMealManager = () => {
             totalDeposits,
             averageExpense,
             members: memberData,
-            allGroceries: allGroceries.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
-            allDeposits: allDeposits.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+            allGroceries: filteredGroceries.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+            allDeposits: filteredDeposits.sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
         };
-    }, [allGroceries, allDeposits, members]);
+    }, [allGroceries, allDeposits, members, startDate, endDate]);
 
     // --- CRUD Functions ---
     const addGroceryItem = async (item: Omit<GroceryItem, 'id'>) => {
@@ -175,6 +196,11 @@ export const useMealManager = () => {
             throw e;
         }
     };
+    
+    const resetDateFilter = () => {
+        setStartDate('');
+        setEndDate('');
+    };
 
 
     return {
@@ -182,6 +208,10 @@ export const useMealManager = () => {
         error,
         members,
         summary,
+        startDate,
+        endDate,
+        setStartDate,
+        setEndDate,
         addGroceryItem,
         addMultipleGroceryItems,
         deleteGroceryItem,
@@ -189,5 +219,6 @@ export const useMealManager = () => {
         deleteDepositItem,
         addMember,
         refreshData: fetchData,
+        resetDateFilter,
     };
 };

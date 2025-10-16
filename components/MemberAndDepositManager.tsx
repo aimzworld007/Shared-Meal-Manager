@@ -93,100 +93,127 @@ const MemberAndDepositManager: React.FC<MemberAndDepositManagerProps> = ({ depos
   };
 
   return (
-    <>
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-6 py-4 border-b">
-          <h3 className="text-lg font-medium text-gray-900">Member & Deposit Management</h3>
-        </div>
-        <div className="p-6">
-          <form onSubmit={handleAddMemberSubmit} className="space-y-4 pb-6 border-b">
-            <h4 className="text-md font-medium text-gray-800">Add New Member</h4>
-            <div className="flex gap-4 items-end">
-                <div className="flex-grow">
-                    <label htmlFor="memberName" className="block text-sm font-medium text-gray-700">Member Name</label>
-                    <input
-                      id="memberName"
-                      type="text"
-                      value={newMemberName}
-                      onChange={(e) => setNewMemberName(e.target.value)}
-                      required
-                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                      placeholder="e.g., John Doe"
-                    />
-                </div>
-                <button
-                  type="submit"
-                  disabled={isAddingMember}
-                  className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400"
-                >
-                  {isAddingMember ? 'Adding...' : 'Add Member'}
-                </button>
-            </div>
-          </form>
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-gray-800 px-1">Member & Deposit Management</h2>
+      
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+        
+        {/* Left Column */}
+        <div className="lg:col-span-2 space-y-8">
           
-          <h4 className="text-md font-medium text-gray-800 mt-6 mb-2">Current Members ({members.length})</h4>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                    <tr>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member Name</th>
-                        <th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
-                    </tr>
+          {/* Add New Member Box */}
+          <div className="bg-white shadow-lg rounded-lg">
+            <div className="px-6 py-4 bg-gray-50 border-b rounded-t-lg">
+              <h3 className="text-lg font-semibold text-gray-800">Add New Member</h3>
+            </div>
+            <div className="p-6">
+              <form onSubmit={handleAddMemberSubmit} className="space-y-4">
+                <div>
+                  <label htmlFor="memberName" className="block text-sm font-medium text-gray-700">Member Name</label>
+                  <input
+                    id="memberName"
+                    type="text"
+                    value={newMemberName}
+                    onChange={(e) => setNewMemberName(e.target.value)}
+                    required
+                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    placeholder="e.g., John Doe"
+                  />
+                </div>
+                <div className="text-right">
+                  <button
+                    type="submit"
+                    disabled={isAddingMember}
+                    className="inline-flex items-center justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 w-full sm:w-auto"
+                  >
+                    {isAddingMember ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Adding...
+                      </>
+                    ) : (
+                      'Add Member'
+                    )}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          {/* Current Members Box */}
+          <div className="bg-white shadow-lg rounded-lg">
+            <div className="px-6 py-4 bg-gray-50 border-b rounded-t-lg">
+              <h3 className="text-lg font-semibold text-gray-800">Current Members <span className="text-gray-500 font-normal">({members.length})</span></h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member Name</th>
+                    <th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
+                  </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                    {members.map(member => (
-                        <tr key={member.id}>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{member.name}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <button
-                                    onClick={() => handleOpenDepositModal(member)}
-                                    className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
-                                >
-                                    Add Deposit
-                                </button>
-                            </td>
-                        </tr>
-                    ))}
-                    {members.length === 0 && (
-                        <tr><td colSpan={2} className="px-6 py-4 text-center text-sm text-gray-500">No members have been added.</td></tr>
-                    )}
+                  {members.map(member => (
+                    <tr key={member.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{member.name}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button
+                          onClick={() => handleOpenDepositModal(member)}
+                          className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
+                        >
+                          Add Deposit
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {members.length === 0 && (
+                    <tr><td colSpan={2} className="px-6 py-4 text-center text-sm text-gray-500">No members have been added.</td></tr>
+                  )}
                 </tbody>
-            </table>
+              </table>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Deposit History Table */}
-      <div className="bg-white shadow rounded-lg mt-8">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">Deposit History</h3>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                <th scope="col" className="relative px-6 py-3"><span className="sr-only">Delete</span></th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {deposits.length === 0 && (
-                <tr><td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500">No deposits added yet.</td></tr>
-              )}
-              {deposits.map((item) => (
-                <tr key={item.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(item.date).toLocaleDateString()}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.userName}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-800">{formatCurrency(item.amount)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button onClick={() => handleDeleteClick(item)} className="text-red-600 hover:text-red-900">Delete</button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {/* Right Column */}
+        <div className="lg:col-span-3">
+          {/* Deposit History Box */}
+          <div className="bg-white shadow-lg rounded-lg h-full">
+            <div className="px-6 py-4 bg-gray-50 border-b rounded-t-lg">
+              <h3 className="text-lg font-semibold text-gray-800">Deposit History</h3>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="min-w-full">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                    <th scope="col" className="relative px-6 py-3"><span className="sr-only">Delete</span></th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {deposits.length === 0 && (
+                    <tr><td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500">No deposits added yet.</td></tr>
+                  )}
+                  {deposits.map((item) => (
+                    <tr key={item.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(item.date).toLocaleDateString()}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.userName}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-800">{formatCurrency(item.amount)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button onClick={() => handleDeleteClick(item)} className="text-red-600 hover:text-red-900">Delete</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </div>
       
@@ -216,7 +243,7 @@ const MemberAndDepositManager: React.FC<MemberAndDepositManagerProps> = ({ depos
         title="Delete Deposit"
         message="Are you sure you want to delete this deposit? This action cannot be undone."
       />
-    </>
+    </div>
   );
 };
 
