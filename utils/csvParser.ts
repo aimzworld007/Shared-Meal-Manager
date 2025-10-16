@@ -36,12 +36,12 @@ export const parseCsv = (file: File): Promise<ParsedGroceryItem[]> => {
         
         const headers = headerLine.split(',').map(h => h.trim().toLowerCase());
         const dateIndex = headers.indexOf('date');
-        const nameIndex = headers.indexOf('name') > -1 ? headers.indexOf('name') : headers.indexOf('item');
-        const amountIndex = headers.indexOf('amount') > -1 ? headers.indexOf('amount') : headers.indexOf('price');
+        const nameIndex = headers.indexOf('item') > -1 ? headers.indexOf('item') : headers.indexOf('name');
+        const amountIndex = headers.indexOf('price') > -1 ? headers.indexOf('price') : headers.indexOf('amount');
         const purchaserIndex = headers.indexOf('purchased by');
 
         if (dateIndex === -1 || nameIndex === -1 || amountIndex === -1 || purchaserIndex === -1) {
-          throw new Error("CSV must contain 'date', 'name' (or 'item'), 'amount' (or 'price'), and 'purchased by' headers.");
+          throw new Error("CSV must contain 'date', 'item' (or 'name'), 'price' (or 'amount'), and 'purchased by' headers.");
         }
 
         const data = lines
@@ -53,12 +53,32 @@ export const parseCsv = (file: File): Promise<ParsedGroceryItem[]> => {
             if (isNaN(amount)) {
                 throw new Error(`Invalid amount found on row ${index + 2}.`);
             }
-             if (!values[dateIndex]?.trim() || !values[nameIndex]?.trim() || !values[purchaserIndex]?.trim()) {
+            
+            // Date parsing for DD-MM-YYYY
+            const dateStr = values[dateIndex]?.trim();
+            if (!dateStr) {
+                throw new Error(`Missing date on row ${index + 2}.`);
+            }
+            const parts = dateStr.split(/[-/]/);
+            if (parts.length !== 3) {
+                throw new Error(`Invalid date format on row ${index + 2}. Expected DD-MM-YYYY.`);
+            }
+            const [day, month, year] = parts;
+            const fullYear = year.length === 2 ? `20${year}` : year;
+            const isoDate = `${fullYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            
+            // Validate date
+            const d = new Date(isoDate);
+            if (d.toString() === 'Invalid Date' || d.toISOString().slice(0, 10) !== isoDate) {
+                 throw new Error(`Invalid date value on row ${index + 2}: '${dateStr}'.`);
+            }
+
+             if (!values[nameIndex]?.trim() || !values[purchaserIndex]?.trim()) {
                  throw new Error(`Missing data on row ${index + 2}.`);
             }
 
             return {
-              date: values[dateIndex].trim(),
+              date: isoDate,
               name: values[nameIndex].trim(),
               amount: amount,
               purchaserName: values[purchaserIndex].trim(),

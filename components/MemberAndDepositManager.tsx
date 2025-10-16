@@ -23,6 +23,7 @@ const MemberAndDepositManager: React.FC<MemberAndDepositManagerProps> = ({ depos
   // State for adding a new member
   const [newMemberName, setNewMemberName] = useState('');
   const [isAddingMember, setIsAddingMember] = useState(false);
+  const [showAddMemberForm, setShowAddMemberForm] = useState(true);
 
   // State for adding a deposit
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
@@ -103,44 +104,63 @@ const MemberAndDepositManager: React.FC<MemberAndDepositManagerProps> = ({ depos
           
           {/* Add New Member Box */}
           <div className="bg-white shadow-lg rounded-lg">
-            <div className="px-6 py-4 bg-gray-50 border-b rounded-t-lg">
+            <div className="px-6 py-4 bg-gray-50 border-b rounded-t-lg flex justify-between items-center">
               <h3 className="text-lg font-semibold text-gray-800">Add New Member</h3>
+               <button
+                type="button"
+                onClick={() => setShowAddMemberForm(!showAddMemberForm)}
+                className={`${
+                  showAddMemberForm ? 'bg-indigo-600' : 'bg-gray-200'
+                } relative inline-flex items-center h-6 rounded-full w-11 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
+                role="switch"
+                aria-checked={showAddMemberForm}
+              >
+                <span className="sr-only">Toggle Add Member Form</span>
+                <span
+                  aria-hidden="true"
+                  className={`${
+                    showAddMemberForm ? 'translate-x-6' : 'translate-x-1'
+                  } inline-block w-4 h-4 transform bg-white rounded-full transition-transform`}
+                />
+              </button>
             </div>
-            <div className="p-6">
-              <form onSubmit={handleAddMemberSubmit} className="space-y-4">
-                <div>
-                  <label htmlFor="memberName" className="block text-sm font-medium text-gray-700">Member Name</label>
-                  <input
-                    id="memberName"
-                    type="text"
-                    value={newMemberName}
-                    onChange={(e) => setNewMemberName(e.target.value)}
-                    required
-                    className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    placeholder="e.g., John Doe"
-                  />
-                </div>
-                <div className="text-right">
-                  <button
-                    type="submit"
-                    disabled={isAddingMember}
-                    className="inline-flex items-center justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 w-full sm:w-auto"
-                  >
-                    {isAddingMember ? (
-                      <>
-                        <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Adding...
-                      </>
-                    ) : (
-                      'Add Member'
-                    )}
-                  </button>
-                </div>
-              </form>
-            </div>
+            {showAddMemberForm && (
+              <div className="p-6">
+                <form onSubmit={handleAddMemberSubmit} className="space-y-4">
+                  <div>
+                    <label htmlFor="memberName" className="block text-sm font-medium text-gray-700">Member Name</label>
+                    <input
+                      id="memberName"
+                      type="text"
+                      value={newMemberName}
+                      onChange={(e) => setNewMemberName(e.target.value)}
+                      required
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                      placeholder="e.g., John Doe"
+                    />
+                  </div>
+                  <div className="text-right">
+                    <button
+                      type="submit"
+                      disabled={isAddingMember}
+                      className="inline-flex items-center justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 w-full sm:w-auto"
+                    >
+                      {isAddingMember ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Adding...
+                        </>
+                      ) : (
+                        'Add Member'
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
           </div>
 
           {/* Current Members Box */}

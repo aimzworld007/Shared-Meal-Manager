@@ -60,8 +60,8 @@ const CSVImportModal: React.FC<CSVImportModalProps> = ({ isOpen, onClose, onImpo
     <Modal isOpen={isOpen} onClose={handleClose} title="Import Expenses from CSV">
       <div className="space-y-4">
         <p className="text-sm text-gray-600">
-          Upload a CSV file with the headers: <code>date</code>, <code>name</code> (or <code>item</code>), <code>amount</code> (or <code>price</code>), and <code>purchased by</code>.
-          The date should be in <code>YYYY-MM-DD</code> format.
+          Upload a CSV file with the headers: <code>date</code>, <code>item</code>, <code>price</code>, and <code>purchased by</code>.
+          The date should be in <code>DD-MM-YYYY</code> format.
         </p>
         <div
           {...getRootProps()}
