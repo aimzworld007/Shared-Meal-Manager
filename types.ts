@@ -109,14 +109,3 @@ export interface Reminder {
   isComplete: boolean;
   createdAt: string; // ISO string
 }
-
-/**
- * Represents an item on the shared shopping list.
- */
-export interface ShoppingListItem {
-    id: string;
-    name: string;
-    isComplete: boolean;
-    addedAt: string; // ISO string
-    addedBy: string; // Member name
-}

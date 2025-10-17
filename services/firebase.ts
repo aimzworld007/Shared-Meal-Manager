@@ -32,7 +32,7 @@ import {
 // FIX: Added Firebase Storage imports for handling file uploads.
 import { getStorage, ref, getDownloadURL, uploadBytes } from "firebase/storage";
 // FIX: Added SiteSettings type import.
-import { User, GroceryItem, Deposit, Participant, Period, ArchiveData, SiteSettings, Reminder, ShoppingListItem } from "../types";
+import { User, GroceryItem, Deposit, Participant, Period, ArchiveData, SiteSettings, Reminder } from "../types";
 
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
@@ -238,41 +238,6 @@ export const updateReminder = (reminderId: string, data: Partial<Omit<Reminder, 
 export const deleteReminder = (reminderId: string) => {
     const reminderDocRef = doc(getUserSubcollection('reminders'), reminderId);
     return deleteDoc(reminderDocRef);
-};
-
-
-// --- Shopping List (not period-specific) ---
-export const getShoppingListItems = async (): Promise<ShoppingListItem[]> => {
-    const shoppingCol = getUserSubcollection('shoppingList');
-    const q = query(shoppingCol, orderBy('addedAt', 'desc'));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ShoppingListItem));
-};
-
-export const addShoppingListItem = (itemData: Omit<ShoppingListItem, 'id'>) => {
-    const shoppingCol = getUserSubcollection('shoppingList');
-    return addDoc(shoppingCol, itemData);
-};
-
-export const updateShoppingListItem = (itemId: string, data: Partial<Omit<ShoppingListItem, 'id'>>) => {
-    const itemDocRef = doc(getUserSubcollection('shoppingList'), itemId);
-    return updateDoc(itemDocRef, data);
-};
-
-export const deleteShoppingListItem = (itemId: string) => {
-    const itemDocRef = doc(getUserSubcollection('shoppingList'), itemId);
-    return deleteDoc(itemDocRef);
-};
-
-export const deleteMultipleShoppingListItems = async (itemIds: string[]) => {
-    if (itemIds.length === 0) return;
-    const batch = writeBatch(db);
-    const shoppingCol = getUserSubcollection('shoppingList');
-    itemIds.forEach(id => {
-        const docRef = doc(shoppingCol, id);
-        batch.delete(docRef);
-    });
-    await batch.commit();
 };
 
 

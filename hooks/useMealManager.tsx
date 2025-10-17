@@ -1,6 +1,7 @@
+
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import * as api from '../services/firebase';
-import { GroceryItem, Deposit, Participant, Member, Period, ArchiveData, Reminder, ShoppingListItem } from '../types';
+import { GroceryItem, Deposit, Participant, Member, Period, ArchiveData, Reminder } from '../types';
 import { ParsedGroceryItem } from '../utils/csvParser';
 
 export const useMealManager = () => {
@@ -13,7 +14,6 @@ export const useMealManager = () => {
     const [allDeposits, setAllDeposits] = useState<Deposit[]>([]);
     const [members, setMembers] = useState<Participant[]>([]);
     const [reminders, setReminders] = useState<Reminder[]>([]);
-    const [shoppingList, setShoppingList] = useState<ShoppingListItem[]>([]);
     
     // State for filtering
     const [startDate, setStartDate] = useState<string>('');
@@ -45,14 +45,12 @@ export const useMealManager = () => {
             setLoading(false);
             // Still fetch non-period-specific data like members and reminders
             try {
-                const [membersData, remindersData, shoppingListData] = await Promise.all([
+                const [membersData, remindersData] = await Promise.all([
                     api.getMembers(), 
-                    api.getReminders(),
-                    api.getShoppingListItems()
+                    api.getReminders()
                 ]);
                 setMembers(membersData);
                 setReminders(remindersData);
-                setShoppingList(shoppingListData);
             } catch (err) {
                  console.error("Data Fetch Error (No Period):", err);
                  setError("Could not load members or reminders.");
@@ -62,12 +60,11 @@ export const useMealManager = () => {
         setLoading(true);
         setError(null);
         try {
-            const [membersData, groceriesData, depositsData, remindersData, shoppingListData] = await Promise.all([
+            const [membersData, groceriesData, depositsData, remindersData] = await Promise.all([
                 api.getMembers(),
                 api.getAllGroceries(activePeriod.id),
                 api.getAllDeposits(activePeriod.id),
-                api.getReminders(),
-                api.getShoppingListItems()
+                api.getReminders()
             ]);
             
             const memberMap = new Map(membersData.map(m => [m.id, m.name]));
@@ -79,7 +76,6 @@ export const useMealManager = () => {
             setAllDeposits(depositsWithName);
             setMembers(membersData);
             setReminders(remindersData);
-            setShoppingList(shoppingListData);
 
         } catch (err: any) {
             console.error("Data Fetch Error:", err);
@@ -202,7 +198,7 @@ export const useMealManager = () => {
             await Promise.all(promises);
             fetchDataForPeriod();
         } catch (err) {
-            // FIX: The error object `err` is of type `unknown` and cannot be directly passed to setError, which expects a string. Type checking is added to extract a valid error message.
+            // FIX: The error object `err` from the catch block is of type `unknown` and cannot be directly passed to setError, which expects a string. Added type checking to safely extract the error message.
             let message = "Failed to import grocery items.";
             if (err instanceof Error) {
                 message = err.message;
@@ -296,37 +292,6 @@ export const useMealManager = () => {
         } catch (err) { setError("Failed to delete reminder."); throw err; }
     };
     
-    // --- Shopping List Management ---
-    const addShoppingListItem = async (item: Omit<ShoppingListItem, 'id'>) => {
-        try {
-            await api.addShoppingListItem(item);
-            fetchDataForPeriod();
-        } catch (err) { setError("Failed to add shopping list item."); throw err; }
-    };
-
-    const updateShoppingListItemStatus = async (itemId: string, isComplete: boolean) => {
-        try {
-            await api.updateShoppingListItem(itemId, { isComplete });
-            fetchDataForPeriod();
-        } catch (err) { setError("Failed to update shopping item."); throw err; }
-    };
-
-    const deleteShoppingListItem = async (itemId: string) => {
-        try {
-            await api.deleteShoppingListItem(itemId);
-            fetchDataForPeriod();
-        } catch (err) { setError("Failed to delete shopping item."); throw err; }
-    };
-    
-    const clearCompletedShoppingItems = async () => {
-        try {
-            const completedIds = shoppingList.filter(i => i.isComplete).map(i => i.id);
-            await api.deleteMultipleShoppingListItems(completedIds);
-            fetchDataForPeriod();
-        } catch (err) { setError("Failed to clear completed items."); throw err; }
-    };
-
-
 
     // --- Period Management ---
     const updateActivePeriod = async (periodData: Omit<Period, 'id' | 'status'>) => {
@@ -395,7 +360,6 @@ export const useMealManager = () => {
         members,
         groceries,
         reminders,
-        shoppingList,
         activePeriod,
         isPeriodLoading,
         refreshData: fetchDataForPeriod,
@@ -417,11 +381,6 @@ export const useMealManager = () => {
         addReminderItem,
         updateReminderItem,
         deleteReminderItem,
-        // Shopping List
-        addShoppingListItem,
-        updateShoppingListItemStatus,
-        deleteShoppingListItem,
-        clearCompletedShoppingItems,
         // Periods
         archiveAndStartNewPeriod,
         createFirstPeriod,
