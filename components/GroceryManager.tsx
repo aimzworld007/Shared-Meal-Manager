@@ -7,6 +7,7 @@ import { GroceryItem, Participant } from '../types';
 import Modal from './Modal';
 import ConfirmationModal from './ConfirmationModal';
 import DataFilter from './DateFilter';
+import { formatCurrency } from '../utils/formatters';
 
 interface GroceryManagerProps {
   groceries: GroceryItem[];
@@ -26,10 +27,6 @@ interface GroceryManagerProps {
   onPurchaserChange: (purchaserId: string) => void;
   onResetFilters: () => void;
 }
-
-const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED' }).format(amount);
-};
 
 const FilterIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

@@ -1,13 +1,10 @@
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Archive } from '../types';
+import { formatCurrency } from './formatters';
 
 // Fix: Removed module augmentation for jspdf to prevent "module not found" errors.
 // Type safety is bypassed by casting to 'any' where the autoTable plugin is used.
-
-const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED' }).format(amount);
-};
 
 export const generateArchivePdf = (archive: Archive) => {
     const doc = new jsPDF();

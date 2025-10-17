@@ -4,6 +4,7 @@
  */
 import React from 'react';
 import { Member } from '../types';
+import { formatCurrency } from '../utils/formatters';
 
 interface MainBalanceSummaryProps {
   summary: {
@@ -13,13 +14,6 @@ interface MainBalanceSummaryProps {
     averageExpense: number;
   };
 }
-
-const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('en-AE', {
-    style: 'currency',
-    currency: 'AED',
-  }).format(amount);
-};
 
 const MainBalanceSummary: React.FC<MainBalanceSummaryProps> = ({ summary }) => {
   const totalPaidAmount = summary.members.reduce((sum, member) => sum + member.totalPurchase, 0);

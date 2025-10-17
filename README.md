@@ -31,7 +31,7 @@ This application provides a secure, private space for each registered user to ma
 
 ## For Administrators
 
-An administrator account (e.g., `com`) has special privileges:
+An administrator account (e.g., `aimctgbd@gmail.com`) has special privileges:
 - Navigate to the **Settings** page by clicking the button in the header.
 - In the "Site Management (Admin)" panel, you can:
     - Change the **Site Title** that appears in the browser tab.

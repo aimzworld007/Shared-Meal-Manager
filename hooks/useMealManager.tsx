@@ -183,7 +183,7 @@ export const useMealManager = () => {
             await Promise.all(promises);
             fetchDataForPeriod();
         // Fix: Correctly handle the 'unknown' type in the catch block to prevent type errors.
-        } catch (err: unknown) {
+        } catch (err) {
             let message = "Failed to import grocery items.";
             if (err instanceof Error) {
                 message = err.message;

@@ -16,6 +16,7 @@ import {
 } from 'chart.js';
 import { GroceryItem } from '../types';
 import { useTheme } from '../App';
+import { formatCurrencyShort } from '../utils/formatters';
 
 ChartJS.register(
   CategoryScale,
@@ -25,15 +26,6 @@ ChartJS.register(
   Tooltip,
   Legend
 );
-
-const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('en-AE', {
-      style: 'currency',
-      currency: 'AED',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
-};
 
 interface MonthlySpendChartProps {
   groceries: GroceryItem[];
@@ -100,7 +92,7 @@ const MonthlySpendChart: React.FC<MonthlySpendChartProps> = ({ groceries }) => {
                 label += ': ';
               }
               if (context.parsed.y !== null) {
-                label += formatCurrency(context.parsed.y);
+                label += formatCurrencyShort(context.parsed.y);
               }
               return label;
             }
@@ -114,7 +106,7 @@ const MonthlySpendChart: React.FC<MonthlySpendChartProps> = ({ groceries }) => {
             color: textColor,
             callback: function(value) {
               if (typeof value === 'number') {
-                  return formatCurrency(value);
+                  return formatCurrencyShort(value);
               }
               return value;
             }

@@ -5,16 +5,13 @@
 import React, { useState } from 'react';
 import { Deposit, Participant } from '../types';
 import ConfirmationModal from './ConfirmationModal';
+import { formatCurrency } from '../utils/formatters';
 
 interface MemberAndDepositManagerProps {
   deposits: Deposit[];
   onEditDeposit: (deposit: Deposit) => void;
   onDeleteDeposit: (item: Deposit) => Promise<void>;
 }
-
-const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED' }).format(amount);
-};
 
 const WhatsAppIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">

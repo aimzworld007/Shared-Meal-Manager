@@ -4,15 +4,12 @@
  */
 import React, { useState, useEffect } from 'react';
 import { Member, GroceryItem } from '../types';
+import { formatCurrency } from '../utils/formatters';
 
 interface IndividualAccountsProps {
     members: Member[];
     groceries: GroceryItem[];
 }
-
-const formatCurrency = (amount: number): string => {
-    return new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED' }).format(amount);
-};
 
 const IndividualAccounts: React.FC<IndividualAccountsProps> = ({ members, groceries }) => {
     const [selectedMemberId, setSelectedMemberId] = useState<string>('');

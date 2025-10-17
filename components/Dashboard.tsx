@@ -16,6 +16,7 @@ import Modal from './Modal';
 import AccountsView from './AccountsView';
 import { GroceryItem, Deposit } from '../types';
 import { logoUrl as defaultLogoUrl } from '../assets/logo';
+import { formatCurrency } from '../utils/formatters';
 
 // Define view types for bottom navigation
 type View = 'home' | 'grocery' | 'accounts' | 'settings';
@@ -57,10 +58,6 @@ const MoonIcon = ({ className = "h-6 w-6" }: { className?: string }) => (
         <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
     </svg>
 );
-
-const formatCurrency = (amount: number): string => {
-  return new Intl.NumberFormat('en-AE', { style: 'currency', currency: 'AED' }).format(amount);
-};
 
 interface DashboardProps {
   logoUrl?: string;
