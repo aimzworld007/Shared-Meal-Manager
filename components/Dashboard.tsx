@@ -264,7 +264,12 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
         </div>
       </nav>
 
-      {activePeriod && view === 'grocery' && <FAB onAddExpense={openGroceryModal} />}
+      {activePeriod && ['home', 'grocery', 'accounts'].includes(view) && (
+        <FAB
+          onAddExpense={openGroceryModal}
+          onAddDeposit={openDepositModal}
+        />
+      )}
 
       {/* Grocery Modal */}
       <Modal title={editingGrocery ? "Edit Expense" : "Add New Expense"} isOpen={isGroceryModalOpen} onClose={() => setIsGroceryModalOpen(false)}>
