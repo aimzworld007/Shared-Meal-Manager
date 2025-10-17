@@ -4,6 +4,7 @@
  * This component provides an interface for users to sign in, sign up,
  * or request a password reset, with an added verification step.
  */
+// FIX: Import useState and useEffect from React to resolve "Cannot find name" errors.
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { logoUrl as defaultLogoUrl } from '../assets/logo';
@@ -40,36 +41,41 @@ const Login: React.FC<LoginProps> = ({ logoUrl, installPromptEvent, onInstallCli
   const [message, setMessage] = useState('');
 
   // State for the math verification system
-  const [num1, setNum1] = useState(0);
-  const [num2, setNum2] = useState(0);
-  const [operator, setOperator] = useState<'+' | '-'>('+');
-  const [verificationAnswer, setVerificationAnswer] = useState('');
+  const [challenge, setChallenge] = useState<{ problem: string; answer: number }>({ problem: '', answer: 0 });
+  const [verificationInput, setVerificationInput] = useState('');
   const [verificationError, setVerificationError] = useState<string | null>(null);
 
   const { login, signUp, resetPassword, error, loading, clearError } = useAuth();
-  
+
   // Generates a new random math problem for verification.
-  const generateProblem = () => {
-    let n1 = Math.floor(Math.random() * 50) + 1; // Random number between 1-50
-    let n2 = Math.floor(Math.random() * 50) + 1;
-    const op = Math.random() > 0.5 ? '+' : '-';
-    
-    // To keep it simple, ensure subtraction doesn't result in a negative number
-    if (op === '-' && n1 < n2) {
-      [n1, n2] = [n2, n1]; // Swap the numbers
+  const generateChallenge = () => {
+    const isAddition = Math.random() > 0.5;
+
+    let num1, num2, problem, answer;
+
+    if (isAddition) {
+        // Keep sum under 20
+        num1 = Math.floor(Math.random() * 10) + 1; // 1-10
+        num2 = Math.floor(Math.random() * (20 - num1)) + 1; // Ensures sum <= 20
+        problem = `${num1} + ${num2}`;
+        answer = num1 + num2;
+    } else {
+        // Ensure result is positive
+        const n1 = Math.floor(Math.random() * 20) + 1; // 1-20
+        const n2 = Math.floor(Math.random() * n1) + 1;   // 1 to n1, ensures positive result
+        problem = `${n1} - ${n2}`;
+        answer = n1 - n2;
     }
 
-    setNum1(n1);
-    setNum2(n2);
-    setOperator(op);
-    setVerificationAnswer(''); // Clear user's previous answer
+    setChallenge({ problem, answer });
+    setVerificationInput(''); // Clear user's previous answer
     setVerificationError(null); // Clear any old verification errors
   };
   
-  // Generate a problem on the initial render and whenever the view (login/signup) changes.
+  // Generate a challenge on the initial render and whenever the view (login/signup) changes.
   useEffect(() => {
     if (view === 'login' || view === 'signup') {
-      generateProblem();
+      generateChallenge();
     }
   }, [view]);
 
@@ -90,10 +96,9 @@ const Login: React.FC<LoginProps> = ({ logoUrl, installPromptEvent, onInstallCli
 
     // --- Verification Check for Login and Signup ---
     if (view === 'login' || view === 'signup') {
-      const correctAnswer = operator === '+' ? num1 + num2 : num1 - num2;
-      if (parseInt(verificationAnswer, 10) !== correctAnswer) {
-        setVerificationError('Incorrect verification answer. Please try again.');
-        generateProblem(); // Ask a new question
+      if (parseInt(verificationInput, 10) !== challenge.answer) {
+        setVerificationError('Incorrect answer. Please try again.');
+        generateChallenge(); // Ask a new question
         setFormLoading(false);
         return; // Stop the submission
       }
@@ -111,7 +116,7 @@ const Login: React.FC<LoginProps> = ({ logoUrl, installPromptEvent, onInstallCli
     } catch (err) {
       // If any auth error occurs, generate a new problem for the user
       if (view === 'login' || view === 'signup') {
-        generateProblem();
+        generateChallenge();
       }
       console.error(err);
     } finally {
@@ -180,16 +185,20 @@ const Login: React.FC<LoginProps> = ({ logoUrl, installPromptEvent, onInstallCli
           {(view === 'login' || view === 'signup') && (
             <div>
               <label htmlFor="verification" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Verification: What is {num1} {operator} {num2}?
+                Verification: What is...
               </label>
+              <p className="mt-1 text-center font-mono text-lg p-2 bg-gray-100 dark:bg-gray-700 rounded-md text-gray-800 dark:text-gray-200 select-none">
+                {challenge.problem}
+              </p>
               <input
                 id="verification"
                 type="number"
-                value={verificationAnswer}
-                onChange={(e) => setVerificationAnswer(e.target.value)}
+                value={verificationInput}
+                onChange={(e) => setVerificationInput(e.target.value)}
                 required
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                className="mt-2 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
                 placeholder="Your answer"
+                autoComplete="off"
               />
             </div>
           )}

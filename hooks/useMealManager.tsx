@@ -182,7 +182,7 @@ export const useMealManager = () => {
             await Promise.all(promises);
             fetchDataForPeriod();
         } catch (err) {
-            // Fix: Safely handle the 'unknown' type of the error object in the catch block by checking if it's an instance of Error or a string before accessing its properties. This resolves the "Type 'unknown' is not assignable to type 'string'" error.
+            // Fix: Type 'unknown' is not assignable to type 'string'. Safely handle the error object by checking its type before accessing properties.
             let message = "Failed to import grocery items.";
             if (err instanceof Error) {
                 message = err.message;
