@@ -9,7 +9,7 @@ import { useMealManager } from '../hooks/useMealManager';
 import GroceryManager from './GroceryManager';
 import PermissionsError from './PermissionsError';
 import SettingsPage from './SettingsPage';
-import MonthlySpendChart from './MonthlySpendChart';
+import SpendChart from './MonthlySpendChart';
 import FAB from './FAB';
 import SummaryCircle from './SummaryCircle';
 import Modal from './Modal';
@@ -214,7 +214,7 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
                   <SummaryCircle title="Total Deposits" value={formatCurrency(summary.totalDeposits)} colorClassName="bg-green-500" />
                   <SummaryCircle title="Avg. Expense/Person" value={formatCurrency(summary.averageExpense)} colorClassName="bg-yellow-500" />
               </div>
-              <MonthlySpendChart groceries={summary.allGroceries} />
+              <SpendChart groceries={summary.allGroceries} />
           </div>
       );
   };
