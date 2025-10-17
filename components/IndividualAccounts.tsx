@@ -63,27 +63,27 @@ const IndividualAccounts: React.FC<IndividualAccountsProps> = ({ members, grocer
                         <table className="min-w-full">
                             <thead className="bg-gray-100 dark:bg-gray-700">
                                 <tr>
-                                    <th scope="col" className="px-4 py-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Date</th>
-                                    <th scope="col" className="px-4 py-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Amount</th>
-                                    <th scope="col" className="px-4 py-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Notes</th>
+                                    <th scope="col" className="px-2 sm:px-4 py-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Date</th>
+                                    <th scope="col" className="px-2 sm:px-4 py-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Amount</th>
+                                    <th scope="col" className="px-2 sm:px-4 py-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Notes</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 {memberGroceries.map(item => (
                                     <tr key={item.id}>
-                                        <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">{new Date(item.date).toLocaleDateString()}</td>
-                                        <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{formatCurrency(item.amount)}</td>
-                                        <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{item.name}</td>
+                                        <td className="px-2 sm:px-4 py-2 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">{new Date(item.date).toLocaleDateString()}</td>
+                                        <td className="px-2 sm:px-4 py-2 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{formatCurrency(item.amount)}</td>
+                                        <td className="px-2 sm:px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{item.name}</td>
                                     </tr>
                                 ))}
                                 {memberGroceries.length === 0 && (
-                                    <tr><td colSpan={3} className="px-4 py-4 text-center text-sm text-gray-500 dark:text-gray-400">No expenses recorded.</td></tr>
+                                    <tr><td colSpan={3} className="px-2 sm:px-4 py-4 text-center text-sm text-gray-500 dark:text-gray-400">No expenses recorded.</td></tr>
                                 )}
                             </tbody>
                             <tfoot className="bg-gray-100 dark:bg-gray-700 border-t-2 border-gray-300 dark:border-gray-600">
                                 <tr>
-                                    <td className="px-4 py-2 text-right font-bold text-gray-800 dark:text-gray-200">Total</td>
-                                    <td colSpan={2} className="px-4 py-2 font-bold text-gray-900 dark:text-gray-100">{formatCurrency(totalPaid)}</td>
+                                    <td className="px-2 sm:px-4 py-2 text-right font-bold text-gray-800 dark:text-gray-200">Total</td>
+                                    <td colSpan={2} className="px-2 sm:px-4 py-2 font-bold text-gray-900 dark:text-gray-100">{formatCurrency(totalPaid)}</td>
                                 </tr>
                             </tfoot>
                         </table>

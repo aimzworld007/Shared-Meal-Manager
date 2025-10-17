@@ -264,7 +264,7 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
         </div>
       </nav>
 
-      {activePeriod && <FAB onAddExpense={openGroceryModal} onAddDeposit={openDepositModal} />}
+      {activePeriod && view === 'grocery' && <FAB onAddExpense={openGroceryModal} />}
 
       {/* Grocery Modal */}
       <Modal title={editingGrocery ? "Edit Expense" : "Add New Expense"} isOpen={isGroceryModalOpen} onClose={() => setIsGroceryModalOpen(false)}>

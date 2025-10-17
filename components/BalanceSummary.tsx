@@ -27,35 +27,35 @@ const MainBalanceSummary: React.FC<MainBalanceSummaryProps> = ({ summary }) => {
         <table className="min-w-full">
           <thead className="bg-gray-100 dark:bg-gray-700">
             <tr>
-              <th scope="col" className="px-4 py-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-300 w-16">S.N</th>
-              <th scope="col" className="px-4 py-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Name</th>
-              <th scope="col" className="px-4 py-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Paid Amount</th>
-              <th scope="col" className="px-4 py-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Deposit</th>
-              <th scope="col" className="px-4 py-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Balance</th>
+              <th scope="col" className="px-2 sm:px-4 py-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-300 w-16">S.N</th>
+              <th scope="col" className="px-2 sm:px-4 py-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Name</th>
+              <th scope="col" className="px-2 sm:px-4 py-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Paid Amount</th>
+              <th scope="col" className="px-2 sm:px-4 py-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Deposit</th>
+              <th scope="col" className="px-2 sm:px-4 py-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Balance</th>
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             {summary.members.map((member, index) => (
               <tr key={member.id}>
-                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-800 dark:text-gray-300">{index + 1}</td>
-                <td className="px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{member.name}</td>
-                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{formatCurrency(member.totalPurchase)}</td>
-                <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{formatCurrency(member.totalDeposit)}</td>
-                <td className={`px-4 py-2 whitespace-nowrap text-sm font-semibold ${member.balance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                <td className="px-2 sm:px-4 py-2 whitespace-nowrap text-sm text-gray-800 dark:text-gray-300">{index + 1}</td>
+                <td className="px-2 sm:px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{member.name}</td>
+                <td className="px-2 sm:px-4 py-2 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{formatCurrency(member.totalPurchase)}</td>
+                <td className="px-2 sm:px-4 py-2 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{formatCurrency(member.totalDeposit)}</td>
+                <td className={`px-2 sm:px-4 py-2 whitespace-nowrap text-sm font-semibold ${member.balance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                   {formatCurrency(member.balance)}
                 </td>
               </tr>
             ))}
             {summary.members.length === 0 && (
-                <tr><td colSpan={5} className="px-4 py-4 text-center text-sm text-gray-500 dark:text-gray-400">No members found.</td></tr>
+                <tr><td colSpan={5} className="px-2 sm:px-4 py-4 text-center text-sm text-gray-500 dark:text-gray-400">No members found.</td></tr>
             )}
           </tbody>
           <tfoot className="bg-gray-100 dark:bg-gray-700 border-t-2 border-gray-300 dark:border-gray-600">
             <tr>
-              <td colSpan={2} className="px-4 py-2 text-right text-sm font-bold text-gray-800 dark:text-gray-200">Total Amount</td>
-              <td className="px-4 py-2 whitespace-nowrap text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(totalPaidAmount)}</td>
-              <td className="px-4 py-2 whitespace-nowrap text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(summary.totalDeposits)}</td>
-              <td className="px-4 py-2"></td>
+              <td colSpan={2} className="px-2 sm:px-4 py-2 text-right text-sm font-bold text-gray-800 dark:text-gray-200">Total Amount</td>
+              <td className="px-2 sm:px-4 py-2 whitespace-nowrap text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(totalPaidAmount)}</td>
+              <td className="px-2 sm:px-4 py-2 whitespace-nowrap text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(summary.totalDeposits)}</td>
+              <td className="px-2 sm:px-4 py-2"></td>
             </tr>
           </tfoot>
         </table>

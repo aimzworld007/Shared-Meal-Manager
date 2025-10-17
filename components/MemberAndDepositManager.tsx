@@ -58,22 +58,22 @@ const MemberAndDepositManager: React.FC<MemberAndDepositManagerProps> = ({ depos
             <table className="min-w-full">
             <thead className="bg-gray-100 dark:bg-gray-700">
                 <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Member</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</th>
-                <th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
+                <th scope="col" className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
+                <th scope="col" className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Member</th>
+                <th scope="col" className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</th>
+                <th scope="col" className="relative px-2 sm:px-6 py-3"><span className="sr-only">Actions</span></th>
                 </tr>
             </thead>
             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {deposits.length === 0 && (
-                <tr><td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">No deposits added yet.</td></tr>
+                <tr><td colSpan={4} className="px-2 sm:px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">No deposits added yet.</td></tr>
                 )}
                 {deposits.map((item) => (
                 <tr key={item.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{new Date(item.date).toLocaleDateString()}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{item.userName}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-800 dark:text-green-400">{formatCurrency(item.amount)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex items-center justify-end gap-3">
+                    <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{new Date(item.date).toLocaleDateString()}</td>
+                    <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{item.userName}</td>
+                    <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-green-800 dark:text-green-400">{formatCurrency(item.amount)}</td>
+                    <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex items-center justify-end gap-3">
                         <button onClick={() => handleShareWhatsApp(item)} className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300" title="Share on WhatsApp">
                         <WhatsAppIcon />
                         </button>
