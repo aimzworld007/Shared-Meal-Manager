@@ -11,6 +11,7 @@ import CSVImportModal from './CSVImportModal';
 import { Participant } from '../types';
 import { useMealManager } from '../hooks/useMealManager';
 import PeriodManager from './PeriodManager';
+import SiteSettingsManager from './SiteSettingsManager';
 
 interface SettingsPageProps {
   mealManager: ReturnType<typeof useMealManager>;
@@ -261,6 +262,9 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ mealManager }) => {
             </div>
         </div>
       </div>
+      
+      {/* Admin Site Settings */}
+      {user?.isAdmin && <SiteSettingsManager />}
       
       {reauthAction && (
           <ReauthModal 

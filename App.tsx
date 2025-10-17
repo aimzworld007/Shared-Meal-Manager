@@ -10,6 +10,7 @@ import Dashboard from './components/Dashboard';
 import Login from './components/Login';
 import Footer from './components/Footer';
 import { logoUrl as defaultLogoUrl } from './assets/logo';
+import DynamicMetadata from './components/DynamicMetadata';
 
 // --- Theme Context ---
 type Theme = 'light' | 'dark';
@@ -40,8 +41,11 @@ const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
     useEffect(() => {
         const root = window.document.documentElement;
-        root.classList.remove(theme === 'light' ? 'dark' : 'light');
-        root.classList.add(theme);
+        if (theme === 'dark') {
+            root.classList.add('dark');
+        } else {
+            root.classList.remove('dark');
+        }
         localStorage.setItem('theme', theme);
     }, [theme]);
 
@@ -120,6 +124,7 @@ const App: React.FC = () => {
 
   return (
     <ThemeProvider>
+        <DynamicMetadata />
         <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
           <main className="flex-grow flex flex-col">
             {loading ? (
