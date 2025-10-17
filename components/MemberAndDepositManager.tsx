@@ -3,21 +3,33 @@
  * @summary A unified component for adding members and managing all deposits.
  */
 import React, { useState } from 'react';
-import { Deposit, Participant } from '../types';
+import { Deposit } from '../types';
 import ConfirmationModal from './ConfirmationModal';
 import { formatCurrency } from '../utils/formatters';
-
-interface MemberAndDepositManagerProps {
-  deposits: Deposit[];
-  onEditDeposit: (deposit: Deposit) => void;
-  onDeleteDeposit: (item: Deposit) => Promise<void>;
-}
 
 const WhatsAppIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
         <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.894 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 4.315 1.731 6.086l.287.468-1.173 4.249 4.35-1.14z" />
     </svg>
 );
+
+const EditIcon = ({ className = "h-5 w-5" }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+    </svg>
+);
+
+const DeleteIcon = ({ className = "h-5 w-5" }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+    </svg>
+);
+
+interface MemberAndDepositManagerProps {
+  deposits: Deposit[];
+  onEditDeposit: (deposit: Deposit) => void;
+  onDeleteDeposit: (item: Deposit) => Promise<void>;
+}
 
 const MemberAndDepositManager: React.FC<MemberAndDepositManagerProps> = ({ deposits, onEditDeposit, onDeleteDeposit }) => {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -73,12 +85,18 @@ const MemberAndDepositManager: React.FC<MemberAndDepositManagerProps> = ({ depos
                     <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{new Date(item.date).toLocaleDateString()}</td>
                     <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{item.userName}</td>
                     <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-green-800 dark:text-green-400">{formatCurrency(item.amount)}</td>
-                    <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex items-center justify-end gap-3">
-                        <button onClick={() => handleShareWhatsApp(item)} className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300" title="Share on WhatsApp">
-                        <WhatsAppIcon />
-                        </button>
-                    <button onClick={() => onEditDeposit(item)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300">Edit / Transfer</button>
-                    <button onClick={() => handleDeleteClick(item)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">Delete</button>
+                    <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex items-center justify-end gap-4">
+                            <button onClick={() => handleShareWhatsApp(item)} className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300" title="Share on WhatsApp">
+                                <WhatsAppIcon />
+                            </button>
+                            <button onClick={() => onEditDeposit(item)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300" title="Edit or Transfer Deposit">
+                                <EditIcon />
+                            </button>
+                            <button onClick={() => handleDeleteClick(item)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300" title="Delete Deposit">
+                                <DeleteIcon />
+                            </button>
+                        </div>
                     </td>
                 </tr>
                 ))}

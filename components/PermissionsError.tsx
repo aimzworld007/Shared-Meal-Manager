@@ -28,9 +28,9 @@ service cloud.firestore {
       allow read, write: if request.auth.uid == userId;
     }
 
-    // Allow authenticated users to read site settings, and admins to write them.
+    // Allow anyone to read site settings for public branding, but only admins to write them.
     match /settings/site {
-      allow get: if request.auth != null;
+      allow get: if true;
       allow write: if request.auth.token.email == 'aimctgbd@gmail.com';
     }
   }
@@ -51,7 +51,7 @@ service cloud.firestore {
               <strong>Error:</strong> {errorMessage}
             </p>
             <p>
-              This error means your Firestore Security Rules are not set up correctly. For this app to work, each user must be able to read and write their own documents, and also read the global site settings.
+              This error means your Firestore Security Rules are not set up correctly. For this app to work, each user must be able to read and write their own documents, and the app needs public access to read global site settings (like the title and logo) for branding on the login page.
             </p>
             
             <div className="bg-red-100 dark:bg-red-900/30 p-4 rounded-lg">

@@ -20,8 +20,7 @@ const SummaryCircle: React.FC<SummaryCircleProps> = ({ title, value, colorClassN
         {/* Use a span to prevent long numbers from breaking the circle */}
         <span className="truncate">{numericValue}</span>
       </div>
-       <p className="mt-3 text-2xl font-semibold text-gray-800 dark:text-gray-200">{value}</p>
-       <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">{title}</h3>
+       <h3 className="mt-4 text-md font-medium text-gray-600 dark:text-gray-400">{title}</h3>
     </div>
   );
 };

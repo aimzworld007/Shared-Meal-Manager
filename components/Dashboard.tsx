@@ -80,6 +80,7 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
   const [depositForm, setDepositForm] = useState({ amount: '', date: new Date().toISOString().split('T')[0], userId: '', notes: '' });
 
   const { members, activePeriod, isPeriodLoading } = mealManager;
+  const designatedMealManager = members.find(m => m.isMealManager);
 
   const openGroceryModal = (item: GroceryItem | null = null) => {
     if (members.length === 0) {
@@ -327,6 +328,15 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
              <label htmlFor="notes" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Notes (Optional)</label>
              <input type="text" id="notes" value={depositForm.notes} onChange={(e) => setDepositForm({...depositForm, notes: e.target.value})} placeholder="e.g., Balance transfer" className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
            </div>
+
+            {designatedMealManager && (
+                <div className="!mt-6 p-3 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg">
+                    <p className="text-xs text-indigo-800 dark:text-indigo-200">
+                        Note: All deposits are managed by the Meal Manager ({designatedMealManager.name}) and will be adjusted against their account balance.
+                    </p>
+                </div>
+            )}
+
            <div className="pt-2 flex justify-end">
              <button type="submit" className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
                 {editingDeposit ? "Update Deposit" : "Add Deposit"}
