@@ -50,8 +50,8 @@ const Login: React.FC<LoginProps> = ({ logoUrl, installPromptEvent, onInstallCli
   
   // Generates a new random math problem for verification.
   const generateProblem = () => {
-    let n1 = Math.floor(Math.random() * 90) + 10; // Random number between 10-99
-    let n2 = Math.floor(Math.random() * 90) + 10;
+    let n1 = Math.floor(Math.random() * 50) + 1; // Random number between 1-50
+    let n2 = Math.floor(Math.random() * 50) + 1;
     const op = Math.random() > 0.5 ? '+' : '-';
     
     // To keep it simple, ensure subtraction doesn't result in a negative number
