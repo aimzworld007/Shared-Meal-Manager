@@ -26,9 +26,9 @@ export const SummaryCard: React.FC<SummaryCardProps> = ({ title, value, isCurren
   const displayValue = isCurrency && typeof value === 'number' ? formatCurrency(value) : value;
 
   return (
-    <div className="bg-white shadow rounded-lg p-5 text-center">
-      <h3 className="text-sm font-medium text-gray-500 truncate">{title}</h3>
-      <p className="mt-1 text-3xl font-semibold text-gray-900">{displayValue}</p>
+    <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-5 text-center">
+      <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">{title}</h3>
+      <p className="mt-1 text-3xl font-semibold text-gray-900 dark:text-gray-100">{displayValue}</p>
     </div>
   );
 };

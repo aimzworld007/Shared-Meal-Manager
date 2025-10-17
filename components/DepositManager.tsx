@@ -59,9 +59,9 @@ const DepositManager: React.FC<DepositManagerProps> = ({ deposits, members, onAd
   };
 
   return (
-    <div className="bg-white shadow rounded-lg">
-      <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-        <h3 className="text-lg font-medium text-gray-900">Deposits</h3>
+    <div className="bg-white dark:bg-gray-800 shadow rounded-lg">
+      <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">Deposits</h3>
         <button
           onClick={() => {
               if(members.length > 0) {
@@ -77,27 +77,27 @@ const DepositManager: React.FC<DepositManagerProps> = ({ deposits, members, onAd
         </button>
       </div>
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="bg-gray-50 dark:bg-gray-700">
             <tr>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member</th>
-              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Member</th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</th>
               <th scope="col" className="relative px-6 py-3"><span className="sr-only">Delete</span></th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
              {deposits.length === 0 && (
-              <tr><td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500">No deposits added yet.</td></tr>
+              <tr><td colSpan={4} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">No deposits added yet.</td></tr>
             )}
             {deposits.map((item) => (
               <tr key={item.id}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{new Date(item.date).toLocaleDateString()}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{new Date(item.date).toLocaleDateString()}</td>
                 {/* Fix: Property 'userEmail' does not exist on type 'Deposit'. Use 'userName' instead. */}
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.userName}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-800">{formatCurrency(item.amount)}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{item.userName}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-800 dark:text-green-400">{formatCurrency(item.amount)}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                   <button onClick={() => handleDeleteClick(item)} className="text-red-600 hover:text-red-900">Delete</button>
+                   <button onClick={() => handleDeleteClick(item)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">Delete</button>
                 </td>
               </tr>
             ))}
@@ -108,8 +108,8 @@ const DepositManager: React.FC<DepositManagerProps> = ({ deposits, members, onAd
        <Modal title="Add New Deposit" isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
         <form onSubmit={handleSubmit} className="space-y-4">
            <div>
-              <label htmlFor="user" className="block text-sm font-medium text-gray-700">Member</label>
-               <select id="user" value={userId} onChange={(e) => setUserId(e.target.value)} required className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+              <label htmlFor="user" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Member</label>
+               <select id="user" value={userId} onChange={(e) => setUserId(e.target.value)} required className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 dark:text-gray-200 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
                 {members.map(member => (
                     // Fix: Property 'email' does not exist on type 'Participant'. Use 'name' instead.
                     <option key={member.id} value={member.id}>{member.name}</option>
@@ -117,12 +117,12 @@ const DepositManager: React.FC<DepositManagerProps> = ({ deposits, members, onAd
               </select>
            </div>
            <div>
-              <label htmlFor="deposit_date" className="block text-sm font-medium text-gray-700">Date</label>
-              <input type="date" id="deposit_date" value={date} onChange={(e) => setDate(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+              <label htmlFor="deposit_date" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Date</label>
+              <input type="date" id="deposit_date" value={date} onChange={(e) => setDate(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
            </div>
            <div>
-             <label htmlFor="deposit_amount" className="block text-sm font-medium text-gray-700">Amount (AED)</label>
-             <input type="number" id="deposit_amount" value={amount} onChange={(e) => setAmount(e.target.value)} required min="0.01" step="0.01" placeholder="e.g., 200.00" className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+             <label htmlFor="deposit_amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Amount (AED)</label>
+             <input type="number" id="deposit_amount" value={amount} onChange={(e) => setAmount(e.target.value)} required min="0.01" step="0.01" placeholder="e.g., 200.00" className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
            </div>
            <div className="pt-2 flex justify-end">
              <button type="submit" disabled={isSubmitting} className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:bg-green-400">
