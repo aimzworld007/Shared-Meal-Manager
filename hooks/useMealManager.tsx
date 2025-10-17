@@ -194,8 +194,8 @@ export const useMealManager = () => {
             await Promise.all(promises);
             fetchDataForPeriod();
         } catch (err) {
-            // FIX: The error object 'err' is of type 'unknown' and cannot be directly used as a string.
-            // We must check its type before accessing properties like 'message' or assigning it.
+            // Fix: The error object 'err' from a catch block is of type 'unknown'.
+            // Added a type check to safely handle the error and extract a meaningful message.
             let message = "Failed to import grocery items.";
             if (err instanceof Error) {
                 message = err.message;
