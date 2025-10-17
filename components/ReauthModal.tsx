@@ -10,7 +10,7 @@ interface ReauthModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  action: 'email' | 'password';
+  action: 'email' | 'password' | 'delete';
   error: string | null;
 }
 
@@ -32,8 +32,19 @@ const ReauthModal: React.FC<ReauthModalProps> = ({ isOpen, onClose, onSuccess, a
     }
   };
   
-  const title = `Confirm to change ${action}`;
-  const message = `For your security, please enter your current password to confirm this change.`;
+  const titles = {
+      email: 'Confirm to change email',
+      password: 'Confirm to change password',
+      delete: 'Confirm Account Deletion'
+  };
+  const messages = {
+      email: 'For your security, please enter your current password to confirm this change.',
+      password: 'For your security, please enter your current password to confirm this change.',
+      delete: 'This is a sensitive action. To proceed with deleting your account, please enter your password.'
+  };
+
+  const title = titles[action];
+  const message = messages[action];
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title}>

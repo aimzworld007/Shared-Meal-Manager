@@ -11,6 +11,7 @@ import {
   reauthenticateWithCredential,
   EmailAuthProvider,
   sendPasswordResetEmail as firebaseSendPasswordResetEmail,
+  deleteUser,
 } from "firebase/auth";
 import {
   getFirestore,
@@ -88,6 +89,23 @@ export const changeUserPassword = (newPassword: string) => {
   if (!auth.currentUser) throw new Error("User not authenticated.");
   return updatePassword(auth.currentUser, newPassword);
 };
+
+export const deleteUserAccount = async () => {
+  const user = auth.currentUser;
+  if (!user) throw new Error("User not authenticated.");
+
+  // 1. Delete Firestore data
+  const userDocRef = doc(db, 'users', user.uid);
+  // Note: This does not delete subcollections (members, periods, etc.). For a full
+  // cleanup, a Cloud Function would be needed to recursively delete subcollections.
+  // For this client-side app, we delete the main doc, and security rules will
+  // make the orphaned subcollections inaccessible to anyone.
+  await deleteDoc(userDocRef);
+
+  // 2. Delete user from Auth
+  await deleteUser(user);
+};
+
 
 // --- Firestore Service (User-Scoped) ---
 

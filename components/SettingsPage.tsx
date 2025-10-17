@@ -12,6 +12,7 @@ import { Participant } from '../types';
 import { useMealManager } from '../hooks/useMealManager';
 import PeriodManager from './PeriodManager';
 import SiteSettingsManager from './SiteSettingsManager';
+import DeleteAccountConfirmationModal from './DeleteAccountConfirmationModal';
 
 interface SettingsPageProps {
   mealManager: ReturnType<typeof useMealManager>;
@@ -19,14 +20,15 @@ interface SettingsPageProps {
 
 
 const SettingsPage: React.FC<SettingsPageProps> = ({ mealManager }) => {
-  const { user, changeEmail, changePassword, error: authError, clearError } = useAuth();
+  const { user, changeEmail, changePassword, deleteAccount, error: authError, clearError } = useAuth();
   const { members, summary, addMember, updateMember, deleteMember, setMealManager, importGroceryItems } = mealManager;
   
   // --- Account Security State ---
-  const [reauthAction, setReauthAction] = useState<'email' | 'password' | null>(null);
+  const [reauthAction, setReauthAction] = useState<'email' | 'password' | 'delete' | null>(null);
   const [newEmail, setNewEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   // --- Member Management State ---
   const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
@@ -62,6 +64,11 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ mealManager }) => {
       setReauthAction('password');
       clearError();
   }
+
+  const handleDeleteAccount = () => {
+    setReauthAction('delete');
+    clearError();
+  };
   
   const onReauthSuccess = async () => {
       if(reauthAction === 'email') {
@@ -79,8 +86,23 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ mealManager }) => {
               setConfirmPassword('');
               alert("Password updated successfully!");
           } catch (e) { /* error handled by auth context */ }
+      } else if (reauthAction === 'delete') {
+          setReauthAction(null);
+          setIsDeleteModalOpen(true);
       }
   }
+
+  const handleConfirmDeleteAccount = async () => {
+    try {
+      await deleteAccount();
+      setIsDeleteModalOpen(false);
+      // User is logged out by the auth provider, no need to redirect here.
+      alert("Your account has been successfully deleted.");
+    } catch (e) {
+      // Error is handled and displayed by auth context.
+      alert("Failed to delete account. Please try logging out and in again.");
+    }
+  };
   
   // --- Member Management Handlers ---
   const openAddMemberModal = () => {
@@ -265,6 +287,22 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ mealManager }) => {
       
       {/* Admin Site Settings */}
       {user?.isAdmin && <SiteSettingsManager />}
+
+      {/* Danger Zone */}
+      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/50 shadow-lg rounded-lg">
+        <div className="px-6 py-4 bg-red-100 dark:bg-red-900/30 rounded-t-lg">
+          <h3 className="text-lg font-semibold text-red-800 dark:text-red-200">Danger Zone</h3>
+        </div>
+        <div className="p-6 flex justify-between items-center flex-wrap gap-4">
+          <div>
+            <h4 className="font-medium text-gray-900 dark:text-gray-100">Delete this Account</h4>
+            <p className="text-sm text-red-600 dark:text-red-400 mt-1">Once you delete your account, there is no going back. Please be certain.</p>
+          </div>
+          <button onClick={handleDeleteAccount} className="inline-flex items-center justify-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700">
+            Delete My Account
+          </button>
+        </div>
+      </div>
       
       {reauthAction && (
           <ReauthModal 
@@ -275,6 +313,12 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ mealManager }) => {
             error={authError}
           />
       )}
+
+      <DeleteAccountConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleConfirmDeleteAccount}
+      />
 
       <Modal title={editingMember ? "Edit Member" : "Add Member"} isOpen={isMemberModalOpen} onClose={() => setIsMemberModalOpen(false)}>
         <form onSubmit={handleMemberSubmit} className="space-y-4">

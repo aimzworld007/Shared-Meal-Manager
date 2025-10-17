@@ -25,6 +25,7 @@ interface AuthContextType {
   reauthenticate: (password: string) => Promise<void>;
   changeEmail: (newEmail: string) => Promise<void>;
   changePassword: (newPassword: string) => Promise<void>;
+  deleteAccount: () => Promise<void>;
   error: string | null;
   clearError: () => void;
 }
@@ -135,8 +136,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       handleError(err);
     }
   };
+  
+  const deleteAccount = async () => {
+    setError(null);
+    try {
+      await api.deleteUserAccount();
+      // onAuthChange listener will automatically set user to null, triggering logout.
+    } catch (err) {
+      handleError(err);
+    }
+  };
 
-  const value = { user, loading, login, signUp, logout, resetPassword, reauthenticate, changeEmail, changePassword, error, clearError };
+  const value = { user, loading, login, signUp, logout, resetPassword, reauthenticate, changeEmail, changePassword, deleteAccount, error, clearError };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
