@@ -16,12 +16,13 @@ import Modal from './Modal';
 import AccountsView from './AccountsView';
 import SimpleBalanceList from './SimpleBalanceList';
 import RemindersPage from './RemindersPage';
-import { GroceryItem, Deposit, Reminder } from '../types';
+import ShoppingListPage from './ShoppingListPage';
+import { GroceryItem, Deposit, Reminder, ShoppingListItem } from '../types';
 import { logoUrl as defaultLogoUrl } from '../assets/logo';
 import { formatCurrency } from '../utils/formatters';
 
 // Define view types for bottom navigation
-type View = 'home' | 'grocery' | 'accounts' | 'reminders' | 'settings';
+type View = 'home' | 'grocery' | 'list' | 'accounts' | 'reminders' | 'settings';
 
 // --- Icon Components ---
 const HomeIcon = ({ className = "h-6 w-6" }: { className?: string }) => (
@@ -32,6 +33,11 @@ const HomeIcon = ({ className = "h-6 w-6" }: { className?: string }) => (
 const GroceryIcon = ({ className = "h-6 w-6" }: { className?: string }) => (
     <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+    </svg>
+);
+const ListIcon = ({ className = "h-6 w-6" }: { className?: string }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
     </svg>
 );
 const AccountsIcon = ({ className = "h-6 w-6" }: { className?: string }) => (
@@ -93,7 +99,7 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
   const { members, activePeriod, isPeriodLoading } = mealManager;
   const designatedMealManager = members.find(m => m.isMealManager);
 
-  const openGroceryModal = (item: GroceryItem | null = null) => {
+  const openGroceryModal = (item: GroceryItem | null = null, fromShoppingList: { name: string, items: ShoppingListItem[] } | null = null) => {
     if (members.length === 0) {
       alert("Please add a member first before adding an expense.");
       return;
@@ -101,6 +107,14 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
     if (item) {
         setEditingGrocery(item);
         setGroceryForm({ name: item.name, amount: item.amount.toString(), date: item.date, purchaserId: item.purchaserId });
+    } else if (fromShoppingList) {
+        setEditingGrocery(null);
+        setGroceryForm({
+            name: fromShoppingList.name,
+            amount: '', // User needs to enter the total amount
+            date: new Date().toISOString().split('T')[0],
+            purchaserId: members[0].id
+        });
     } else {
         setEditingGrocery(null);
         setGroceryForm({ name: '', amount: '', date: new Date().toISOString().split('T')[0], purchaserId: members[0].id });
@@ -197,7 +211,7 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
         );
     }
 
-    if (!activePeriod && view !== 'settings' && view !== 'reminders') {
+    if (!activePeriod && !['settings', 'reminders', 'list'].includes(view)) {
         return <SettingsPage mealManager={mealManager} />;
     }
 
@@ -237,6 +251,8 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
                     onPurchaserChange={mealManager.setSelectedPurchaser}
                     onResetFilters={mealManager.resetFilters}
                 />;
+      case 'list':
+          return <ShoppingListPage mealManager={mealManager} onConvertToExpense={openGroceryModal} />;
       case 'accounts':
         return <AccountsView mealManager={mealManager} onEditDeposit={openDepositModal} />;
       case 'reminders':
@@ -300,7 +316,8 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
   
   const navItems = [
       { name: 'home', Icon: HomeIcon, requiresPeriod: true }, 
-      { name: 'grocery', Icon: GroceryIcon, requiresPeriod: true }, 
+      { name: 'grocery', Icon: GroceryIcon, requiresPeriod: true },
+      { name: 'list', Icon: ListIcon, requiresPeriod: false },
       { name: 'accounts', Icon: AccountsIcon, requiresPeriod: true },
       { name: 'reminders', Icon: ReminderIcon, requiresPeriod: false },
       { name: 'settings', Icon: SettingsIcon, requiresPeriod: false }
@@ -341,13 +358,13 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
       {/* Bottom Navigation */}
       <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-lg z-40">
         <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
-          <div className="flex justify-around h-16">
+          <div className="grid grid-cols-6 h-16">
             {navItems.map(item => (
                 <button
                     key={item.name}
                     onClick={() => setView(item.name as View)}
                     disabled={!activePeriod && item.requiresPeriod}
-                    className={`flex flex-col items-center justify-center w-full text-sm font-medium transition-colors duration-200 ${
+                    className={`flex flex-col items-center justify-center w-full text-xs sm:text-sm font-medium transition-colors duration-200 ${
                         view === item.name ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
                     } ${!activePeriod && item.requiresPeriod ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
@@ -363,6 +380,12 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
         onAddExpense={openGroceryModal}
         onAddDeposit={openDepositModal}
         onAddReminder={openReminderModal}
+        onAddShoppingItem={() => {
+            if (view !== 'list') setView('list');
+            // A bit of a hack to ensure the add item input is focused.
+            // A more robust solution might use a ref and context.
+            setTimeout(() => window.dispatchEvent(new Event('focusAddItem')), 100);
+        }}
       />
 
       {/* Grocery Modal */}
