@@ -2,7 +2,7 @@
  * @file Dashboard.tsx
  * @summary The main user dashboard, displaying all meal and expense data for the logged-in user.
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { useTheme } from '../App';
 import { useMealManager } from '../hooks/useMealManager';
@@ -46,7 +46,7 @@ const ReminderIcon = ({ className = "h-6 w-6" }: { className?: string }) => (
 );
 const SettingsIcon = ({ className = "h-6 w-6" }: { className?: string }) => (
     <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066 2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
     </svg>
 );
@@ -253,9 +253,38 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
   };
 
   const HomeView: React.FC = () => {
-      const { summary } = mealManager;
+      const { summary, activePeriod } = mealManager;
+      const [currentDateTime, setCurrentDateTime] = useState(new Date());
+
+      useEffect(() => {
+        const timerId = setInterval(() => setCurrentDateTime(new Date()), 1000);
+        return () => clearInterval(timerId); // Cleanup interval on component unmount
+      }, []);
+
+      const formatDate = (date: Date) => {
+        return date.toLocaleDateString(undefined, {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+        });
+      };
+      
+      const formatTime = (date: Date) => {
+        return date.toLocaleTimeString();
+      };
+
       return (
           <div className="space-y-6">
+              <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6 text-center transition-shadow duration-300 hover:shadow-xl">
+                <p className="text-lg font-medium text-gray-500 dark:text-gray-400">{formatDate(currentDateTime)}</p>
+                <p className="text-5xl font-bold text-gray-800 dark:text-gray-200 my-2 tracking-wider">{formatTime(currentDateTime)}</p>
+                {activePeriod && (
+                    <p className="text-xl font-semibold text-indigo-600 dark:text-indigo-400">
+                        Running Period: <span className="font-bold">{activePeriod.name}</span>
+                    </p>
+                )}
+              </div>
               <SimpleBalanceList members={summary.members} onViewDetails={() => setView('accounts')} />
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   <SummaryCircle title="Total Members" value={summary.totalMembers.toString()} colorClassName="bg-blue-500" />
@@ -285,7 +314,7 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
               <img src={logoUrl || defaultLogoUrl} alt="Logo" className="h-10 w-10 object-contain" />
-              <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 ml-3">{activePeriod?.name || 'Meal Manager'}</h1>
+              <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 ml-3">Meal Manager</h1>
             </div>
             <div className="flex items-center space-x-2">
               <button
