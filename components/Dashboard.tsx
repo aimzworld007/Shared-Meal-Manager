@@ -14,6 +14,7 @@ import FAB from './FAB';
 import SummaryCircle from './SummaryCircle';
 import Modal from './Modal';
 import AccountsView from './AccountsView';
+import MainBalanceSummary from './BalanceSummary';
 import { GroceryItem, Deposit } from '../types';
 import { logoUrl as defaultLogoUrl } from '../assets/logo';
 import { formatCurrency } from '../utils/formatters';
@@ -205,6 +206,7 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
       const { summary } = mealManager;
       return (
           <div className="space-y-6">
+              <MainBalanceSummary summary={summary} />
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   <SummaryCircle title="Total Members" value={summary.totalMembers.toString()} colorClassName="bg-blue-500" />
                   <SummaryCircle title="Total Grocery Cost" value={formatCurrency(summary.totalGroceryCost)} colorClassName="bg-red-500" />
@@ -227,7 +229,11 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
               <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 ml-3">{activePeriod?.name || 'Meal Manager'}</h1>
             </div>
             <div className="flex items-center space-x-2">
-              <button onClick={toggleTheme} className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+              >
                   {theme === 'light' ? <MoonIcon /> : <SunIcon />}
               </button>
               <button onClick={logout} className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">

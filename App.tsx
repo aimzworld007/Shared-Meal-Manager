@@ -27,26 +27,37 @@ export const useTheme = () => {
 
 const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [theme, setTheme] = useState<Theme>(() => {
-        if (typeof window !== 'undefined' && window.localStorage) {
-            const storedTheme = window.localStorage.getItem('theme');
-            if (storedTheme === 'light' || storedTheme === 'dark') {
-                return storedTheme;
+        // This function runs once to determine the initial theme.
+        try {
+            if (typeof window !== 'undefined' && window.localStorage) {
+                // 1. Check for a saved theme in localStorage.
+                const storedTheme = window.localStorage.getItem('theme');
+                if (storedTheme === 'light' || storedTheme === 'dark') {
+                    return storedTheme;
+                }
+                // 2. If no saved theme, check the user's OS-level preference.
+                if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    return 'dark';
+                }
             }
-            if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                return 'dark';
-            }
+        } catch (error) {
+            console.warn("Could not access localStorage for theme. Using default.", error);
         }
+        // 3. Default to 'light' theme.
         return 'light';
     });
 
     useEffect(() => {
         const root = window.document.documentElement;
-        if (theme === 'dark') {
-            root.classList.add('dark');
-        } else {
-            root.classList.remove('dark');
+        // Apply the 'dark' class to the root <html> element for Tailwind CSS.
+        root.classList.toggle('dark', theme === 'dark');
+        
+        // Persist the current theme to localStorage to remember the user's choice.
+        try {
+            localStorage.setItem('theme', theme);
+        } catch (error) {
+            console.warn("Could not save theme to localStorage.", error);
         }
-        localStorage.setItem('theme', theme);
     }, [theme]);
 
     const toggleTheme = () => {

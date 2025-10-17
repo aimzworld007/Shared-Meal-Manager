@@ -58,7 +58,6 @@ export const useMealManager = () => {
             const depositsWithName = depositsData.map(d => ({ ...d, userName: memberMap.get(d.userId) || 'Unknown Member' }));
             
             setGroceries(groceriesWithName);
-            // Fix: Corrected typo from 'deposWithName' to 'depositsWithName'.
             setAllDeposits(depositsWithName);
             setMembers(membersData);
 
@@ -183,7 +182,7 @@ export const useMealManager = () => {
             await Promise.all(promises);
             fetchDataForPeriod();
         } catch (err) {
-            // Fix: The 'err' object in a catch block is of type 'unknown' and cannot be directly assigned to a state that expects a string. We need to check its type and extract a message.
+            // Fix: The 'err' object in a catch block is of type 'unknown', which is not assignable to type 'string'. Check if 'err' is an instance of Error to safely extract the message.
             let message = "Failed to import grocery items.";
             if (err instanceof Error) {
                 message = err.message;
