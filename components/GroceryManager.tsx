@@ -3,15 +3,17 @@
  * @summary Component for adding, viewing, and deleting grocery expenses for all members.
  */
 import React, { useState } from 'react';
-import { GroceryItem, Participant } from '../types';
+import { GroceryItem, Participant, Period } from '../types';
 import ConfirmationModal from './ConfirmationModal';
 import { formatCurrency } from '../utils/formatters';
 
 interface GroceryManagerProps {
   groceries: GroceryItem[];
   members: Participant[];
+  activePeriod: Period | null;
   onEditGrocery: (item: GroceryItem) => void;
   onDeleteGrocery: (item: GroceryItem) => Promise<void>;
+  onNavigateToAccounts: () => void;
   // Filter props
   startDate: string;
   endDate: string;
@@ -49,6 +51,7 @@ const GroceryManager: React.FC<GroceryManagerProps> = (props) => {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<GroceryItem | null>(null);
   const [isFilterVisible, setIsFilterVisible] = useState(false);
+  const [isEditModeEnabled, setIsEditModeEnabled] = useState(false);
   
   const handleDeleteClick = (item: GroceryItem) => {
     setItemToDelete(item);
@@ -67,26 +70,50 @@ const GroceryManager: React.FC<GroceryManagerProps> = (props) => {
     props.onResetFilters();
     setIsFilterVisible(false);
   };
+
+  const formatDateShort = (isoDate: string) => {
+      // Create date in UTC to avoid timezone shifts when parsing YYYY-MM-DD
+      const date = new Date(`${isoDate}T00:00:00Z`);
+      return date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' }).replace(' ', '-');
+  };
   
   const totalGroceryCost = props.groceries.reduce((sum, item) => sum + item.amount, 0);
 
   return (
     <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg">
-      <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-b dark:border-gray-700 rounded-t-lg flex justify-between items-center flex-wrap gap-2">
+      <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-b dark:border-gray-700 rounded-t-lg flex justify-between items-center flex-wrap gap-4">
         <div>
-          <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200">Grocery Bill</h3>
-          <p className="text-2xl font-semibold text-indigo-600 dark:text-indigo-400">{formatCurrency(totalGroceryCost)}</p>
+          <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200">
+            Grocery bill Month Of {props.activePeriod?.name}
+          </h3>
+           <button onClick={props.onNavigateToAccounts} className="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800">
+            Show More in Balance Tab
+          </button>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
             <button 
               onClick={() => setIsFilterVisible(!isFilterVisible)} 
-              className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+              className="inline-flex items-center gap-2 px-3 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
               aria-expanded={isFilterVisible}
               aria-controls="filter-panel"
             >
                 <FilterIcon />
-                {isFilterVisible ? 'Hide Filters' : 'Show Filters'}
+                {isFilterVisible ? 'Hide' : 'Filter'}
             </button>
+            <label htmlFor="edit-toggle" className="flex items-center cursor-pointer">
+                <span className="mr-2 text-sm font-medium text-gray-700 dark:text-gray-300">Edit</span>
+                <div className="relative">
+                    <input
+                        id="edit-toggle"
+                        type="checkbox"
+                        className="sr-only"
+                        checked={isEditModeEnabled}
+                        onChange={() => setIsEditModeEnabled(!isEditModeEnabled)}
+                    />
+                    <div className={`block w-12 h-6 rounded-full transition ${isEditModeEnabled ? 'bg-indigo-600' : 'bg-gray-300 dark:bg-gray-600'}`}></div>
+                    <div className={`dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform ${isEditModeEnabled ? 'translate-x-6' : ''}`}></div>
+                </div>
+            </label>
         </div>
       </div>
 
@@ -169,36 +196,44 @@ const GroceryManager: React.FC<GroceryManagerProps> = (props) => {
             <tr>
               <th scope="col" className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
               <th scope="col" className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Item</th>
-              <th scope="col" className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Purchased By</th>
+              <th scope="col" className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">By</th>
               <th scope="col" className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</th>
-              <th scope="col" className="relative px-2 sm:px-6 py-3"><span className="sr-only">Actions</span></th>
+              {isEditModeEnabled && <th scope="col" className="relative px-2 sm:px-6 py-3"><span className="sr-only">Actions</span></th>}
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             {props.groceries.length === 0 && (
-              <tr><td colSpan={5} className="px-2 sm:px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">No expenses found for the selected filters.</td></tr>
+              <tr><td colSpan={isEditModeEnabled ? 5 : 4} className="px-2 sm:px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">No expenses found for the selected filters.</td></tr>
             )}
             {props.groceries.map((item) => (
               <tr key={item.id}>
-                <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">{new Date(item.date).toLocaleDateString()}</td>
+                <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">{formatDateShort(item.date)}</td>
                 <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{item.name}</td>
                 <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">{item.purchaserName}</td>
                 <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-800 dark:text-gray-200">{formatCurrency(item.amount)}</td>
-                <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                   <div className="flex items-center justify-end space-x-4">
-                        <button onClick={() => props.onEditGrocery(item)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300" title="Edit Expense" aria-label="Edit Expense">
-                           <EditIcon />
-                        </button>
-                        <button onClick={() => handleDeleteClick(item)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300" title="Delete Expense" aria-label="Delete Expense">
-                           <DeleteIcon />
-                        </button>
-                   </div>
-                </td>
+                {isEditModeEnabled && (
+                    <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                       <div className="flex items-center justify-end space-x-4">
+                            <button onClick={() => props.onEditGrocery(item)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300" title="Edit Expense" aria-label="Edit Expense">
+                               <EditIcon />
+                            </button>
+                            <button onClick={() => handleDeleteClick(item)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300" title="Delete Expense" aria-label="Delete Expense">
+                               <DeleteIcon />
+                            </button>
+                       </div>
+                    </td>
+                )}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+       <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-t dark:border-gray-700 rounded-b-lg text-right">
+            <p className="text-lg font-bold text-gray-800 dark:text-gray-200">
+                Total Grocery Amount: <span className="text-indigo-600 dark:text-indigo-400">{formatCurrency(totalGroceryCost)}</span>
+            </p>
+        </div>
 
       <ConfirmationModal
         isOpen={isConfirmOpen}

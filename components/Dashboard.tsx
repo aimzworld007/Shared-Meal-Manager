@@ -220,8 +220,10 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
         return <GroceryManager 
                     groceries={mealManager.summary.allGroceries} 
                     members={members}
+                    activePeriod={activePeriod}
                     onEditGrocery={openGroceryModal}
                     onDeleteGrocery={mealManager.deleteGroceryItem}
+                    onNavigateToAccounts={() => setView('accounts')}
                     startDate={mealManager.startDate}
                     endDate={mealManager.endDate}
                     minAmount={mealManager.minAmount}
