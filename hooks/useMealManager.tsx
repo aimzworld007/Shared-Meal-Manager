@@ -182,8 +182,8 @@ export const useMealManager = () => {
             const promises = itemsToAdd.map(item => api.addGrocery(activePeriod.id, item));
             await Promise.all(promises);
             fetchDataForPeriod();
-        // Fix: Correctly handle the error object in the catch block by treating it as 'unknown' and using a type guard.
         } catch (err) {
+            // Fix: The 'err' object in a catch block is of type 'unknown' and cannot be directly assigned to a state that expects a string. We need to check its type and extract a message.
             let message = "Failed to import grocery items.";
             if (err instanceof Error) {
                 message = err.message;

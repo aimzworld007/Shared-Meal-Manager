@@ -27,6 +27,12 @@ service cloud.firestore {
     match /users/{userId}/{document=**} {
       allow read, write: if request.auth.uid == userId;
     }
+
+    // Allow authenticated users to read site settings, and admins to write them.
+    match /settings/site {
+      allow get: if request.auth != null;
+      allow write: if request.auth.token.email == 'aimctgbd@gmail.com';
+    }
   }
 }`;
 
@@ -45,16 +51,16 @@ service cloud.firestore {
               <strong>Error:</strong> {errorMessage}
             </p>
             <p>
-              This error means your Firestore Security Rules are not set up correctly to allow you to access your own data. For this app to work, each user should only be able to read and write their own documents.
+              This error means your Firestore Security Rules are not set up correctly. For this app to work, each user must be able to read and write their own documents, and also read the global site settings.
             </p>
             
             <div className="bg-red-100 dark:bg-red-900/30 p-4 rounded-lg">
                 <h4 className="font-bold text-lg text-red-800 dark:text-red-300">How to Fix</h4>
-                <p className="mt-1">You need to update your Firestore security rules to protect user data.</p>
+                <p className="mt-1">You need to update your Firestore security rules to protect user data and enable site features.</p>
                 <ol className="list-decimal list-inside space-y-2 mt-2 pl-2">
                   <li>Open your project in the <a href="https://console.firebase.google.com/" target="_blank" rel="noopener noreferrer" className="underline font-bold hover:text-red-900 dark:hover:text-red-200">Firebase Console</a>.</li>
                   <li>Navigate to the <strong>Firestore Database</strong> &gt; <strong>Rules</strong> tab.</li>
-                  <li>Replace the entire content of the rules editor with the code below. This ensures that users can only access data under their own user ID.</li>
+                  <li>Replace the entire content of the rules editor with the code below. This ensures that users can only access their own data and that site settings are properly configured.</li>
                 </ol>
                  <pre className="bg-gray-800 text-white p-3 rounded-md text-sm overflow-x-auto mt-2">
                     <code>{securityRuleSnippet}</code>
