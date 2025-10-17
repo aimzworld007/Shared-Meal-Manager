@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import * as api from '../services/firebase';
-import { GroceryItem, Deposit, Participant, Member, Period, ArchiveData } from '../types';
+import { GroceryItem, Deposit, Participant, Member, Period, ArchiveData, Reminder } from '../types';
 import { ParsedGroceryItem } from '../utils/csvParser';
 
 export const useMealManager = () => {
@@ -12,6 +12,7 @@ export const useMealManager = () => {
     const [groceries, setGroceries] = useState<GroceryItem[]>([]);
     const [allDeposits, setAllDeposits] = useState<Deposit[]>([]);
     const [members, setMembers] = useState<Participant[]>([]);
+    const [reminders, setReminders] = useState<Reminder[]>([]);
     
     // State for filtering
     const [startDate, setStartDate] = useState<string>('');
@@ -41,15 +42,25 @@ export const useMealManager = () => {
             setGroceries([]);
             setAllDeposits([]);
             setLoading(false);
+            // Still fetch non-period-specific data like members and reminders
+            try {
+                const [membersData, remindersData] = await Promise.all([api.getMembers(), api.getReminders()]);
+                setMembers(membersData);
+                setReminders(remindersData);
+            } catch (err) {
+                 console.error("Data Fetch Error (No Period):", err);
+                 setError("Could not load members or reminders.");
+            }
             return;
         }
         setLoading(true);
         setError(null);
         try {
-            const [membersData, groceriesData, depositsData] = await Promise.all([
+            const [membersData, groceriesData, depositsData, remindersData] = await Promise.all([
                 api.getMembers(),
                 api.getAllGroceries(activePeriod.id),
-                api.getAllDeposits(activePeriod.id)
+                api.getAllDeposits(activePeriod.id),
+                api.getReminders()
             ]);
             
             const memberMap = new Map(membersData.map(m => [m.id, m.name]));
@@ -60,6 +71,7 @@ export const useMealManager = () => {
             setGroceries(groceriesWithName);
             setAllDeposits(depositsWithName);
             setMembers(membersData);
+            setReminders(remindersData);
 
         } catch (err: any) {
             console.error("Data Fetch Error:", err);
@@ -182,7 +194,7 @@ export const useMealManager = () => {
             await Promise.all(promises);
             fetchDataForPeriod();
         } catch (err) {
-            // Fix: Type 'unknown' is not assignable to type 'string'. Safely handle the error object by checking its type before accessing properties.
+            // FIX: Safely handle the error object by checking its type before accessing properties, as 'err' is of type 'unknown'.
             let message = "Failed to import grocery items.";
             if (err instanceof Error) {
                 message = err.message;
@@ -254,6 +266,29 @@ export const useMealManager = () => {
         } catch (err) { setError("Failed to set meal manager."); throw err; }
     };
     
+    // --- Reminder Management ---
+    const addReminderItem = async (item: Omit<Reminder, 'id'>) => {
+        try {
+            await api.addReminder(item);
+            fetchDataForPeriod(); // Refetch all data to update reminder list
+        } catch (err) { setError("Failed to add reminder."); throw err; }
+    };
+
+    const updateReminderItem = async (reminderId: string, data: Partial<Omit<Reminder, 'id'>>) => {
+        try {
+            await api.updateReminder(reminderId, data);
+            fetchDataForPeriod();
+        } catch (err) { setError("Failed to update reminder."); throw err; }
+    };
+
+    const deleteReminderItem = async (reminderId: string) => {
+        try {
+            await api.deleteReminder(reminderId);
+            fetchDataForPeriod();
+        } catch (err) { setError("Failed to delete reminder."); throw err; }
+    };
+
+
     // --- Period Management ---
     const updateActivePeriod = async (periodData: Omit<Period, 'id' | 'status'>) => {
         if (!activePeriod) throw new Error("No active period to update.");
@@ -320,6 +355,7 @@ export const useMealManager = () => {
         summary,
         members,
         groceries,
+        reminders,
         activePeriod,
         isPeriodLoading,
         refreshData: fetchDataForPeriod,
@@ -337,6 +373,10 @@ export const useMealManager = () => {
         updateMember,
         deleteMember,
         setMealManager,
+        // Reminders
+        addReminderItem,
+        updateReminderItem,
+        deleteReminderItem,
         // Periods
         archiveAndStartNewPeriod,
         createFirstPeriod,

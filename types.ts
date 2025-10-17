@@ -97,3 +97,14 @@ export interface Archive {
     periodEndDate: string;
     data: ArchiveData;
 }
+
+/**
+ * Represents a task or reminder for the group.
+ */
+export interface Reminder {
+  id: string;
+  title: string;
+  dueDate: string; // ISO string format for date and time
+  isComplete: boolean;
+  createdAt: string; // ISO string
+}

@@ -32,7 +32,7 @@ import {
 // FIX: Added Firebase Storage imports for handling file uploads.
 import { getStorage, ref, getDownloadURL, uploadBytes } from "firebase/storage";
 // FIX: Added SiteSettings type import.
-import { User, GroceryItem, Deposit, Participant, Period, ArchiveData, SiteSettings } from "../types";
+import { User, GroceryItem, Deposit, Participant, Period, ArchiveData, SiteSettings, Reminder } from "../types";
 
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
@@ -196,6 +196,30 @@ export const setMealManager = async (newManagerId: string) => {
 
     await batch.commit();
 };
+
+// --- Reminders (not period-specific) ---
+export const getReminders = async (): Promise<Reminder[]> => {
+    const remindersCol = getUserSubcollection('reminders');
+    const q = query(remindersCol, orderBy('dueDate', 'asc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Reminder));
+};
+
+export const addReminder = (reminderData: Omit<Reminder, 'id'>) => {
+    const remindersCol = getUserSubcollection('reminders');
+    return addDoc(remindersCol, reminderData);
+};
+
+export const updateReminder = (reminderId: string, data: Partial<Omit<Reminder, 'id'>>) => {
+    const reminderDocRef = doc(getUserSubcollection('reminders'), reminderId);
+    return updateDoc(reminderDocRef, data);
+};
+
+export const deleteReminder = (reminderId: string) => {
+    const reminderDocRef = doc(getUserSubcollection('reminders'), reminderId);
+    return deleteDoc(reminderDocRef);
+};
+
 
 // --- Meal Periods & Archiving ---
 export const getPeriods = async (): Promise<Period[]> => {

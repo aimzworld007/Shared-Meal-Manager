@@ -15,12 +15,13 @@ import SummaryCircle from './SummaryCircle';
 import Modal from './Modal';
 import AccountsView from './AccountsView';
 import MainBalanceSummary from './BalanceSummary';
-import { GroceryItem, Deposit } from '../types';
+import RemindersPage from './RemindersPage';
+import { GroceryItem, Deposit, Reminder } from '../types';
 import { logoUrl as defaultLogoUrl } from '../assets/logo';
 import { formatCurrency } from '../utils/formatters';
 
 // Define view types for bottom navigation
-type View = 'home' | 'grocery' | 'accounts' | 'settings';
+type View = 'home' | 'grocery' | 'accounts' | 'reminders' | 'settings';
 
 // --- Icon Components ---
 const HomeIcon = ({ className = "h-6 w-6" }: { className?: string }) => (
@@ -36,6 +37,11 @@ const GroceryIcon = ({ className = "h-6 w-6" }: { className?: string }) => (
 const AccountsIcon = ({ className = "h-6 w-6" }: { className?: string }) => (
     <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+    </svg>
+);
+const ReminderIcon = ({ className = "h-6 w-6" }: { className?: string }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
     </svg>
 );
 const SettingsIcon = ({ className = "h-6 w-6" }: { className?: string }) => (
@@ -78,6 +84,11 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [editingDeposit, setEditingDeposit] = useState<Deposit | null>(null);
   const [depositForm, setDepositForm] = useState({ amount: '', date: new Date().toISOString().split('T')[0], userId: '', notes: '' });
+
+  const [isReminderModalOpen, setIsReminderModalOpen] = useState(false);
+  const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);
+  const [reminderForm, setReminderForm] = useState({ title: '', dueDate: '' });
+
 
   const { members, activePeriod, isPeriodLoading } = mealManager;
   const designatedMealManager = members.find(m => m.isMealManager);
@@ -148,6 +159,35 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
       } catch(err) { console.error(err); }
   };
 
+  const openReminderModal = (item: Reminder | null = null) => {
+    if (item) {
+        setEditingReminder(item);
+        // Format date for datetime-local input
+        const localDate = new Date(item.dueDate).toISOString().slice(0, 16);
+        setReminderForm({ title: item.title, dueDate: localDate });
+    } else {
+        setEditingReminder(null);
+        setReminderForm({ title: '', dueDate: '' });
+    }
+    setIsReminderModalOpen(true);
+  };
+
+  const handleReminderSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+        const data = {
+            title: reminderForm.title,
+            dueDate: new Date(reminderForm.dueDate).toISOString(),
+        };
+        if (editingReminder) {
+            await mealManager.updateReminderItem(editingReminder.id, data);
+        } else {
+            await mealManager.addReminderItem({ ...data, isComplete: false, createdAt: new Date().toISOString() });
+        }
+        setIsReminderModalOpen(false);
+    } catch(err) { console.error(err); }
+  };
+
   const renderView = () => {
     if (isPeriodLoading) {
         return (
@@ -157,11 +197,11 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
         );
     }
 
-    if (!activePeriod) {
+    if (!activePeriod && view !== 'settings' && view !== 'reminders') {
         return <SettingsPage mealManager={mealManager} />;
     }
 
-    if (mealManager.loading) {
+    if (mealManager.loading && view !== 'settings') {
         return (
             <div className="flex-grow flex items-center justify-center">
                  <p className="text-gray-600 dark:text-gray-400">Loading meal data...</p>
@@ -196,6 +236,13 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
                 />;
       case 'accounts':
         return <AccountsView mealManager={mealManager} onEditDeposit={openDepositModal} />;
+      case 'reminders':
+        return <RemindersPage 
+                    reminders={mealManager.reminders} 
+                    onEditReminder={openReminderModal}
+                    onUpdateReminder={mealManager.updateReminderItem}
+                    onDeleteReminder={mealManager.deleteReminderItem}
+                />;
       case 'settings':
         return <SettingsPage mealManager={mealManager} />;
       default:
@@ -218,6 +265,15 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
           </div>
       );
   };
+  
+  const navItems = [
+      { name: 'home', Icon: HomeIcon, requiresPeriod: true }, 
+      { name: 'grocery', Icon: GroceryIcon, requiresPeriod: true }, 
+      { name: 'accounts', Icon: AccountsIcon, requiresPeriod: true },
+      { name: 'reminders', Icon: ReminderIcon, requiresPeriod: false },
+      { name: 'settings', Icon: SettingsIcon, requiresPeriod: false }
+  ];
+
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -254,14 +310,14 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
       <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-lg z-40">
         <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
           <div className="flex justify-around h-16">
-            {[{ name: 'home', Icon: HomeIcon }, { name: 'grocery', Icon: GroceryIcon }, { name: 'accounts', Icon: AccountsIcon }, { name: 'settings', Icon: SettingsIcon }].map(item => (
+            {navItems.map(item => (
                 <button
                     key={item.name}
                     onClick={() => setView(item.name as View)}
-                    disabled={!activePeriod && item.name !== 'settings'}
+                    disabled={!activePeriod && item.requiresPeriod}
                     className={`flex flex-col items-center justify-center w-full text-sm font-medium transition-colors duration-200 ${
                         view === item.name ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-                    } ${!activePeriod && item.name !== 'settings' ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    } ${!activePeriod && item.requiresPeriod ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                     <item.Icon className="h-6 w-6 mb-1" />
                     <span className="capitalize">{item.name}</span>
@@ -271,12 +327,11 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
         </div>
       </nav>
 
-      {activePeriod && ['home', 'grocery', 'accounts'].includes(view) && (
-        <FAB
-          onAddExpense={openGroceryModal}
-          onAddDeposit={openDepositModal}
-        />
-      )}
+      <FAB
+        onAddExpense={openGroceryModal}
+        onAddDeposit={openDepositModal}
+        onAddReminder={openReminderModal}
+      />
 
       {/* Grocery Modal */}
       <Modal title={editingGrocery ? "Edit Expense" : "Add New Expense"} isOpen={isGroceryModalOpen} onClose={() => setIsGroceryModalOpen(false)}>
@@ -340,6 +395,25 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
            <div className="pt-2 flex justify-end">
              <button type="submit" className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700">
                 {editingDeposit ? "Update Deposit" : "Add Deposit"}
+             </button>
+           </div>
+        </form>
+      </Modal>
+
+      {/* Reminder Modal */}
+      <Modal title={editingReminder ? "Edit Reminder" : "Add New Reminder"} isOpen={isReminderModalOpen} onClose={() => setIsReminderModalOpen(false)}>
+        <form onSubmit={handleReminderSubmit} className="space-y-4">
+            <div>
+             <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Task / Title</label>
+             <input type="text" id="title" value={reminderForm.title} onChange={(e) => setReminderForm({...reminderForm, title: e.target.value})} required placeholder="e.g., Pay electricity bill" className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+           </div>
+           <div>
+              <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Due Date & Time</label>
+              <input type="datetime-local" id="dueDate" value={reminderForm.dueDate} onChange={(e) => setReminderForm({...reminderForm, dueDate: e.target.value})} required className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+           </div>
+           <div className="pt-2 flex justify-end">
+             <button type="submit" className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700">
+                {editingReminder ? "Update Reminder" : "Add Reminder"}
              </button>
            </div>
         </form>
