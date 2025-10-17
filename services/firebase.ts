@@ -29,15 +29,10 @@ import {
   where,
   limit,
 } from "firebase/firestore";
-// Fix: Add Firebase storage imports for site settings features.
-import {
-  getStorage,
-  ref,
-  uploadBytes,
-  getDownloadURL,
-} from "firebase/storage";
-// Fix: Import the missing SiteSettings type.
-import { User, GroceryItem, Deposit, Participant, SiteSettings, Period, ArchiveData } from "../types";
+// FIX: Added Firebase Storage imports for handling file uploads.
+import { getStorage, ref, getDownloadURL, uploadBytes } from "firebase/storage";
+// FIX: Added SiteSettings type import.
+import { User, GroceryItem, Deposit, Participant, Period, ArchiveData, SiteSettings } from "../types";
 
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
@@ -54,7 +49,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-// Fix: Initialize Firebase Storage.
+// FIX: Initialize Firebase Storage.
 const storage = getStorage(app);
 
 // --- Auth Service ---
@@ -312,26 +307,29 @@ export const archivePeriodAndStartNew = async (
     }
 };
 
-
-// Fix: Add missing functions for managing site settings.
+// FIX: Added functions to manage global site settings for admins.
 // --- Site Settings (Admin) ---
 export const getSiteSettings = async (): Promise<SiteSettings> => {
-  const settingsDocRef = doc(db, 'settings', 'site');
-  const docSnap = await getDoc(settingsDocRef);
-  if (docSnap.exists()) {
-    return docSnap.data() as SiteSettings;
-  }
-  return {}; // Return empty object if no settings found
+    const settingsRef = doc(db, 'settings', 'site');
+    const docSnap = await getDoc(settingsRef);
+    if (docSnap.exists()) {
+        return docSnap.data() as SiteSettings;
+    }
+    // Return default/empty settings if not found, to prevent app from crashing on first run.
+    return { siteTitle: 'Shared Meal Manager', siteDescription: 'Manage your shared meals easily.', logoUrl: '' };
 };
 
 export const updateSiteSettings = (data: Partial<SiteSettings>) => {
-  const settingsDocRef = doc(db, 'settings', 'site');
-  return setDoc(settingsDocRef, data, { merge: true });
+    const settingsRef = doc(db, 'settings', 'site');
+    // Use setDoc with merge: true to create/update the document without overwriting existing fields.
+    return setDoc(settingsRef, data, { merge: true });
 };
 
 export const uploadLogo = async (file: File): Promise<string> => {
-  // Use a consistent file path to overwrite the logo
-  const storageRef = ref(storage, 'site/logo.png');
-  await uploadBytes(storageRef, file);
-  return getDownloadURL(storageRef);
+    // Create a unique file path to prevent overwriting existing files.
+    const filePath = `logos/${new Date().getTime()}_${file.name}`;
+    const storageRef = ref(storage, filePath);
+    const snapshot = await uploadBytes(storageRef, file);
+    const downloadURL = await getDownloadURL(snapshot.ref);
+    return downloadURL;
 };

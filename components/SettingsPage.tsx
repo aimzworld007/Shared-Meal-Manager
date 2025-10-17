@@ -11,7 +11,6 @@ import CSVImportModal from './CSVImportModal';
 import { Participant } from '../types';
 import { useMealManager } from '../hooks/useMealManager';
 import PeriodManager from './PeriodManager';
-import SiteSettingsManager from './SiteSettingsManager';
 import DeleteAccountConfirmationModal from './DeleteAccountConfirmationModal';
 
 interface SettingsPageProps {
@@ -317,9 +316,6 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ mealManager }) => {
         </div>
       </div>
       
-      {/* Admin Site Settings */}
-      {user?.isAdmin && <SiteSettingsManager />}
-
       {/* Danger Zone */}
       <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/50 shadow-lg rounded-lg">
         <div className="px-6 py-4 bg-red-100 dark:bg-red-900/30 rounded-t-lg">

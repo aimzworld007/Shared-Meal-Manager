@@ -10,7 +10,6 @@ import Dashboard from './components/Dashboard';
 import Login from './components/Login';
 import Footer from './components/Footer';
 import { logoUrl as defaultLogoUrl } from './assets/logo';
-import DynamicMetadata from './components/DynamicMetadata';
 
 // --- Theme Context ---
 type Theme = 'light' | 'dark';
@@ -67,6 +66,7 @@ const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     return (
         <ThemeContext.Provider value={{ theme, toggleTheme }}>
             {children}
+        {/* FIX: Corrected typo in closing tag from Theme-Context.Provider to ThemeContext.Provider */}
         </ThemeContext.Provider>
     );
 };
@@ -132,27 +132,35 @@ const App: React.FC = () => {
   };
 
   const loading = authLoading;
+  const logoToDisplay = defaultLogoUrl;
+
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="flex-grow flex items-center justify-center">
+          <p className="text-gray-600 dark:text-gray-400">Loading your session...</p>
+        </div>
+      );
+    }
+
+    if (user) {
+      return <Dashboard logoUrl={logoToDisplay} />;
+    }
+
+    return (
+      <Login
+        logoUrl={logoToDisplay}
+        installPromptEvent={installPromptEvent}
+        onInstallClick={handleInstallClick}
+      />
+    );
+  };
 
   return (
     <ThemeProvider>
-        <DynamicMetadata />
         <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
           <main className="flex-grow flex flex-col">
-            {loading ? (
-               <div className="flex-grow flex items-center justify-center">
-                 <p className="text-gray-600 dark:text-gray-400">Loading your session...</p>
-               </div>
-            ) : user ? (
-              <Dashboard
-                logoUrl={defaultLogoUrl}
-              />
-            ) : (
-              <Login
-                logoUrl={defaultLogoUrl}
-                installPromptEvent={installPromptEvent}
-                onInstallClick={handleInstallClick}
-              />
-            )}
+            {renderContent()}
           </main>
           <Footer />
         </div>

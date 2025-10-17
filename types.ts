@@ -56,6 +56,13 @@ export interface Member extends Participant {
     balance: number;
 }
 
+// FIX: Added SiteSettings interface for admin-configurable site-wide settings.
+export interface SiteSettings {
+  siteTitle: string;
+  siteDescription: string;
+  logoUrl: string;
+}
+
 export interface Period {
     id: string;
     name: string;
@@ -89,15 +96,4 @@ export interface Archive {
     periodStartDate: string;
     periodEndDate: string;
     data: ArchiveData;
-}
-
-
-// Fix: Add missing SiteSettings type definition.
-/**
- * Represents the global site settings, configurable by an admin.
- */
-export interface SiteSettings {
-  siteTitle?: string;
-  siteDescription?: string;
-  logoUrl?: string;
 }
