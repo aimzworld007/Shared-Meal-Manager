@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 import { GroceryItem, Participant, Period } from '../types';
 import ConfirmationModal from './ConfirmationModal';
 import { formatCurrency } from '../utils/formatters';
+import { useAuth } from '../hooks/useAuth';
 
 interface GroceryManagerProps {
   groceries: GroceryItem[];
@@ -49,6 +50,7 @@ const DeleteIcon = ({ className = "h-5 w-5" }) => (
 
 
 const GroceryManager: React.FC<GroceryManagerProps> = (props) => {
+  const { currency } = useAuth();
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<GroceryItem | null>(null);
   const [isFilterVisible, setIsFilterVisible] = useState(false);
@@ -211,7 +213,7 @@ const GroceryManager: React.FC<GroceryManagerProps> = (props) => {
                 <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">{formatDateShort(item.date)}</td>
                 <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{item.name}</td>
                 <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">{item.purchaserName}</td>
-                <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-800 dark:text-gray-200">{formatCurrency(item.amount)}</td>
+                <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-800 dark:text-gray-200">{formatCurrency(item.amount, currency)}</td>
                 {isEditModeEnabled && (
                     <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                        <div className="flex items-center justify-end space-x-4">
@@ -232,11 +234,11 @@ const GroceryManager: React.FC<GroceryManagerProps> = (props) => {
 
        <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-t dark:border-gray-700 rounded-b-lg text-center space-y-1">
             <p className="text-lg font-bold text-gray-800 dark:text-gray-200">
-                Total Grocery Amount: <span className="text-indigo-600 dark:text-indigo-400">{formatCurrency(totalGroceryCost)}</span>
+                Total Grocery Amount: <span className="text-indigo-600 dark:text-indigo-400">{formatCurrency(totalGroceryCost, currency)}</span>
             </p>
             {props.members.length > 0 && (
                 <p className="text-lg font-bold text-gray-800 dark:text-gray-200">
-                    {props.members.length} Person Average: <span className="text-indigo-600 dark:text-indigo-400">{formatCurrency(props.averageExpense)}</span>
+                    {props.members.length} Person Average: <span className="text-indigo-600 dark:text-indigo-400">{formatCurrency(props.averageExpense, currency)}</span>
                 </p>
             )}
         </div>

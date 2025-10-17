@@ -5,6 +5,7 @@
 import React from 'react';
 import { Member } from '../types';
 import { formatCurrency } from '../utils/formatters';
+import { useAuth } from '../hooks/useAuth';
 
 interface SimpleBalanceListProps {
   members: Member[];
@@ -18,6 +19,7 @@ const ArrowRightIcon = () => (
 );
 
 const SimpleBalanceList: React.FC<SimpleBalanceListProps> = ({ members, onViewDetails }) => {
+  const { currency } = useAuth();
   return (
     <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg">
         <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-b dark:border-gray-700 rounded-t-lg flex justify-between items-center">
@@ -41,7 +43,7 @@ const SimpleBalanceList: React.FC<SimpleBalanceListProps> = ({ members, onViewDe
                     <li key={member.id} className="py-3 flex justify-between items-center">
                         <span className="font-medium text-gray-800 dark:text-gray-200">{member.name}</span>
                         <span className={`font-semibold text-lg ${member.balance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                            {formatCurrency(member.balance)}
+                            {formatCurrency(member.balance, currency)}
                         </span>
                     </li>
                 ))}

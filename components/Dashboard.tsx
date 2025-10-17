@@ -71,7 +71,7 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, currency } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const mealManager = useMealManager();
   const [view, setView] = useState<View>('home');
@@ -289,9 +289,9 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
               <SimpleBalanceList members={summary.members} onViewDetails={() => setView('accounts')} />
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   <SummaryCircle title="Total Members" value={summary.totalMembers.toString()} colorClassName="bg-blue-500" />
-                  <SummaryCircle title="Total Grocery Cost" value={formatCurrency(summary.totalGroceryCost)} colorClassName="bg-red-500" />
-                  <SummaryCircle title="Total Deposits" value={formatCurrency(summary.totalDeposits)} colorClassName="bg-green-500" />
-                  <SummaryCircle title="Avg. Expense/Person" value={formatCurrency(summary.averageExpense)} colorClassName="bg-yellow-500" />
+                  <SummaryCircle title="Total Grocery Cost" value={formatCurrency(summary.totalGroceryCost, currency)} colorClassName="bg-red-500" />
+                  <SummaryCircle title="Total Deposits" value={formatCurrency(summary.totalDeposits, currency)} colorClassName="bg-green-500" />
+                  <SummaryCircle title="Avg. Expense/Person" value={formatCurrency(summary.averageExpense, currency)} colorClassName="bg-yellow-500" />
               </div>
               <SpendChart groceries={summary.allGroceries} />
           </div>
@@ -383,7 +383,7 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
              <input type="text" id="name" value={groceryForm.name} onChange={(e) => setGroceryForm({...groceryForm, name: e.target.value})} required placeholder="e.g., Rice, Vegetables" className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
            </div>
            <div>
-             <label htmlFor="amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Amount (AED)</label>
+             <label htmlFor="amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Amount ({currency})</label>
              <input type="number" id="amount" value={groceryForm.amount} onChange={(e) => setGroceryForm({...groceryForm, amount: e.target.value})} required min="0.01" step="0.01" placeholder="e.g., 55.50" className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
            </div>
            <div className="pt-2 flex justify-end">
@@ -408,7 +408,7 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
               <input type="date" id="deposit_date" value={depositForm.date} onChange={(e) => setDepositForm({...depositForm, date: e.target.value})} required className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
            </div>
             <div>
-             <label htmlFor="deposit_amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Amount (AED)</label>
+             <label htmlFor="deposit_amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Amount ({currency})</label>
              <input type="number" id="deposit_amount" value={depositForm.amount} onChange={(e) => setDepositForm({...depositForm, amount: e.target.value})} required min="0.01" step="0.01" placeholder="e.g., 200.00" className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
            </div>
            <div>

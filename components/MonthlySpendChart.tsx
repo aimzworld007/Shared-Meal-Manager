@@ -17,6 +17,7 @@ import {
 import { GroceryItem } from '../types';
 import { useTheme } from '../App';
 import { formatCurrencyShort } from '../utils/formatters';
+import { useAuth } from '../hooks/useAuth';
 
 ChartJS.register(
   CategoryScale,
@@ -33,6 +34,7 @@ interface SpendChartProps {
 
 const SpendChart: React.FC<SpendChartProps> = ({ groceries }) => {
   const { theme } = useTheme();
+  const { currency } = useAuth();
   const [view, setView] = useState<'daily' | 'monthly'>('daily');
 
   const monthlyChartData = useMemo(() => {
@@ -141,7 +143,7 @@ const SpendChart: React.FC<SpendChartProps> = ({ groceries }) => {
                 label += ': ';
               }
               if (context.parsed.y !== null) {
-                label += formatCurrencyShort(context.parsed.y);
+                label += formatCurrencyShort(context.parsed.y, currency);
               }
               return label;
             }
@@ -155,7 +157,7 @@ const SpendChart: React.FC<SpendChartProps> = ({ groceries }) => {
             color: textColor,
             callback: function(value) {
               if (typeof value === 'number') {
-                  return formatCurrencyShort(value);
+                  return formatCurrencyShort(value, currency);
               }
               return value;
             }
@@ -174,7 +176,7 @@ const SpendChart: React.FC<SpendChartProps> = ({ groceries }) => {
         }
       },
     };
-  }, [theme, view]);
+  }, [theme, view, currency]);
 
 
   return (

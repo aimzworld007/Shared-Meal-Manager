@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 import { Deposit } from '../types';
 import ConfirmationModal from './ConfirmationModal';
 import { formatCurrency } from '../utils/formatters';
+import { useAuth } from '../hooks/useAuth';
 
 const WhatsAppIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
@@ -32,6 +33,7 @@ interface MemberAndDepositManagerProps {
 }
 
 const MemberAndDepositManager: React.FC<MemberAndDepositManagerProps> = ({ deposits, onEditDeposit, onDeleteDeposit }) => {
+  const { currency } = useAuth();
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<Deposit | null>(null);
 
@@ -52,7 +54,7 @@ const MemberAndDepositManager: React.FC<MemberAndDepositManagerProps> = ({ depos
     const dateFormatted = new Date(item.date).toLocaleDateString();
     const message = `*Deposit Recorded*\n\n` +
                     `*Member:* ${item.userName}\n` +
-                    `*Amount:* ${formatCurrency(item.amount)}\n` +
+                    `*Amount:* ${formatCurrency(item.amount, currency)}\n` +
                     `*Date:* ${dateFormatted}\n\n` +
                     `Thank you for your contribution!`;
 
@@ -84,7 +86,7 @@ const MemberAndDepositManager: React.FC<MemberAndDepositManagerProps> = ({ depos
                 <tr key={item.id}>
                     <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{new Date(item.date).toLocaleDateString()}</td>
                     <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{item.userName}</td>
-                    <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-green-800 dark:text-green-400">{formatCurrency(item.amount)}</td>
+                    <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-green-800 dark:text-green-400">{formatCurrency(item.amount, currency)}</td>
                     <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex items-center justify-end gap-4">
                             <button onClick={() => handleShareWhatsApp(item)} className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300" title="Share on WhatsApp">

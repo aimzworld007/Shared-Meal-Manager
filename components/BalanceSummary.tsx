@@ -5,6 +5,7 @@
 import React from 'react';
 import { Member } from '../types';
 import { formatCurrency } from '../utils/formatters';
+import { useAuth } from '../hooks/useAuth';
 
 interface MainBalanceSummaryProps {
   summary: {
@@ -16,6 +17,7 @@ interface MainBalanceSummaryProps {
 }
 
 const MainBalanceSummary: React.FC<MainBalanceSummaryProps> = ({ summary }) => {
+  const { currency } = useAuth();
   const totalPaidAmount = summary.members.reduce((sum, member) => sum + member.totalPurchase, 0);
 
   return (
@@ -39,10 +41,10 @@ const MainBalanceSummary: React.FC<MainBalanceSummaryProps> = ({ summary }) => {
               <tr key={member.id}>
                 <td className="px-2 sm:px-4 py-2 whitespace-nowrap text-sm text-gray-800 dark:text-gray-300">{index + 1}</td>
                 <td className="px-2 sm:px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{member.name}</td>
-                <td className="px-2 sm:px-4 py-2 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{formatCurrency(member.totalPurchase)}</td>
-                <td className="px-2 sm:px-4 py-2 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{formatCurrency(member.totalDeposit)}</td>
+                <td className="px-2 sm:px-4 py-2 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{formatCurrency(member.totalPurchase, currency)}</td>
+                <td className="px-2 sm:px-4 py-2 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{formatCurrency(member.totalDeposit, currency)}</td>
                 <td className={`px-2 sm:px-4 py-2 whitespace-nowrap text-sm font-semibold ${member.balance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                  {formatCurrency(member.balance)}
+                  {formatCurrency(member.balance, currency)}
                 </td>
               </tr>
             ))}
@@ -53,8 +55,8 @@ const MainBalanceSummary: React.FC<MainBalanceSummaryProps> = ({ summary }) => {
           <tfoot className="bg-gray-100 dark:bg-gray-700 border-t-2 border-gray-300 dark:border-gray-600">
             <tr>
               <td colSpan={2} className="px-2 sm:px-4 py-2 text-right text-sm font-bold text-gray-800 dark:text-gray-200">Total Amount</td>
-              <td className="px-2 sm:px-4 py-2 whitespace-nowrap text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(totalPaidAmount)}</td>
-              <td className="px-2 sm:px-4 py-2 whitespace-nowrap text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(summary.totalDeposits)}</td>
+              <td className="px-2 sm:px-4 py-2 whitespace-nowrap text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(totalPaidAmount, currency)}</td>
+              <td className="px-2 sm:px-4 py-2 whitespace-nowrap text-sm font-bold text-gray-900 dark:text-gray-100">{formatCurrency(summary.totalDeposits, currency)}</td>
               <td className="px-2 sm:px-4 py-2"></td>
             </tr>
           </tfoot>
@@ -64,11 +66,11 @@ const MainBalanceSummary: React.FC<MainBalanceSummaryProps> = ({ summary }) => {
         <div className="inline-block text-left space-y-1">
             <p className="text-sm">
                 <span className="font-semibold text-gray-700 dark:text-gray-300">Total Grocery Amount: </span> 
-                <span className="font-bold text-gray-900 dark:text-gray-100">{formatCurrency(summary.totalGroceryCost)}</span>
+                <span className="font-bold text-gray-900 dark:text-gray-100">{formatCurrency(summary.totalGroceryCost, currency)}</span>
             </p>
             <p className="text-sm">
                 <span className="font-semibold text-gray-700 dark:text-gray-300">{summary.members.length} Person Average: </span> 
-                <span className="font-bold text-gray-900 dark:text-gray-100">{formatCurrency(summary.averageExpense)}</span>
+                <span className="font-bold text-gray-900 dark:text-gray-100">{formatCurrency(summary.averageExpense, currency)}</span>
             </p>
         </div>
       </div>

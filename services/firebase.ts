@@ -58,7 +58,11 @@ export const signUp = async (email: string, pass: string) => {
   const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
   const user = userCredential.user;
   // Create a document for the new user so we can add subcollections to it.
-  await setDoc(doc(db, "users", user.uid), { email: user.email, createdAt: new Date() });
+  await setDoc(doc(db, "users", user.uid), { 
+    email: user.email, 
+    createdAt: new Date(),
+    currency: 'AED' // Set default currency on signup
+  });
   return userCredential;
 };
 export const signOut = () => firebaseSignOut(auth);
@@ -103,6 +107,22 @@ export const deleteUserAccount = async () => {
 
 
 // --- Firestore Service (User-Scoped) ---
+
+// --- User Data ---
+export const getUserData = async (uid: string): Promise<User | null> => {
+    const userDocRef = doc(db, 'users', uid);
+    const docSnap = await getDoc(userDocRef);
+    if (docSnap.exists()) {
+        // We only cast here because we know the shape from signup and updates
+        return { uid, ...(docSnap.data() as Omit<User, 'uid'>) };
+    }
+    return null;
+}
+
+export const updateUserSettings = (uid: string, data: Partial<User>) => {
+    const userDocRef = doc(db, 'users', uid);
+    return updateDoc(userDocRef, data);
+};
 
 // --- Helper for period-specific subcollections ---
 const getPeriodSubcollection = (periodId: string, collectionName: string) => {

@@ -4,6 +4,7 @@ import { Period } from '../types';
 import Modal from './Modal';
 import * as api from '../services/firebase';
 import { generateArchivePdf } from '../utils/pdfGenerator';
+import { useAuth } from '../hooks/useAuth';
 
 const DownloadIcon = ({ className = "h-5 w-5" }) => (
     <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -13,6 +14,7 @@ const DownloadIcon = ({ className = "h-5 w-5" }) => (
 
 
 const PeriodManager: React.FC<{ mealManager: ReturnType<typeof useMealManager> }> = ({ mealManager }) => {
+    const { currency } = useAuth();
     const { activePeriod, archiveAndStartNewPeriod, createFirstPeriod, updateActivePeriod } = mealManager;
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
@@ -92,7 +94,7 @@ const PeriodManager: React.FC<{ mealManager: ReturnType<typeof useMealManager> }
     const handleDownloadPdf = async (archiveId: string) => {
         try {
             const archive = await api.getArchive(archiveId);
-            generateArchivePdf(archive);
+            generateArchivePdf(archive, currency);
         } catch (error) {
             console.error("Failed to generate PDF:", error);
             alert("Could not download the archive PDF. It may have been deleted or an error occurred.");

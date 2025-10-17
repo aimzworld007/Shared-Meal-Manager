@@ -5,6 +5,7 @@
 import React, { useState, useEffect } from 'react';
 import { Member, GroceryItem } from '../types';
 import { formatCurrency } from '../utils/formatters';
+import { useAuth } from '../hooks/useAuth';
 
 interface IndividualAccountsProps {
     members: Member[];
@@ -12,6 +13,7 @@ interface IndividualAccountsProps {
 }
 
 const IndividualAccounts: React.FC<IndividualAccountsProps> = ({ members, groceries }) => {
+    const { currency } = useAuth();
     const [selectedMemberId, setSelectedMemberId] = useState<string>('');
 
     useEffect(() => {
@@ -72,7 +74,7 @@ const IndividualAccounts: React.FC<IndividualAccountsProps> = ({ members, grocer
                                 {memberGroceries.map(item => (
                                     <tr key={item.id}>
                                         <td className="px-2 sm:px-4 py-2 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">{new Date(item.date).toLocaleDateString()}</td>
-                                        <td className="px-2 sm:px-4 py-2 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{formatCurrency(item.amount)}</td>
+                                        <td className="px-2 sm:px-4 py-2 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{formatCurrency(item.amount, currency)}</td>
                                         <td className="px-2 sm:px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{item.name}</td>
                                     </tr>
                                 ))}
@@ -83,7 +85,7 @@ const IndividualAccounts: React.FC<IndividualAccountsProps> = ({ members, grocer
                             <tfoot className="bg-gray-100 dark:bg-gray-700 border-t-2 border-gray-300 dark:border-gray-600">
                                 <tr>
                                     <td className="px-2 sm:px-4 py-2 text-right font-bold text-gray-800 dark:text-gray-200">Total</td>
-                                    <td colSpan={2} className="px-2 sm:px-4 py-2 font-bold text-gray-900 dark:text-gray-100">{formatCurrency(totalPaid)}</td>
+                                    <td colSpan={2} className="px-2 sm:px-4 py-2 font-bold text-gray-900 dark:text-gray-100">{formatCurrency(totalPaid, currency)}</td>
                                 </tr>
                             </tfoot>
                         </table>

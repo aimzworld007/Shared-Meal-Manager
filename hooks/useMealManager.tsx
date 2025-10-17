@@ -193,8 +193,8 @@ export const useMealManager = () => {
             const promises = itemsToAdd.map(item => api.addGrocery(activePeriod.id, item));
             await Promise.all(promises);
             fetchDataForPeriod();
-// FIX: The error object 'err' from a catch block is of type 'unknown'. A type check is added to safely handle the error and extract a meaningful message before setting the error state, preventing a type mismatch.
         } catch (err) {
+            // FIX: The error object `err` is of type `unknown` and cannot be directly passed to setError, which expects a string. Type checking is added to extract a valid error message.
             let message = "Failed to import grocery items.";
             if (err instanceof Error) {
                 message = err.message;

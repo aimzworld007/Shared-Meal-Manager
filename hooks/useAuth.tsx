@@ -17,6 +17,7 @@ const SUPER_ADMIN_EMAIL = 'aimctgbd@gmail.com';
  */
 interface AuthContextType {
   user: User | null;
+  currency: string;
   loading: boolean;
   login: (email: string, pass: string) => Promise<void>;
   signUp: (email: string, pass: string) => Promise<void>;
@@ -26,6 +27,7 @@ interface AuthContextType {
   changeEmail: (newEmail: string) => Promise<void>;
   changePassword: (newPassword: string) => Promise<void>;
   deleteAccount: () => Promise<void>;
+  updateCurrency: (currency: string) => Promise<void>;
   error: string | null;
   clearError: () => void;
 }
@@ -51,12 +53,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const currency = user?.currency || 'AED';
 
   useEffect(() => {
-    const unsubscribe = api.onAuthChange((firebaseUser: FirebaseUser | null) => {
+    const unsubscribe = api.onAuthChange(async (firebaseUser: FirebaseUser | null) => {
       if (firebaseUser) {
-        const isAdmin = firebaseUser.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
-        setUser({ uid: firebaseUser.uid, email: firebaseUser.email, isAdmin });
+        // Fetch full user profile from Firestore
+        const userData = await api.getUserData(firebaseUser.uid);
+        if (userData) {
+          const isAdmin = userData.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+          setUser({ ...userData, isAdmin });
+        } else {
+            // This might happen if Firestore doc creation failed during signup, create a fallback
+            const isAdmin = firebaseUser.email?.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
+            setUser({ uid: firebaseUser.uid, email: firebaseUser.email, isAdmin, currency: 'AED' });
+        }
       } else {
         setUser(null);
       }
@@ -120,6 +131,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       await api.changeUserEmail(newEmail);
       // Manually update user state since onAuthChange might not fire immediately
       if(user) {
+        await api.updateUserSettings(user.uid, { email: newEmail });
         const isAdmin = newEmail.toLowerCase() === SUPER_ADMIN_EMAIL.toLowerCase();
         setUser({...user, email: newEmail, isAdmin});
       }
@@ -146,8 +158,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       handleError(err);
     }
   };
+  
+  const updateCurrency = async (newCurrency: string) => {
+    if (user) {
+        try {
+            await api.updateUserSettings(user.uid, { currency: newCurrency });
+            setUser(prevUser => prevUser ? { ...prevUser, currency: newCurrency } : null);
+        } catch (err) {
+            console.error("Failed to update currency:", err);
+            // Optionally set an error state here
+            throw err;
+        }
+    }
+  };
 
-  const value = { user, loading, login, signUp, logout, resetPassword, reauthenticate, changeEmail, changePassword, deleteAccount, error, clearError };
+  const value = { user, loading, login, signUp, logout, resetPassword, reauthenticate, changeEmail, changePassword, deleteAccount, error, clearError, currency, updateCurrency };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

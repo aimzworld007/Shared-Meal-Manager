@@ -6,7 +6,7 @@ import { formatCurrency } from './formatters';
 // Fix: Removed module augmentation for jspdf to prevent "module not found" errors.
 // Type safety is bypassed by casting to 'any' where the autoTable plugin is used.
 
-export const generateArchivePdf = (archive: Archive) => {
+export const generateArchivePdf = (archive: Archive, currency: string) => {
     const doc = new jsPDF();
     const { periodName, periodStartDate, periodEndDate, data } = archive;
     const { members, groceries, deposits, summary } = data;
@@ -24,9 +24,9 @@ export const generateArchivePdf = (archive: Archive) => {
     // --- Summary Table ---
     const summaryBody = members.map(m => [
         m.name,
-        formatCurrency(m.totalPurchase),
-        formatCurrency(m.totalDeposit),
-        formatCurrency(m.balance),
+        formatCurrency(m.totalPurchase, currency),
+        formatCurrency(m.totalDeposit, currency),
+        formatCurrency(m.balance, currency),
     ]);
 
     (doc as any).autoTable({
@@ -35,8 +35,8 @@ export const generateArchivePdf = (archive: Archive) => {
         body: summaryBody,
         foot: [[
             'Totals',
-            formatCurrency(summary.totalGroceryCost),
-            formatCurrency(summary.totalDeposits),
+            formatCurrency(summary.totalGroceryCost, currency),
+            formatCurrency(summary.totalDeposits, currency),
             ''
         ]],
         theme: 'striped',
@@ -49,7 +49,7 @@ export const generateArchivePdf = (archive: Archive) => {
     // --- Overall Stats ---
     doc.setFontSize(10);
     doc.text(`Total Members: ${summary.totalMembers}`, 14, finalY + 10);
-    doc.text(`Average Expense per Person: ${formatCurrency(summary.averageExpense)}`, 14, finalY + 15);
+    doc.text(`Average Expense per Person: ${formatCurrency(summary.averageExpense, currency)}`, 14, finalY + 15);
 
     // --- Grocery List Table ---
     doc.addPage();
@@ -59,7 +59,7 @@ export const generateArchivePdf = (archive: Archive) => {
         new Date(g.date).toLocaleDateString(),
         g.name,
         g.purchaserName,
-        formatCurrency(g.amount),
+        formatCurrency(g.amount, currency),
     ]);
     (doc as any).autoTable({
         startY: 30,
@@ -76,7 +76,7 @@ export const generateArchivePdf = (archive: Archive) => {
     const depositBody = deposits.map(d => [
         new Date(d.date).toLocaleDateString(),
         d.userName,
-        formatCurrency(d.amount),
+        formatCurrency(d.amount, currency),
         d.notes || '-',
     ]);
     (doc as any).autoTable({

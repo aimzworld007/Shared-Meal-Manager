@@ -12,6 +12,7 @@ import { Participant } from '../types';
 import { useMealManager } from '../hooks/useMealManager';
 import PeriodManager from './PeriodManager';
 import DeleteAccountConfirmationModal from './DeleteAccountConfirmationModal';
+import CurrencySettings from './CurrencySettings';
 
 interface SettingsPageProps {
   mealManager: ReturnType<typeof useMealManager>;
@@ -224,6 +225,9 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ mealManager }) => {
 
       {/* Period Management */}
       <PeriodManager mealManager={mealManager} />
+      
+      {/* Currency Settings */}
+      <CurrencySettings />
 
       {/* Member Management */}
       <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg">
