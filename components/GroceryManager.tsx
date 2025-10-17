@@ -14,6 +14,7 @@ interface GroceryManagerProps {
   onEditGrocery: (item: GroceryItem) => void;
   onDeleteGrocery: (item: GroceryItem) => Promise<void>;
   onNavigateToAccounts: () => void;
+  averageExpense: number;
   // Filter props
   startDate: string;
   endDate: string;
@@ -229,10 +230,15 @@ const GroceryManager: React.FC<GroceryManagerProps> = (props) => {
         </table>
       </div>
 
-       <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-t dark:border-gray-700 rounded-b-lg text-right">
+       <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-t dark:border-gray-700 rounded-b-lg text-center space-y-1">
             <p className="text-lg font-bold text-gray-800 dark:text-gray-200">
                 Total Grocery Amount: <span className="text-indigo-600 dark:text-indigo-400">{formatCurrency(totalGroceryCost)}</span>
             </p>
+            {props.members.length > 0 && (
+                <p className="text-lg font-bold text-gray-800 dark:text-gray-200">
+                    {props.members.length} Person Average: <span className="text-indigo-600 dark:text-indigo-400">{formatCurrency(props.averageExpense)}</span>
+                </p>
+            )}
         </div>
 
       <ConfirmationModal
