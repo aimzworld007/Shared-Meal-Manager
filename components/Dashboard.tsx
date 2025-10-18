@@ -14,7 +14,7 @@ import FAB from './FAB';
 import SummaryCircle from './SummaryCircle';
 import Modal from './Modal';
 import AccountsView from './AccountsView';
-import SimpleBalanceList from './SimpleBalanceList';
+import BalanceOverview from './BalanceOverview';
 import RemindersPage from './RemindersPage';
 import { GroceryItem, Deposit, Reminder } from '../types';
 import { logoUrl as defaultLogoUrl } from '../assets/logo';
@@ -286,7 +286,7 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
                     </p>
                 )}
               </div>
-              <SimpleBalanceList members={summary.members} onViewDetails={() => setView('accounts')} />
+              <BalanceOverview members={summary.members} onViewDetails={() => setView('accounts')} />
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                   <SummaryCircle title="Total Members" value={summary.totalMembers.toString()} colorClassName="bg-blue-500" />
                   <SummaryCircle title="Total Grocery Cost" value={formatCurrency(summary.totalGroceryCost, currency)} colorClassName="bg-red-500" />
