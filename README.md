@@ -29,14 +29,6 @@ This application provides a secure, private space for each registered user to ma
     - Check the **Individual Accounts** tables to see a detailed list of who bought what.
 6.  **Filter and Export**: Use the filter controls at the top of the dashboard to view data for a specific period. When you're ready, click **Download CSV** in the Main Balance Summary to export the data.
 
-## For Administrators
-
-An administrator account (e.g., `aimctgbd@gmail.com`) has special privileges:
-- Navigate to the **Settings** page by clicking the button in the header.
-- In the "Site Management (Admin)" panel, you can:
-    - Change the **Site Title** that appears in the browser tab.
-    - Update the **Site Description** for search engines.
-    - Upload a new **Site Logo**.
 
 ## Technical Stack
 
