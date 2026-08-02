@@ -64,38 +64,38 @@ const MemberAndDepositManager: React.FC<MemberAndDepositManagerProps> = ({ depos
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg">
-        <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-b dark:border-gray-700 rounded-t-lg flex flex-wrap justify-between items-center gap-2">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Deposit History</h3>
+    <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2rem] overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+        <div className="px-8 py-5 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center flex-wrap gap-2">
+            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Deposit History</h3>
         </div>
         <div className="overflow-x-auto">
             <table className="min-w-full">
-            <thead className="bg-gray-100 dark:bg-gray-700">
+            <thead className="bg-slate-50 dark:bg-slate-800/50">
                 <tr>
-                <th scope="col" className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Date</th>
-                <th scope="col" className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Member</th>
-                <th scope="col" className="px-2 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Amount</th>
-                <th scope="col" className="relative px-2 sm:px-6 py-3"><span className="sr-only">Actions</span></th>
+                <th scope="col" className="px-4 sm:px-8 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
+                <th scope="col" className="px-4 sm:px-8 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Member</th>
+                <th scope="col" className="px-4 sm:px-8 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Amount</th>
+                <th scope="col" className="relative px-4 sm:px-8 py-4"><span className="sr-only">Actions</span></th>
                 </tr>
             </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-100 dark:divide-slate-800/60">
                 {deposits.length === 0 && (
-                <tr><td colSpan={4} className="px-2 sm:px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">No deposits added yet.</td></tr>
+                <tr><td colSpan={4} className="px-4 sm:px-8 py-8 text-center text-sm text-slate-500 dark:text-slate-400">No deposits added yet.</td></tr>
                 )}
                 {deposits.map((item) => (
-                <tr key={item.id}>
-                    <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{new Date(item.date).toLocaleDateString()}</td>
-                    <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{item.userName}</td>
-                    <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-sm font-medium text-green-800 dark:text-green-400">{formatCurrency(item.amount, currency)}</td>
-                    <td className="px-2 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center justify-end gap-4">
-                            <button onClick={() => handleShareWhatsApp(item)} className="text-green-600 hover:text-green-800 dark:text-green-400 dark:hover:text-green-300" title="Share on WhatsApp">
+                <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                    <td className="px-4 sm:px-8 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">{new Date(item.date).toLocaleDateString()}</td>
+                    <td className="px-4 sm:px-8 py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-white">{item.userName}</td>
+                    <td className="px-4 sm:px-8 py-4 whitespace-nowrap text-sm font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(item.amount, currency)}</td>
+                    <td className="px-4 sm:px-8 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex items-center justify-end gap-2">
+                            <button onClick={() => handleShareWhatsApp(item)} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-full dark:text-emerald-400 dark:hover:bg-emerald-900/30 transition-colors active:scale-95" title="Share on WhatsApp">
                                 <WhatsAppIcon />
                             </button>
-                            <button onClick={() => onEditDeposit(item)} className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300" title="Edit or Transfer Deposit">
+                            <button onClick={() => onEditDeposit(item)} className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-full dark:text-indigo-400 dark:hover:bg-indigo-900/30 transition-colors active:scale-95" title="Edit or Transfer Deposit">
                                 <EditIcon />
                             </button>
-                            <button onClick={() => handleDeleteClick(item)} className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300" title="Delete Deposit">
+                            <button onClick={() => handleDeleteClick(item)} className="p-2 text-red-600 hover:bg-red-50 rounded-full dark:text-red-400 dark:hover:bg-red-900/30 transition-colors active:scale-95" title="Delete Deposit">
                                 <DeleteIcon />
                             </button>
                         </div>

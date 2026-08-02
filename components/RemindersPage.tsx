@@ -80,7 +80,7 @@ const RemindersPage: React.FC<RemindersPageProps> = ({ reminders, onEditReminder
                 if (permission === 'granted') {
                     new Notification('Notifications Enabled!', {
                         body: 'You will now receive reminders for your tasks.',
-                        icon: 'https://i.ibb.co/ycwhj9tt/logo.jpg',
+                        icon: '/logo.jpg',
                     });
                 }
             });
@@ -91,7 +91,7 @@ const RemindersPage: React.FC<RemindersPageProps> = ({ reminders, onEditReminder
         if ('Notification' in window && Notification.permission === 'granted') {
             new Notification('Task Reminder', {
                 body: title,
-                icon: 'https://i.ibb.co/ycwhj9tt/logo.jpg',
+                icon: '/logo.jpg',
             });
         }
     };
@@ -130,21 +130,21 @@ const RemindersPage: React.FC<RemindersPageProps> = ({ reminders, onEditReminder
 
     return (
         <div className="space-y-8 max-w-4xl mx-auto">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Reminders</h1>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Reminders</h1>
             
             {notificationPermission !== 'granted' && (
-                <div className="bg-yellow-50 dark:bg-yellow-900/30 border-l-4 border-yellow-400 p-4 rounded-md">
+                <div className="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 p-5 rounded-2xl">
                     <div className="flex">
                         <div className="ml-3">
-                            <p className="text-sm text-yellow-700 dark:text-yellow-200">
+                            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
                                 {notificationPermission === 'denied'
                                     ? 'You have blocked notifications. To get reminders, please enable them in your browser settings.'
                                     : 'Enable browser notifications to get timely reminders for your tasks.'
                                 }
                             </p>
                             {notificationPermission === 'default' && (
-                                <div className="mt-2 text-sm">
-                                    <button onClick={requestNotificationPermission} className="font-medium text-yellow-700 hover:text-yellow-600 dark:text-yellow-200 dark:hover:text-yellow-100">
+                                <div className="mt-3 text-sm">
+                                    <button onClick={requestNotificationPermission} className="font-bold text-amber-700 hover:text-amber-800 dark:text-amber-200 dark:hover:text-amber-100 transition-colors bg-amber-100 dark:bg-amber-800/30 px-4 py-2 rounded-full">
                                         Enable Notifications
                                     </button>
                                 </div>
@@ -155,26 +155,26 @@ const RemindersPage: React.FC<RemindersPageProps> = ({ reminders, onEditReminder
             )}
 
             {/* Upcoming Reminders */}
-            <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg">
-                <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-b dark:border-gray-700 rounded-t-lg">
-                    <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Upcoming</h3>
+            <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2rem] overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                <div className="px-8 py-5 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
+                    <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Upcoming</h3>
                 </div>
-                <ul className="divide-y divide-gray-200 dark:divide-gray-700">
-                    {upcoming.length === 0 && <p className="text-center text-gray-500 dark:text-gray-400 py-6">No upcoming reminders. Add one using the button below!</p>}
+                <ul className="divide-y divide-slate-100 dark:divide-slate-800/60">
+                    {upcoming.length === 0 && <p className="text-center text-slate-500 dark:text-slate-400 py-10 font-medium">No upcoming reminders. Add one using the button below!</p>}
                     {upcoming.map(r => (
-                        <li key={r.id} className="p-4 flex items-center justify-between">
+                        <li key={r.id} className="p-6 flex items-center justify-between hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
                             <div className="flex items-center">
-                                <button onClick={() => handleToggleComplete(r)} className="text-gray-400 hover:text-green-500 mr-4">
-                                    <CircleIcon />
+                                <button onClick={() => handleToggleComplete(r)} className="text-slate-400 hover:text-emerald-500 dark:text-slate-500 dark:hover:text-emerald-400 mr-5 transition-colors">
+                                    <CircleIcon className="h-7 w-7" />
                                 </button>
                                 <div>
-                                    <p className="text-md font-medium text-gray-900 dark:text-gray-100">{r.title}</p>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">{new Date(r.dueDate).toLocaleString()}</p>
+                                    <p className="text-lg font-bold text-slate-900 dark:text-white">{r.title}</p>
+                                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-0.5">{new Date(r.dueDate).toLocaleString()}</p>
                                 </div>
                             </div>
-                            <div className="flex items-center space-x-2">
-                                <button onClick={() => onEditReminder(r)} className="p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700" title="Edit Reminder"><EditIcon /></button>
-                                <button onClick={() => handleDeleteClick(r)} className="p-2 rounded-full text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50" title="Delete Reminder"><DeleteIcon /></button>
+                            <div className="flex items-center gap-2">
+                                <button onClick={() => onEditReminder(r)} className="p-2.5 rounded-full text-indigo-500 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-900/30 transition-colors active:scale-95" title="Edit Reminder"><EditIcon /></button>
+                                <button onClick={() => handleDeleteClick(r)} className="p-2.5 rounded-full text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30 transition-colors active:scale-95" title="Delete Reminder"><DeleteIcon /></button>
                             </div>
                         </li>
                     ))}
@@ -183,24 +183,24 @@ const RemindersPage: React.FC<RemindersPageProps> = ({ reminders, onEditReminder
             
             {/* Completed Reminders */}
             {completed.length > 0 && (
-                <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg">
-                    <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-b dark:border-gray-700 rounded-t-lg">
-                        <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Completed</h3>
+                <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2rem] overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                    <div className="px-8 py-5 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
+                        <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Completed</h3>
                     </div>
-                    <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+                    <ul className="divide-y divide-slate-100 dark:divide-slate-800/60">
                         {completed.map(r => (
-                            <li key={r.id} className="p-4 flex items-center justify-between opacity-60">
+                            <li key={r.id} className="p-6 flex items-center justify-between opacity-60 hover:opacity-100 transition-opacity">
                                 <div className="flex items-center">
-                                    <button onClick={() => handleToggleComplete(r)} className="text-green-500 mr-4">
-                                        <CheckCircleIcon />
+                                    <button onClick={() => handleToggleComplete(r)} className="text-emerald-500 mr-5 transition-colors">
+                                        <CheckCircleIcon className="h-7 w-7" />
                                     </button>
                                     <div>
-                                        <p className="text-md font-medium text-gray-900 dark:text-gray-100 line-through">{r.title}</p>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400 line-through">{new Date(r.dueDate).toLocaleString()}</p>
+                                        <p className="text-lg font-bold text-slate-900 dark:text-white line-through">{r.title}</p>
+                                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-0.5 line-through">{new Date(r.dueDate).toLocaleString()}</p>
                                     </div>
                                 </div>
-                                <div className="flex items-center space-x-2">
-                                    <button onClick={() => handleDeleteClick(r)} className="p-2 rounded-full text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50" title="Delete Reminder"><DeleteIcon /></button>
+                                <div className="flex items-center gap-2">
+                                    <button onClick={() => handleDeleteClick(r)} className="p-2.5 rounded-full text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30 transition-colors active:scale-95" title="Delete Reminder"><DeleteIcon /></button>
                                 </div>
                             </li>
                         ))}

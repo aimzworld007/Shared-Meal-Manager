@@ -110,46 +110,46 @@ const PeriodManager: React.FC<{ mealManager: ReturnType<typeof useMealManager> }
         : (isEditMode ? 'Save Changes' : (activePeriod ? 'Archive & Start New' : 'Create Period'));
 
     return (
-        <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg">
-            <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 rounded-t-lg flex justify-between items-center">
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Meal Period Management</h3>
-                <button onClick={handleOpenCreateModal} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
+        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2rem] overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+            <div className="px-8 py-5 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Meal Period Management</h3>
+                <button onClick={handleOpenCreateModal} className="inline-flex items-center px-6 py-2.5 border border-transparent text-sm font-semibold rounded-full shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 transition-colors active:scale-95">
                     {activePeriod ? 'Archive & Start New' : 'Create First Period'}
                 </button>
             </div>
             
              {activePeriod && (
-                <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-                    <h4 className="text-md font-medium text-gray-700 dark:text-gray-300 mb-2">Active Period</h4>
+                <div className="p-8 border-b border-slate-100 dark:border-slate-800">
+                    <h4 className="text-sm font-bold text-slate-500 dark:text-slate-400 mb-4 tracking-wider uppercase">Active Period</h4>
                     <div className="flex justify-between items-center">
                         <div>
-                            <p className="font-semibold text-lg text-gray-800 dark:text-gray-200">{activePeriod.name}</p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                            <p className="font-extrabold text-2xl text-slate-900 dark:text-white tracking-tight">{activePeriod.name}</p>
+                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-1">
                                 {new Date(activePeriod.startDate).toLocaleDateString()} - {new Date(activePeriod.endDate).toLocaleDateString()}
                             </p>
                         </div>
-                        <button onClick={handleOpenEditModal} className="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300">
+                        <button onClick={handleOpenEditModal} className="text-sm font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors bg-indigo-50 dark:bg-indigo-900/30 px-4 py-2 rounded-full active:scale-95">
                             Edit Period
                         </button>
                     </div>
                 </div>
             )}
             
-            <div className="p-6">
-                <h4 className="text-md font-medium text-gray-700 dark:text-gray-300 mb-2">Archive History</h4>
+            <div className="p-8">
+                <h4 className="text-sm font-bold text-slate-500 dark:text-slate-400 mb-4 tracking-wider uppercase">Archive History</h4>
                 {isLoadingArchives ? (
-                    <p className="text-sm text-gray-500">Loading archives...</p>
+                    <p className="text-sm font-medium text-slate-500">Loading archives...</p>
                 ) : archivedPeriods.length > 0 ? (
-                    <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+                    <ul className="divide-y divide-slate-100 dark:divide-slate-800/60 -mx-8 px-8">
                         {archivedPeriods.map(p => (
-                            <li key={p.id} className="py-3 flex justify-between items-center">
+                            <li key={p.id} className="py-4 flex justify-between items-center group">
                                 <div>
-                                    <p className="font-medium text-gray-800 dark:text-gray-200">{p.name}</p>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                                    <p className="font-bold text-slate-900 dark:text-white">{p.name}</p>
+                                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-0.5">
                                         {new Date(p.startDate).toLocaleDateString()} - {new Date(p.endDate).toLocaleDateString()}
                                     </p>
                                 </div>
-                                <button onClick={() => handleDownloadPdf(p.id)} className="inline-flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800">
+                                <button onClick={() => handleDownloadPdf(p.id)} className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-indigo-600 dark:text-slate-400 dark:hover:text-indigo-400 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-full active:scale-95">
                                     <DownloadIcon className="h-4 w-4" />
                                     Download PDF
                                 </button>
@@ -157,53 +157,53 @@ const PeriodManager: React.FC<{ mealManager: ReturnType<typeof useMealManager> }
                         ))}
                     </ul>
                 ) : (
-                    <p className="text-sm text-gray-500 dark:text-gray-400">No archived periods found.</p>
+                    <p className="text-sm font-medium text-slate-500 dark:text-slate-400">No archived periods found.</p>
                 )}
             </div>
 
             <Modal title={modalTitle} isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {activePeriod && !isEditMode && (
-                        <div className="p-4 bg-yellow-50 dark:bg-yellow-900/50 border-l-4 border-yellow-400 text-yellow-800 dark:text-yellow-300 rounded-md">
-                            <p className="font-bold">You are about to archive the current period: "{activePeriod.name}".</p>
-                            <p className="text-sm">This will save a final report and start a fresh period. This action cannot be undone.</p>
+                        <div className="p-5 bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-400 text-amber-800 dark:text-amber-300 rounded-2xl">
+                            <p className="font-bold text-base tracking-tight">You are about to archive the current period: "{activePeriod.name}".</p>
+                            <p className="text-sm mt-1">This will save a final report and start a fresh period. This action cannot be undone.</p>
                         </div>
                     )}
-                    <h4 className="font-medium text-gray-900 dark:text-gray-100">{isEditMode ? 'Edit Period Details' : 'New Period Details'}</h4>
+                    <h4 className="font-bold text-slate-900 dark:text-white text-lg tracking-tight mb-2">{isEditMode ? 'Edit Period Details' : 'New Period Details'}</h4>
                     <div>
-                        <label htmlFor="periodName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Period Name</label>
-                        <input id="periodName" type="text" value={periodName} onChange={e => setPeriodName(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700" placeholder="e.g., July 2024" />
+                        <label htmlFor="periodName" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Period Name</label>
+                        <input id="periodName" type="text" value={periodName} onChange={e => setPeriodName(e.target.value)} required className="block w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-transparent rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-slate-700 sm:text-sm text-slate-900 dark:text-white transition-all" placeholder="e.g., July 2024" />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Start Date</label>
-                            <input id="startDate" type="date" value={startDate} onChange={e => setStartDate(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700" />
+                            <label htmlFor="startDate" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Start Date</label>
+                            <input id="startDate" type="date" value={startDate} onChange={e => setStartDate(e.target.value)} required className="block w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-transparent rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-slate-700 sm:text-sm text-slate-900 dark:text-white transition-all" />
                         </div>
                         <div>
-                            <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300">End Date</label>
-                            <input id="endDate" type="date" value={endDate} onChange={e => setEndDate(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700" />
+                            <label htmlFor="endDate" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">End Date</label>
+                            <input id="endDate" type="date" value={endDate} onChange={e => setEndDate(e.target.value)} required className="block w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-transparent rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-slate-700 sm:text-sm text-slate-900 dark:text-white transition-all" />
                         </div>
                     </div>
                      <div>
-                        <label htmlFor="periodType" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Period Type</label>
-                        <select id="periodType" value={periodType} onChange={e => setPeriodType(e.target.value as 'monthly' | 'weekly')} className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-200 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+                        <label htmlFor="periodType" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Period Type</label>
+                        <select id="periodType" value={periodType} onChange={e => setPeriodType(e.target.value as 'monthly' | 'weekly')} className="block w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-transparent rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-slate-700 sm:text-sm text-slate-900 dark:text-white transition-all appearance-none cursor-pointer">
                             <option value="monthly">Monthly</option>
                             <option value="weekly">Weekly</option>
                         </select>
                     </div>
                     {activePeriod && !isEditMode && (
-                        <div className="flex items-start">
-                            <div className="flex items-center h-5">
-                                <input id="transferBalances" name="transferBalances" type="checkbox" checked={transferBalances} onChange={e => setTransferBalances(e.target.checked)} className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded" />
+                        <div className="flex items-start mt-6 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                            <div className="flex items-center h-6">
+                                <input id="transferBalances" name="transferBalances" type="checkbox" checked={transferBalances} onChange={e => setTransferBalances(e.target.checked)} className="focus:ring-indigo-500 h-5 w-5 text-indigo-600 border-slate-300 rounded cursor-pointer" />
                             </div>
                             <div className="ml-3 text-sm">
-                                <label htmlFor="transferBalances" className="font-medium text-gray-700 dark:text-gray-300">Transfer Balances</label>
-                                <p className="text-gray-500 dark:text-gray-400">Carry over final balances from the current period to the new one.</p>
+                                <label htmlFor="transferBalances" className="font-bold text-slate-900 dark:text-white cursor-pointer select-none">Transfer Balances</label>
+                                <p className="text-slate-500 dark:text-slate-400 mt-0.5">Carry over final balances from the current period to the new one.</p>
                             </div>
                         </div>
                     )}
-                    <div className="pt-2 flex justify-end">
-                        <button type="submit" disabled={isSubmitting} className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 disabled:bg-green-400">
+                    <div className="pt-6 flex justify-end">
+                        <button type="submit" disabled={isSubmitting} className="inline-flex justify-center py-2.5 px-6 border border-transparent shadow-sm text-sm font-bold rounded-full text-white bg-emerald-600 hover:bg-emerald-700 transition-colors active:scale-95 disabled:bg-emerald-400 disabled:active:scale-100">
                            {submitButtonText}
                         </button>
                     </div>

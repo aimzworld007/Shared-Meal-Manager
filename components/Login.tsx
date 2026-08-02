@@ -145,30 +145,30 @@ const Login: React.FC<LoginProps> = ({ logoUrl, installPromptEvent, onInstallCli
   const isProcessing = loading || formLoading;
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-full py-12 px-4 sm:px-6 lg:px-8">
-      <div className="p-8 bg-white dark:bg-gray-800 rounded-lg shadow-xl text-center max-w-sm w-full">
-        <img src={logoUrl || defaultLogoUrl} alt="Shared Meal Manager Logo" className="w-40 h-40 object-contain mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">{titles[view]}</h2>
-        <p className="text-gray-600 dark:text-gray-300 mt-2 mb-6">
+    <div className="flex flex-col items-center justify-center min-h-full py-12 px-4 sm:px-6 lg:px-8 bg-slate-50 dark:bg-slate-950">
+      <div className="p-8 sm:p-10 bg-white dark:bg-slate-900 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 dark:border-slate-800 text-center max-w-sm w-full transition-all">
+        <img src={logoUrl || defaultLogoUrl} alt="Shared Meal Manager Logo" className="w-40 h-40 object-contain mx-auto mb-6" />
+        <h2 className="text-3xl font-bold text-slate-800 dark:text-white tracking-tight">{titles[view]}</h2>
+        <p className="text-slate-500 dark:text-slate-400 mt-3 mb-8 text-sm">
           {descriptions[view]}
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4 text-left">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email Address</label>
+            <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email Address</label>
             <input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              className="block w-full px-4 py-3 bg-slate-100 border-transparent rounded-xl shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:border-transparent sm:text-sm dark:bg-slate-800 dark:text-white transition-all"
               placeholder="you@example.com"
             />
           </div>
           {view !== 'forgot' && (
             <div>
-              <label htmlFor="password"className="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+              <label htmlFor="password"className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Password</label>
               <input
                 id="password"
                 type="password"
@@ -176,7 +176,7 @@ const Login: React.FC<LoginProps> = ({ logoUrl, installPromptEvent, onInstallCli
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 minLength={6}
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                className="block w-full px-4 py-3 bg-slate-100 border-transparent rounded-xl shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:border-transparent sm:text-sm dark:bg-slate-800 dark:text-white transition-all"
                 placeholder="••••••••"
               />
             </div>
@@ -184,10 +184,10 @@ const Login: React.FC<LoginProps> = ({ logoUrl, installPromptEvent, onInstallCli
 
           {(view === 'login' || view === 'signup') && (
             <div>
-              <label htmlFor="verification" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label htmlFor="verification" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Verification: What is...
               </label>
-              <p className="mt-1 text-center font-mono text-lg p-2 bg-gray-100 dark:bg-gray-700 rounded-md text-gray-800 dark:text-gray-200 select-none">
+              <p className="mt-1 text-center font-mono text-lg py-3 bg-indigo-50/50 dark:bg-indigo-900/20 rounded-xl text-indigo-700 dark:text-indigo-300 select-none border border-indigo-100 dark:border-indigo-800/50">
                 {challenge.problem}
               </p>
               <input
@@ -196,47 +196,47 @@ const Login: React.FC<LoginProps> = ({ logoUrl, installPromptEvent, onInstallCli
                 value={verificationInput}
                 onChange={(e) => setVerificationInput(e.target.value)}
                 required
-                className="mt-2 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                className="mt-3 block w-full px-4 py-3 bg-slate-100 border-transparent rounded-xl shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white focus:border-transparent sm:text-sm dark:bg-slate-800 dark:text-white transition-all"
                 placeholder="Your answer"
                 autoComplete="off"
               />
             </div>
           )}
           
-          {(error || verificationError) && <p className="text-sm text-red-600 text-center">{error || verificationError}</p>}
-          {message && <p className="text-sm text-green-600 text-center">{message}</p>}
+          {(error || verificationError) && <p className="text-sm text-red-500 text-center font-medium bg-red-50 dark:bg-red-900/20 py-2 rounded-lg">{error || verificationError}</p>}
+          {message && <p className="text-sm text-emerald-600 text-center font-medium bg-emerald-50 dark:bg-emerald-900/20 py-2 rounded-lg">{message}</p>}
 
           <button
             type="submit"
             disabled={isProcessing}
-            className="w-full bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-300 ease-in-out disabled:bg-indigo-300"
+            className="w-full bg-indigo-600 text-white font-medium py-3.5 px-4 rounded-full shadow-md hover:shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 active:scale-[0.98] disabled:opacity-70 disabled:active:scale-100 mt-2"
           >
             {isProcessing ? 'Processing...' : buttonText[view]}
           </button>
         </form>
-        <div className="mt-6 text-sm">
+        <div className="mt-8 text-sm font-medium">
           {view === 'login' && (
             <div className="flex justify-between">
-              <button onClick={() => switchView('forgot')} className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">
+              <button type="button" onClick={() => switchView('forgot')} className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors">
                 Forgot password?
               </button>
-              <button onClick={() => switchView('signup')} className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">
-                Sign up
+              <button type="button" onClick={() => switchView('signup')} className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors">
+                Create account
               </button>
             </div>
           )}
            {view === 'signup' && (
-            <p className="dark:text-gray-300">
+            <p className="dark:text-slate-400 text-slate-500">
               Already have an account?{' '}
-              <button onClick={() => switchView('login')} className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">
+              <button type="button" onClick={() => switchView('login')} className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors ml-1">
                 Sign in
               </button>
             </p>
           )}
            {view === 'forgot' && (
-             <p className="dark:text-gray-300">
+             <p className="dark:text-slate-400 text-slate-500">
               Remember your password?{' '}
-              <button onClick={() => switchView('login')} className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">
+              <button type="button" onClick={() => switchView('login')} className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors ml-1">
                 Sign in
               </button>
             </p>
@@ -245,9 +245,9 @@ const Login: React.FC<LoginProps> = ({ logoUrl, installPromptEvent, onInstallCli
       </div>
       {installPromptEvent && (
          <div className="mt-8 max-w-sm w-full">
-             <button onClick={onInstallClick} className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700">
+             <button onClick={onInstallClick} className="w-full inline-flex items-center justify-center px-6 py-3.5 border border-transparent text-sm font-medium rounded-full shadow-sm text-slate-700 bg-white hover:bg-slate-50 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700 dark:border-slate-700 transition-all active:scale-[0.98]">
                  <InstallIcon />
-                 Install App
+                 Install App to Home Screen
              </button>
          </div>
       )}

@@ -277,11 +277,11 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
 
       return (
           <div className="space-y-6">
-              <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg p-6 text-center transition-shadow duration-300 hover:shadow-xl">
-                <p className="text-lg font-medium text-gray-500 dark:text-gray-400">{formatDate(currentDateTime)}</p>
-                <p className="text-5xl font-bold text-gray-800 dark:text-gray-200 my-2 tracking-wider">{formatTime(currentDateTime)}</p>
+              <div className="bg-white dark:bg-slate-900 shadow-sm border border-slate-100 dark:border-slate-800 rounded-[2rem] p-8 text-center transition-all duration-300 hover:shadow-md">
+                <p className="text-lg font-medium text-slate-500 dark:text-slate-400">{formatDate(currentDateTime)}</p>
+                <p className="text-6xl font-extrabold text-slate-900 dark:text-white my-3 tracking-tight">{formatTime(currentDateTime)}</p>
                 {activePeriod && (
-                    <p className="text-xl font-semibold text-indigo-600 dark:text-indigo-400">
+                    <p className="text-lg font-medium text-indigo-600 dark:text-indigo-400 mt-2 bg-indigo-50 dark:bg-indigo-900/30 inline-block px-4 py-1.5 rounded-full">
                         Running Period: <span className="font-bold">{activePeriod.name}</span>
                     </p>
                 )}
@@ -308,24 +308,24 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
 
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-950">
       {/* Header */}
-      <header className="bg-white dark:bg-gray-800 shadow-md sticky top-0 z-40">
+      <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg shadow-sm border-b border-slate-200 dark:border-slate-800 sticky top-0 z-40 transition-colors">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
-              <img src={logoUrl || defaultLogoUrl} alt="Logo" className="h-10 w-10 object-contain" />
-              <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100 ml-3">Meal Manager</h1>
+              <img src={logoUrl || defaultLogoUrl} alt="Logo" className="h-10 w-10 object-contain drop-shadow-sm" />
+              <h1 className="text-xl font-bold text-slate-900 dark:text-white ml-3 tracking-tight">Meal Manager</h1>
             </div>
             <div className="flex items-center space-x-2">
               <button
                 onClick={toggleTheme}
-                className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="p-2.5 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors active:scale-95"
                 aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
               >
                   {theme === 'light' ? <MoonIcon /> : <SunIcon />}
               </button>
-              <button onClick={logout} className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700">
+              <button onClick={logout} className="p-2.5 rounded-full text-slate-500 dark:text-slate-400 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors active:scale-95">
                 <LogoutIcon />
               </button>
             </div>
@@ -339,7 +339,7 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 shadow-lg z-40">
+      <nav className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shadow-[0_-4px_20px_rgba(0,0,0,0.05)] z-40 pb-safe">
         <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
           <div className="grid grid-cols-5 h-16">
             {navItems.map(item => (
@@ -347,11 +347,13 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
                     key={item.name}
                     onClick={() => setView(item.name as View)}
                     disabled={!activePeriod && item.requiresPeriod}
-                    className={`flex flex-col items-center justify-center w-full text-xs sm:text-sm font-medium transition-colors duration-200 ${
-                        view === item.name ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
-                    } ${!activePeriod && item.requiresPeriod ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    className={`flex flex-col items-center justify-center w-full text-xs sm:text-sm font-medium transition-all duration-200 active:scale-95 ${
+                        view === item.name ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200'
+                    } ${!activePeriod && item.requiresPeriod ? 'opacity-40 cursor-not-allowed active:scale-100' : ''}`}
                 >
-                    <item.Icon className="h-6 w-6 mb-1" />
+                    <div className={`p-1.5 rounded-full transition-colors mb-0.5 ${view === item.name ? 'bg-indigo-50 dark:bg-indigo-900/30' : ''}`}>
+                      <item.Icon className="h-6 w-6" />
+                    </div>
                     <span className="capitalize">{item.name}</span>
                 </button>
             ))}
@@ -369,25 +371,25 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
       <Modal title={editingGrocery ? "Edit Expense" : "Add New Expense"} isOpen={isGroceryModalOpen} onClose={() => setIsGroceryModalOpen(false)}>
         <form onSubmit={handleGrocerySubmit} className="space-y-4">
            <div>
-              <label htmlFor="purchaser" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Purchased By</label>
-               <select id="purchaser" value={groceryForm.purchaserId} onChange={(e) => setGroceryForm({...groceryForm, purchaserId: e.target.value})} required className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+              <label htmlFor="purchaser" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Purchased By</label>
+               <select id="purchaser" value={groceryForm.purchaserId} onChange={(e) => setGroceryForm({...groceryForm, purchaserId: e.target.value})} required className="block w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-transparent rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-slate-700 sm:text-sm text-slate-900 dark:text-white transition-all appearance-none cursor-pointer">
                 {members.map(member => <option key={member.id} value={member.id}>{member.name}</option>)}
               </select>
            </div>
            <div>
-              <label htmlFor="date" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Date</label>
-              <input type="date" id="date" value={groceryForm.date} onChange={(e) => setGroceryForm({...groceryForm, date: e.target.value})} required className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+              <label htmlFor="date" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Date</label>
+              <input type="date" id="date" value={groceryForm.date} onChange={(e) => setGroceryForm({...groceryForm, date: e.target.value})} required className="block w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-transparent rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-slate-700 sm:text-sm text-slate-900 dark:text-white transition-all" />
            </div>
            <div>
-             <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Item Name</label>
-             <input type="text" id="name" value={groceryForm.name} onChange={(e) => setGroceryForm({...groceryForm, name: e.target.value})} required placeholder="e.g., Rice, Vegetables" className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+             <label htmlFor="name" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Item Name</label>
+             <input type="text" id="name" value={groceryForm.name} onChange={(e) => setGroceryForm({...groceryForm, name: e.target.value})} required placeholder="e.g., Rice, Vegetables" className="block w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-transparent rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-slate-700 sm:text-sm text-slate-900 dark:text-white transition-all" />
            </div>
            <div>
-             <label htmlFor="amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Amount ({currency})</label>
-             <input type="number" id="amount" value={groceryForm.amount} onChange={(e) => setGroceryForm({...groceryForm, amount: e.target.value})} required min="0.01" step="0.01" placeholder="e.g., 55.50" className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+             <label htmlFor="amount" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Amount ({currency})</label>
+             <input type="number" id="amount" value={groceryForm.amount} onChange={(e) => setGroceryForm({...groceryForm, amount: e.target.value})} required min="0.01" step="0.01" placeholder="e.g., 55.50" className="block w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-transparent rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-slate-700 sm:text-sm text-slate-900 dark:text-white transition-all" />
            </div>
-           <div className="pt-2 flex justify-end">
-             <button type="submit" className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+           <div className="pt-4 flex justify-end">
+             <button type="submit" className="inline-flex justify-center py-2.5 px-6 border border-transparent shadow-sm text-sm font-bold rounded-full text-white bg-indigo-600 hover:bg-indigo-700 transition-colors active:scale-95">
                 {editingGrocery ? "Update Expense" : "Add Expense"}
              </button>
            </div>
@@ -398,25 +400,25 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
       <Modal title={editingDeposit ? "Edit Deposit" : "Add New Deposit"} isOpen={isDepositModalOpen} onClose={() => setIsDepositModalOpen(false)}>
         <form onSubmit={handleDepositSubmit} className="space-y-4">
            <div>
-              <label htmlFor="user" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Member</label>
-               <select id="user" value={depositForm.userId} onChange={(e) => setDepositForm({...depositForm, userId: e.target.value})} required className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md">
+              <label htmlFor="user" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Member</label>
+               <select id="user" value={depositForm.userId} onChange={(e) => setDepositForm({...depositForm, userId: e.target.value})} required className="block w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-transparent rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-slate-700 sm:text-sm text-slate-900 dark:text-white transition-all appearance-none cursor-pointer">
                 {members.map(member => <option key={member.id} value={member.id}>{member.name}</option>)}
               </select>
            </div>
            <div>
-              <label htmlFor="deposit_date" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Date</label>
-              <input type="date" id="deposit_date" value={depositForm.date} onChange={(e) => setDepositForm({...depositForm, date: e.target.value})} required className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+              <label htmlFor="deposit_date" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Date</label>
+              <input type="date" id="deposit_date" value={depositForm.date} onChange={(e) => setDepositForm({...depositForm, date: e.target.value})} required className="block w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-transparent rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-slate-700 sm:text-sm text-slate-900 dark:text-white transition-all" />
            </div>
             <div>
-             <label htmlFor="deposit_amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Amount ({currency})</label>
-             <input type="number" id="deposit_amount" value={depositForm.amount} onChange={(e) => setDepositForm({...depositForm, amount: e.target.value})} required min="0.01" step="0.01" placeholder="e.g., 200.00" className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+             <label htmlFor="deposit_amount" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Amount ({currency})</label>
+             <input type="number" id="deposit_amount" value={depositForm.amount} onChange={(e) => setDepositForm({...depositForm, amount: e.target.value})} required min="0.01" step="0.01" placeholder="e.g., 200.00" className="block w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-transparent rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-slate-700 sm:text-sm text-slate-900 dark:text-white transition-all" />
            </div>
            <div>
-             <label htmlFor="deposit_notes" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Notes (Optional)</label>
-             <input type="text" id="deposit_notes" value={depositForm.notes} onChange={(e) => setDepositForm({...depositForm, notes: e.target.value})} placeholder="e.g., Balance transfer" className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+             <label htmlFor="deposit_notes" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Notes (Optional)</label>
+             <input type="text" id="deposit_notes" value={depositForm.notes} onChange={(e) => setDepositForm({...depositForm, notes: e.target.value})} placeholder="e.g., Balance transfer" className="block w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-transparent rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-slate-700 sm:text-sm text-slate-900 dark:text-white transition-all" />
            </div>
-           <div className="pt-2 flex justify-end">
-             <button type="submit" className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+           <div className="pt-4 flex justify-end">
+             <button type="submit" className="inline-flex justify-center py-2.5 px-6 border border-transparent shadow-sm text-sm font-bold rounded-full text-white bg-indigo-600 hover:bg-indigo-700 transition-colors active:scale-95">
                 {editingDeposit ? "Update Deposit" : "Add Deposit"}
              </button>
            </div>
@@ -427,15 +429,15 @@ const Dashboard: React.FC<DashboardProps> = ({ logoUrl }) => {
        <Modal title={editingReminder ? "Edit Reminder" : "Add New Reminder"} isOpen={isReminderModalOpen} onClose={() => setIsReminderModalOpen(false)}>
         <form onSubmit={handleReminderSubmit} className="space-y-4">
            <div>
-             <label htmlFor="reminder_title" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Title</label>
-             <input type="text" id="reminder_title" value={reminderForm.title} onChange={(e) => setReminderForm({...reminderForm, title: e.target.value})} required placeholder="e.g., Pay electricity bill" className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+             <label htmlFor="reminder_title" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Title</label>
+             <input type="text" id="reminder_title" value={reminderForm.title} onChange={(e) => setReminderForm({...reminderForm, title: e.target.value})} required placeholder="e.g., Pay electricity bill" className="block w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-transparent rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-slate-700 sm:text-sm text-slate-900 dark:text-white transition-all" />
            </div>
            <div>
-              <label htmlFor="reminder_dueDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Due Date & Time</label>
-              <input type="datetime-local" id="reminder_dueDate" value={reminderForm.dueDate} onChange={(e) => setReminderForm({...reminderForm, dueDate: e.target.value})} required className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm" />
+              <label htmlFor="reminder_dueDate" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Due Date & Time</label>
+              <input type="datetime-local" id="reminder_dueDate" value={reminderForm.dueDate} onChange={(e) => setReminderForm({...reminderForm, dueDate: e.target.value})} required className="block w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-transparent rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-slate-700 sm:text-sm text-slate-900 dark:text-white transition-all" />
            </div>
-           <div className="pt-2 flex justify-end">
-             <button type="submit" className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+           <div className="pt-4 flex justify-end">
+             <button type="submit" className="inline-flex justify-center py-2.5 px-6 border border-transparent shadow-sm text-sm font-bold rounded-full text-white bg-indigo-600 hover:bg-indigo-700 transition-colors active:scale-95">
                 {editingReminder ? "Update Reminder" : "Add Reminder"}
              </button>
            </div>

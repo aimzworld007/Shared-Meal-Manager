@@ -54,20 +54,20 @@ const CurrencySettings: React.FC = () => {
     };
 
     return (
-        <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg">
-            <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 rounded-t-lg">
-                <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Currency Settings</h3>
+        <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2rem] overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+            <div className="px-8 py-5 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
+                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Currency Settings</h3>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="p-8 space-y-6">
                 <div>
-                    <label htmlFor="currency-select" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <label htmlFor="currency-select" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                         Select Currency
                     </label>
                     <select
                         id="currency-select"
                         value={selectedCurrency}
                         onChange={handleSelectChange}
-                        className="mt-1 block w-full sm:w-80 pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                        className="block w-full sm:w-80 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-transparent rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-slate-700 sm:text-sm text-slate-900 dark:text-white transition-all appearance-none cursor-pointer"
                     >
                         {PREDEFINED_CURRENCIES.map(code => (
                             <option key={code} value={code}>{code}</option>
@@ -78,7 +78,7 @@ const CurrencySettings: React.FC = () => {
 
                 {isCustom && (
                     <div>
-                        <label htmlFor="custom-currency" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        <label htmlFor="custom-currency" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                             Custom Currency Code
                         </label>
                         <input
@@ -88,16 +88,16 @@ const CurrencySettings: React.FC = () => {
                             onChange={(e) => setCustomCurrency(e.target.value)}
                             maxLength={3}
                             placeholder="E.g., CAD"
-                            className="mt-1 block w-full sm:w-80 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700"
+                            className="block w-full sm:w-80 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-transparent rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-slate-700 sm:text-sm text-slate-900 dark:text-white transition-all"
                         />
                     </div>
                 )}
 
-                <div>
+                <div className="pt-2">
                     <button
                         onClick={handleSave}
                         disabled={isSubmitting}
-                        className="inline-flex items-center justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400"
+                        className="inline-flex items-center justify-center py-2.5 px-6 border border-transparent shadow-sm text-sm font-semibold rounded-full text-white bg-indigo-600 hover:bg-indigo-700 transition-colors active:scale-95 disabled:bg-indigo-400 disabled:active:scale-100"
                     >
                         {isSubmitting ? 'Saving...' : 'Save Currency'}
                     </button>

@@ -220,8 +220,8 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ mealManager }) => {
   };
 
   return (
-    <div className="space-y-8 max-w-4xl mx-auto">
-      <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Settings</h1>
+    <div className="space-y-10 max-w-4xl mx-auto">
+      <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Settings</h1>
 
       {/* Period Management */}
       <PeriodManager mealManager={mealManager} />
@@ -230,90 +230,90 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ mealManager }) => {
       <CurrencySettings />
 
       {/* Member Management */}
-      <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg">
-        <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 rounded-t-lg flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Member Management</h3>
-          <button onClick={openAddMemberModal} className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700">
+      <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2rem] overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+        <div className="px-8 py-5 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center flex-wrap gap-4">
+          <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Member Management</h3>
+          <button onClick={openAddMemberModal} className="inline-flex items-center px-6 py-2.5 border border-transparent text-sm font-semibold rounded-full shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 transition-colors active:scale-95">
             Add New Member
           </button>
         </div>
-        <div className="p-6">
-            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+        <div className="p-0">
+            <ul className="divide-y divide-slate-100 dark:divide-slate-800/60">
                 {members.map(member => (
-                    <li key={member.id} className="py-4 flex justify-between items-center">
+                    <li key={member.id} className="p-6 flex justify-between items-center hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
                         <div>
-                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{member.name}</p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">{member.phone}</p>
+                            <p className="text-lg font-bold text-slate-900 dark:text-white">{member.name}</p>
+                            <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mt-0.5">{member.phone}</p>
                         </div>
-                        <div className="flex items-center">
+                        <div className="flex items-center gap-2">
                             {member.isMealManager ? (
-                                <span className="px-2 py-1 text-xs font-semibold leading-tight text-green-700 bg-green-100 dark:bg-green-900/50 dark:text-green-300 rounded-full">
+                                <span className="px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-full mr-2">
                                     Meal Manager
                                 </span>
                             ) : (
                                 <button 
                                     onClick={() => setMealManager(member.id)} 
-                                    className="p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-400"
+                                    className="p-2.5 rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 dark:text-slate-400 transition-colors active:scale-95"
                                     title="Make Meal Manager"
                                 >
                                     <MakeManagerIcon />
                                 </button>
                             )}
-                            <button onClick={() => openEditMemberModal(member)} className="p-2 rounded-full text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-400" title="Edit Member">
+                            <button onClick={() => openEditMemberModal(member)} className="p-2.5 rounded-full text-indigo-500 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-900/30 transition-colors active:scale-95" title="Edit Member">
                                 <EditIcon />
                             </button>
-                            <button onClick={() => handleDeleteMemberClick(member)} className="p-2 rounded-full text-red-500 hover:bg-red-100 dark:hover:bg-red-900/50" title="Delete Member">
+                            <button onClick={() => handleDeleteMemberClick(member)} className="p-2.5 rounded-full text-red-500 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30 transition-colors active:scale-95" title="Delete Member">
                                 <DeleteIcon />
                             </button>
                         </div>
                     </li>
                 ))}
-                {members.length === 0 && <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">No members have been added yet.</p>}
+                {members.length === 0 && <p className="text-sm font-medium text-slate-500 dark:text-slate-400 text-center py-10">No members have been added yet.</p>}
             </ul>
         </div>
       </div>
       
       {/* Data Management */}
-      <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg">
-        <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 rounded-t-lg">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Data Management</h3>
+      <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2rem] overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+        <div className="px-8 py-5 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
+          <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Data Management</h3>
         </div>
-        <div className="p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-            <button onClick={() => setIsImportModalOpen(true)} className="w-full inline-flex items-center justify-center text-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"><UploadIcon />Import Groceries</button>
-            <button onClick={handleExportGroceries} className="w-full inline-flex items-center justify-center text-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"><DownloadIcon />Export Groceries</button>
-            <button onClick={handleExportDeposits} className="w-full inline-flex items-center justify-center text-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"><DownloadIcon />Export Deposits</button>
-            <button onClick={handleExportSummary} className="w-full inline-flex items-center justify-center text-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md shadow-sm text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"><DownloadIcon />Export Summary</button>
+        <div className="p-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+            <button onClick={() => setIsImportModalOpen(true)} className="w-full inline-flex items-center justify-center text-center px-4 py-3 border-2 border-slate-200 dark:border-slate-700 text-sm font-semibold rounded-2xl shadow-sm text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors active:scale-95 hover:border-slate-300 dark:hover:border-slate-600"><UploadIcon />Import Groceries</button>
+            <button onClick={handleExportGroceries} className="w-full inline-flex items-center justify-center text-center px-4 py-3 border-2 border-slate-200 dark:border-slate-700 text-sm font-semibold rounded-2xl shadow-sm text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors active:scale-95 hover:border-slate-300 dark:hover:border-slate-600"><DownloadIcon />Export Groceries</button>
+            <button onClick={handleExportDeposits} className="w-full inline-flex items-center justify-center text-center px-4 py-3 border-2 border-slate-200 dark:border-slate-700 text-sm font-semibold rounded-2xl shadow-sm text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors active:scale-95 hover:border-slate-300 dark:hover:border-slate-600"><DownloadIcon />Export Deposits</button>
+            <button onClick={handleExportSummary} className="w-full inline-flex items-center justify-center text-center px-4 py-3 border-2 border-slate-200 dark:border-slate-700 text-sm font-semibold rounded-2xl shadow-sm text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors active:scale-95 hover:border-slate-300 dark:hover:border-slate-600"><DownloadIcon />Export Summary</button>
         </div>
       </div>
 
        {/* Account Security */}
-      <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg">
-        <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 rounded-t-lg">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Account Security</h3>
+      <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2rem] overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+        <div className="px-8 py-5 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800">
+          <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100 tracking-tight">Account Security</h3>
         </div>
-        <div className="p-6 space-y-6">
-            <div className="space-y-4 border-b border-gray-200 dark:border-gray-700 pb-6">
-                <h4 className="font-medium text-gray-900 dark:text-gray-100">Change Email Address</h4>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Current Email: <span className="font-semibold">{user?.email}</span></p>
+        <div className="p-8 space-y-8">
+            <div className="space-y-4 border-b border-slate-100 dark:border-slate-800 pb-8">
+                <h4 className="font-bold text-slate-900 dark:text-white">Change Email Address</h4>
+                <p className="text-sm font-medium text-slate-600 dark:text-slate-400">Current Email: <span className="font-bold text-slate-900 dark:text-white">{user?.email}</span></p>
                  <div>
-                    <label htmlFor="newEmail" className="block text-sm font-medium text-gray-700 dark:text-gray-300">New Email</label>
-                    <input id="newEmail" type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} className="mt-1 block w-full sm:w-80 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-300" />
+                    <label htmlFor="newEmail" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">New Email</label>
+                    <input id="newEmail" type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} className="block w-full sm:w-80 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-transparent rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-slate-700 sm:text-sm text-slate-900 dark:text-white transition-all" />
                 </div>
-                <button onClick={handleEmailChange} className="inline-flex items-center justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                <button onClick={handleEmailChange} className="inline-flex items-center justify-center py-2.5 px-6 border border-transparent shadow-sm text-sm font-semibold rounded-full text-white bg-indigo-600 hover:bg-indigo-700 transition-colors active:scale-95">
                     Change Email
                 </button>
             </div>
             <div className="space-y-4">
-                 <h4 className="font-medium text-gray-900 dark:text-gray-100">Change Password</h4>
+                 <h4 className="font-bold text-slate-900 dark:text-white">Change Password</h4>
                  <div>
-                    <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">New Password</label>
-                    <input id="newPassword" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="mt-1 block w-full sm:w-80 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-300" placeholder="Min. 6 characters" />
+                    <label htmlFor="newPassword" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">New Password</label>
+                    <input id="newPassword" type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} className="block w-full sm:w-80 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-transparent rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-slate-700 sm:text-sm text-slate-900 dark:text-white transition-all" placeholder="Min. 6 characters" />
                 </div>
                  <div>
-                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Confirm New Password</label>
-                    <input id="confirmPassword" type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="mt-1 block w-full sm:w-80 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-300" />
+                    <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Confirm New Password</label>
+                    <input id="confirmPassword" type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="block w-full sm:w-80 px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-transparent rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-slate-700 sm:text-sm text-slate-900 dark:text-white transition-all" />
                 </div>
-                 <button onClick={handlePasswordChange} className="inline-flex items-center justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+                 <button onClick={handlePasswordChange} className="inline-flex items-center justify-center py-2.5 px-6 border border-transparent shadow-sm text-sm font-semibold rounded-full text-white bg-indigo-600 hover:bg-indigo-700 transition-colors active:scale-95">
                     Change Password
                 </button>
             </div>
@@ -321,16 +321,16 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ mealManager }) => {
       </div>
       
       {/* Danger Zone */}
-      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/50 shadow-lg rounded-lg">
-        <div className="px-6 py-4 bg-red-100 dark:bg-red-900/30 rounded-t-lg">
-          <h3 className="text-lg font-semibold text-red-800 dark:text-red-200">Danger Zone</h3>
+      <div className="bg-red-50 dark:bg-red-900/10 border-2 border-red-200 dark:border-red-900/30 rounded-[2rem] overflow-hidden shadow-sm transition-shadow hover:shadow-md">
+        <div className="px-8 py-5 bg-red-100/50 dark:bg-red-900/20 border-b border-red-200/50 dark:border-red-900/30">
+          <h3 className="text-xl font-bold text-red-800 dark:text-red-300 tracking-tight">Danger Zone</h3>
         </div>
-        <div className="p-6 flex justify-between items-center flex-wrap gap-4">
+        <div className="p-8 flex justify-between items-center flex-wrap gap-4">
           <div>
-            <h4 className="font-medium text-gray-900 dark:text-gray-100">Delete this Account</h4>
-            <p className="text-sm text-red-600 dark:text-red-400 mt-1">Once you delete your account, there is no going back. Please be certain.</p>
+            <h4 className="font-bold text-slate-900 dark:text-white">Delete this Account</h4>
+            <p className="text-sm font-medium text-red-600 dark:text-red-400 mt-1 max-w-sm">Once you delete your account, there is no going back. Please be certain.</p>
           </div>
-          <button onClick={handleDeleteAccount} className="inline-flex items-center justify-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700">
+          <button onClick={handleDeleteAccount} className="inline-flex items-center justify-center px-6 py-2.5 border border-transparent shadow-sm text-sm font-semibold rounded-full text-white bg-red-600 hover:bg-red-700 transition-colors active:scale-95">
             Delete My Account
           </button>
         </div>
@@ -355,15 +355,15 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ mealManager }) => {
       <Modal title={editingMember ? "Edit Member" : "Add Member"} isOpen={isMemberModalOpen} onClose={() => setIsMemberModalOpen(false)}>
         <form onSubmit={handleMemberSubmit} className="space-y-4">
           <div>
-            <label htmlFor="memberName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Member Name</label>
-            <input id="memberName" type="text" value={memberName} onChange={e => setMemberName(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-300" />
+            <label htmlFor="memberName" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Member Name</label>
+            <input id="memberName" type="text" value={memberName} onChange={e => setMemberName(e.target.value)} required className="block w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-transparent rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-slate-700 sm:text-sm text-slate-900 dark:text-white transition-all" />
           </div>
           <div>
-            <label htmlFor="memberPhone" className="block text-sm font-medium text-gray-700 dark:text-gray-300">Phone Number</label>
-            <input id="memberPhone" type="tel" value={memberPhone} onChange={e => setMemberPhone(e.target.value)} required className="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm dark:bg-gray-700 dark:text-gray-300" />
+            <label htmlFor="memberPhone" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Phone Number</label>
+            <input id="memberPhone" type="tel" value={memberPhone} onChange={e => setMemberPhone(e.target.value)} required className="block w-full px-4 py-2.5 bg-slate-100 dark:bg-slate-800 border-transparent rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-slate-700 sm:text-sm text-slate-900 dark:text-white transition-all" />
           </div>
-          <div className="pt-2 flex justify-end">
-            <button type="submit" disabled={isSubmittingMember} className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400">
+          <div className="pt-4 flex justify-end">
+            <button type="submit" disabled={isSubmittingMember} className="inline-flex justify-center py-2.5 px-6 border border-transparent shadow-sm text-sm font-bold rounded-full text-white bg-indigo-600 hover:bg-indigo-700 transition-colors active:scale-95 disabled:bg-indigo-400 disabled:active:scale-100">
               {isSubmittingMember ? 'Saving...' : 'Save Member'}
             </button>
           </div>

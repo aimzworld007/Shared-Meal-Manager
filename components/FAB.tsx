@@ -63,11 +63,11 @@ const FAB: React.FC<FABProps> = ({ onAddExpense, onAddDeposit, onAddReminder }) 
         {/* Main FAB */}
         <button 
           onClick={() => setIsOpen(!isOpen)} 
-          className="bg-indigo-600 text-white w-14 h-14 rounded-full flex items-center justify-center shadow-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-transform duration-200"
+          className="bg-indigo-600 text-white w-16 h-16 rounded-[1.25rem] flex items-center justify-center shadow-[0_8px_20px_rgba(79,70,229,0.3)] hover:bg-indigo-700 hover:shadow-[0_12px_24px_rgba(79,70,229,0.4)] focus:outline-none focus:ring-4 focus:ring-indigo-500/30 transition-all duration-300 active:scale-95"
           aria-label={isOpen ? "Close actions" : "Open actions"}
           aria-expanded={isOpen}
         >
-            <div className={`transform transition-transform duration-300 ${isOpen ? 'rotate-45' : 'rotate-0'}`}>
+            <div className={`transform transition-transform duration-300 ${isOpen ? 'rotate-[135deg]' : 'rotate-0'}`}>
                  <PlusIcon />
             </div>
         </button>
@@ -80,12 +80,12 @@ const FAB: React.FC<FABProps> = ({ onAddExpense, onAddDeposit, onAddReminder }) 
         >
              {/* Add Expense */}
             <div className="flex items-center gap-3">
-                 <div className="bg-gray-900 text-white text-xs font-semibold px-3 py-1.5 rounded-md shadow-lg dark:bg-gray-700">
+                 <div className="bg-white text-slate-800 text-xs font-semibold px-4 py-2 rounded-xl shadow-md border border-slate-100 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100">
                     Add Expense
                 </div>
                 <button 
                     onClick={() => handleActionClick(onAddExpense)} 
-                    className="bg-red-500 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-md hover:bg-red-600"
+                    className="bg-red-50 text-red-600 dark:bg-red-900/30 dark:text-red-400 border border-red-100 dark:border-red-900/50 w-12 h-12 rounded-full flex items-center justify-center shadow-sm hover:shadow-md hover:bg-red-100 dark:hover:bg-red-900/50 transition-all active:scale-95"
                     aria-label="Add Expense"
                     tabIndex={isOpen ? 0 : -1}
                 >
@@ -94,12 +94,12 @@ const FAB: React.FC<FABProps> = ({ onAddExpense, onAddDeposit, onAddReminder }) 
             </div>
             {/* Add Deposit */}
             <div className="flex items-center gap-3">
-                 <div className="bg-gray-900 text-white text-xs font-semibold px-3 py-1.5 rounded-md shadow-lg dark:bg-gray-700">
+                 <div className="bg-white text-slate-800 text-xs font-semibold px-4 py-2 rounded-xl shadow-md border border-slate-100 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100">
                     Add Deposit
                 </div>
                 <button 
                     onClick={() => handleActionClick(onAddDeposit)} 
-                    className="bg-green-600 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-md hover:bg-green-700"
+                    className="bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/50 w-12 h-12 rounded-full flex items-center justify-center shadow-sm hover:shadow-md hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-all active:scale-95"
                     aria-label="Add Deposit"
                     tabIndex={isOpen ? 0 : -1}
                 >
@@ -108,12 +108,12 @@ const FAB: React.FC<FABProps> = ({ onAddExpense, onAddDeposit, onAddReminder }) 
             </div>
              {/* Add Reminder */}
             <div className="flex items-center gap-3">
-                 <div className="bg-gray-900 text-white text-xs font-semibold px-3 py-1.5 rounded-md shadow-lg dark:bg-gray-700">
+                 <div className="bg-white text-slate-800 text-xs font-semibold px-4 py-2 rounded-xl shadow-md border border-slate-100 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100">
                     Add Reminder
                 </div>
                 <button 
                     onClick={() => handleActionClick(onAddReminder)} 
-                    className="bg-yellow-500 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-md hover:bg-yellow-600"
+                    className="bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400 border border-amber-100 dark:border-amber-900/50 w-12 h-12 rounded-full flex items-center justify-center shadow-sm hover:shadow-md hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-all active:scale-95"
                     aria-label="Add Reminder"
                     tabIndex={isOpen ? 0 : -1}
                 >

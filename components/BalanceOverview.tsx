@@ -81,27 +81,27 @@ const BalanceOverview: React.FC<BalanceOverviewProps> = ({ members, onViewDetail
 
 
   return (
-    <div className="bg-white dark:bg-gray-800 shadow-lg rounded-lg">
-        <div className="px-6 py-4 bg-gray-50 dark:bg-gray-700/50 border-b dark:border-gray-700 rounded-t-lg flex justify-between items-center">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Member Balances</h3>
+    <div className="bg-white dark:bg-slate-900 shadow-sm border border-slate-100 dark:border-slate-800 rounded-[2rem] overflow-hidden transition-all hover:shadow-md">
+        <div className="px-8 py-5 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+            <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 tracking-tight">Member Balances</h3>
              <button
                 onClick={onViewDetails}
-                className="inline-flex items-center text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300"
+                className="inline-flex items-center text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 transition-colors bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1.5 rounded-full active:scale-95"
             >
                 View Details
                 <ArrowRightIcon />
             </button>
         </div>
-        <div className="p-4 sm:p-6">
+        <div className="p-6 sm:p-8">
             {members.length > 0 ? (
-                 <div className="grid grid-cols-1 md:grid-cols-2 md:gap-8">
+                 <div className="grid grid-cols-1 md:grid-cols-2 md:gap-10">
                     {/* List View */}
                     <div>
-                        <ul className="divide-y divide-gray-200 dark:divide-gray-700">
+                        <ul className="divide-y divide-slate-100 dark:divide-slate-800/60">
                             {members.map(member => (
-                                <li key={member.id} className="py-3 flex justify-between items-center">
-                                    <span className="font-medium text-gray-800 dark:text-gray-200">{member.name}</span>
-                                    <span className={`font-semibold text-lg ${member.balance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                                <li key={member.id} className="py-3.5 flex justify-between items-center">
+                                    <span className="font-medium text-slate-800 dark:text-slate-200">{member.name}</span>
+                                    <span className={`font-bold text-lg px-3 py-1 rounded-full ${member.balance >= 0 ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400' : 'bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400'}`}>
                                         {formatCurrency(member.balance, currency)}
                                     </span>
                                 </li>

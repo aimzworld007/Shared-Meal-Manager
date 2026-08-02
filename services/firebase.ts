@@ -36,13 +36,13 @@ import { User, GroceryItem, Deposit, Participant, Period, ArchiveData, SiteSetti
 
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyDmNZKM8m9iKA4rrxanl-yscV86cMz2-fM",
-  authDomain: "messmeal-31a11.firebaseapp.com",
-  projectId: "messmeal-31a11",
-  storageBucket: "messmeal-31a11.firebasestorage.app",
-  messagingSenderId: "413119253017",
-  appId: "1:413119253017:web:4b6c4f8dbb147693853888",
-  measurementId: "G-KXD9W95FCT"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDmNZKM8m9iKA4rrxanl-yscV86cMz2-fM",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "messmeal-31a11.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "messmeal-31a11",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "messmeal-31a11.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "413119253017",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:413119253017:web:4b6c4f8dbb147693853888",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-KXD9W95FCT"
 };
 
 // Initialize Firebase

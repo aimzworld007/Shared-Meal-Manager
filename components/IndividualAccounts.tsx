@@ -37,8 +37,8 @@ const IndividualAccounts: React.FC<IndividualAccountsProps> = ({ members, grocer
 
     return (
         <div>
-            <div className="flex justify-between items-center mb-4 px-1 flex-wrap gap-4">
-                <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">Individual Accounts</h2>
+            <div className="flex justify-between items-center mb-6 px-1 flex-wrap gap-4">
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Individual Accounts</h2>
                 {members.length > 0 && (
                     <div>
                         <label htmlFor="member-select" className="sr-only">Select Member</label>
@@ -46,7 +46,7 @@ const IndividualAccounts: React.FC<IndividualAccountsProps> = ({ members, grocer
                             id="member-select"
                             value={selectedMemberId}
                             onChange={(e) => setSelectedMemberId(e.target.value)}
-                            className="block w-full sm:w-64 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md shadow-sm dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300"
+                            className="block w-full sm:w-64 px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm text-slate-900 dark:text-white transition-all appearance-none cursor-pointer hover:border-slate-300 dark:hover:border-slate-600"
                         >
                             {members.map(member => (
                                 <option key={member.id} value={member.id}>{member.name}</option>
@@ -57,42 +57,42 @@ const IndividualAccounts: React.FC<IndividualAccountsProps> = ({ members, grocer
             </div>
             
             {selectedMember ? (
-                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-                    <div className="px-4 py-3 bg-green-600 text-white">
-                        <h3 className="text-lg font-bold uppercase">{selectedMember.name} PAID</h3>
+                <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-[2rem] overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                    <div className="px-6 py-4 bg-emerald-600 text-white flex justify-between items-center flex-wrap gap-2">
+                        <h3 className="text-xl font-bold uppercase tracking-tight">{selectedMember.name} PAID</h3>
                     </div>
                     <div className="overflow-x-auto">
                         <table className="min-w-full">
-                            <thead className="bg-gray-100 dark:bg-gray-700">
+                            <thead className="bg-slate-50 dark:bg-slate-800/50">
                                 <tr>
-                                    <th scope="col" className="px-2 sm:px-4 py-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Date</th>
-                                    <th scope="col" className="px-2 sm:px-4 py-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Amount</th>
-                                    <th scope="col" className="px-2 sm:px-4 py-2 text-left text-sm font-semibold text-gray-700 dark:text-gray-300">Notes</th>
+                                    <th scope="col" className="px-4 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
+                                    <th scope="col" className="px-4 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Amount</th>
+                                    <th scope="col" className="px-4 py-4 text-left text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Notes</th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                            <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-100 dark:divide-slate-800/60">
                                 {memberGroceries.map(item => (
-                                    <tr key={item.id}>
-                                        <td className="px-2 sm:px-4 py-2 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400">{new Date(item.date).toLocaleDateString()}</td>
-                                        <td className="px-2 sm:px-4 py-2 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">{formatCurrency(item.amount, currency)}</td>
-                                        <td className="px-2 sm:px-4 py-2 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">{item.name}</td>
+                                    <tr key={item.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                                        <td className="px-4 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">{new Date(item.date).toLocaleDateString()}</td>
+                                        <td className="px-4 py-4 whitespace-nowrap text-sm font-bold text-slate-900 dark:text-white">{formatCurrency(item.amount, currency)}</td>
+                                        <td className="px-4 py-4 whitespace-nowrap text-sm font-medium text-slate-700 dark:text-slate-300">{item.name}</td>
                                     </tr>
                                 ))}
                                 {memberGroceries.length === 0 && (
-                                    <tr><td colSpan={3} className="px-2 sm:px-4 py-4 text-center text-sm text-gray-500 dark:text-gray-400">No expenses recorded.</td></tr>
+                                    <tr><td colSpan={3} className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">No expenses recorded.</td></tr>
                                 )}
                             </tbody>
-                            <tfoot className="bg-gray-100 dark:bg-gray-700 border-t-2 border-gray-300 dark:border-gray-600">
+                            <tfoot className="bg-slate-50 dark:bg-slate-800/50 border-t-2 border-slate-200 dark:border-slate-700">
                                 <tr>
-                                    <td className="px-2 sm:px-4 py-2 text-right font-bold text-gray-800 dark:text-gray-200">Total</td>
-                                    <td colSpan={2} className="px-2 sm:px-4 py-2 font-bold text-gray-900 dark:text-gray-100">{formatCurrency(totalPaid, currency)}</td>
+                                    <td className="px-4 py-4 text-right text-sm font-bold text-slate-700 dark:text-slate-300">Total</td>
+                                    <td colSpan={2} className="px-4 py-4 font-extrabold text-slate-900 dark:text-white">{formatCurrency(totalPaid, currency)}</td>
                                 </tr>
                             </tfoot>
                         </table>
                     </div>
                 </div>
             ) : (
-                <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow text-center text-gray-500 dark:text-gray-400">
+                <div className="bg-white dark:bg-slate-900 p-8 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800 text-center text-slate-500 dark:text-slate-400">
                     <p>No members available to display. Please add a member in Settings.</p>
                 </div>
             )}
